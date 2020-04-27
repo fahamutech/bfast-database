@@ -1,6 +1,8 @@
 const express = require('express');
 const {ParseServer} = require('parse-server');
+const cors = require('cors');
 const app = express();
+app.use(cors());
 
 const api = new ParseServer({
     databaseURI: process.env.PARSE_SERVER_DATABASE_URI,
