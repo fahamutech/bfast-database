@@ -2,16 +2,16 @@ const express = require('express');
 // const cookieParser = require('cookie-parser');
 // const logger = require('morgan');
 const {ParseServer} = require('parse-server');
-const cors = require('cors');
+// const cors = require('cors');
 const app = express();
 // app.use(logger('dev'));
-app.use(express.json({
-    limit: '4024mb'
-}));
-app.use(express.urlencoded({extended: false}));
+// app.use(express.json({
+//     limit: '4024mb'
+// }));
+// app.use(express.urlencoded({extended: false}));
 // app.use(cookieParser());
-app.use(cors());
-app.options('*', cors());
+// app.use(cors());
+// app.options('*', cors());
 
 const api = new ParseServer({
     databaseURI: process.env.PARSE_SERVER_DATABASE_URI,
