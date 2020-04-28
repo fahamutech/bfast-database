@@ -22,6 +22,7 @@ const api = new ParseServer({
     mountPath: process.env.PARSE_SERVER_MOUNT_PATH,
     maxUploadSize: '4024mb',
     objectIdSize: 16,
+    allowCustomObjectId: true,
     filesAdapter: {
         module: 'parse-server-s3like-adapter',
         options: {
