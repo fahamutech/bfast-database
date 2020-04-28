@@ -12,21 +12,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@master
-      - name: set environment variables
-        uses: allenevans/set-env@v1.0.0
-        with:
-          TAG: $(node pkg.js)
-#      - name: export tag
-#        run: |
-#          export TAG="$(node pkg.js)"
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@latest
+      - name: Create release
+        run: |
+          export TAG="$(node pkg.js)"
+          apt-get update
+          apt-get install -y curl
+          curl -H "Authorization: token ${TOKEN}" https://api.github.com/repos/fahamutech/bfast-daas/releases -d'{"tag_name": ${TAG},"target_commitish": "master","name": ${TAG},"body": "","draft": false,"prerelease": false}'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-        with:
-          tag_name: ${TAG}
-          release_name: Release ${TAG}
-          body: |
-          draft: false
-          prerelease: false
+          TOKEN: ${{ secrets.TOKEN }}
+          CI: true
