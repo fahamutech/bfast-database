@@ -1,15 +1,15 @@
 const express = require('express');
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
+// const cookieParser = require('cookie-parser');
+// const logger = require('morgan');
 const {ParseServer} = require('parse-server');
 const cors = require('cors');
 const app = express();
-app.use(logger('dev'));
+// app.use(logger('dev'));
 app.use(express.json({
     limit: '4024mb'
 }));
 app.use(express.urlencoded({extended: false}));
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use(cors());
 app.options('*', cors());
 
@@ -22,7 +22,6 @@ const api = new ParseServer({
     mountPath: process.env.PARSE_SERVER_MOUNT_PATH,
     maxUploadSize: '4024mb',
     objectIdSize: 16,
-    verbose: true,
     filesAdapter: {
         module: 'parse-server-s3like-adapter',
         options: {
@@ -38,9 +37,9 @@ const api = new ParseServer({
 
 app.use('/', api);
 
-const httpServer = app.listen(3000, function () {
+const httpServer = app.listen(Number(process.env.PORT), function () {
     console.log('BFast::Cloud DaaS running at port 3000.');
 });
 const parseLiveQueryServer = ParseServer.createLiveQueryServer(httpServer, {
-   redisURL: 'redis://rdb:6379'
+    redisURL: 'redis://rdb:6379'
 });
