@@ -42,5 +42,5 @@ const httpServer = app.listen(Number(process.env.PORT), function () {
     console.log('BFast::Cloud DaaS running at port 3000.');
 });
 const parseLiveQueryServer = ParseServer.createLiveQueryServer(httpServer, {
-    redisURL: 'redis://rdb:6379'
+    // redisURL: 'redis://rdb:6379'
 });
