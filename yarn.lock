@@ -342,6 +342,13 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.17.21.tgz#c00e9603399126925806bed2d9a1e37da506965e"
   integrity sha512-PQKsydPxYxF1DsAFWmunaxd3sOi3iMt6Zmx/tgaagHYmwJ/9cRH91hQkeJZaUGWbvn0K5HlSVEXkn5U/llWPpQ==
 
+"@types/parse@^2.12.0":
+  version "2.12.0"
+  resolved "https://registry.yarnpkg.com/@types/parse/-/parse-2.12.0.tgz#9b1f6c8a30dcd46b83baf8b3768d0b2d3eb4edc1"
+  integrity sha512-N2EAR6zDAPxBybmv+c6ao8Vtq5gfY5PDwN4UCU+plYb9nHwNqk/P7CTCRfjUz8+ckWH8bfjmgikhwyLi+YiCpQ==
+  dependencies:
+    "@types/node" "*"
+
 "@types/qs@*":
   version "6.9.1"
   resolved "https://registry.yarnpkg.com/@types/qs/-/qs-6.9.1.tgz#937fab3194766256ee09fcd40b781740758617e7"
@@ -3545,7 +3552,7 @@ node-forge@^0.7.1:
   resolved "https://registry.yarnpkg.com/node-forge/-/node-forge-0.7.6.tgz#fdf3b418aee1f94f0ef642cd63486c77ca9724ac"
   integrity sha512-sol30LUpz1jQFBjOKwbjxijiE3b6pjd74YwfD0fJOKPjF+fONKb2Yg8rYgS6+bK6VDl+/wfr4IYpC7jDzLUIfw==
 
-node-pre-gyp@*, node-pre-gyp@0.14.0:
+node-pre-gyp@0.14.0:
   version "0.14.0"
   resolved "https://registry.yarnpkg.com/node-pre-gyp/-/node-pre-gyp-0.14.0.tgz#9a0596533b877289bcad4e143982ca3d904ddc83"
   integrity sha512-+CvDC7ZttU/sSt9rFjix/P05iS43qHCOOGzcr3Ry99bXG7VX953+vFyEuph/tfqoYu8dttBkE86JSKBO2OzcxA==
@@ -3869,7 +3876,7 @@ parse-server-s3like-adapter@^2.0.1:
     thenify-all "^1.6.0"
     url-join "^1.1.0"
 
-parse-server@^:
+parse-server@^4.2.0:
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/parse-server/-/parse-server-4.2.0.tgz#ae2141091b4e2bb9fe2bfd65ac9a01279af06f1a"
   integrity sha512-xSsK8dLwNuMOsodQ8Hpmy8QgZFR2lqjre8GG7gPQ7yG3htDuYn5V0XH2bQDL4OXLGwKNp/b/TBUO8Bho1uAE0Q==
