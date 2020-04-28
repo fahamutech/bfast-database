@@ -1,6 +1,6 @@
 {
   "name": "bfast-ce-daas",
-  "version": "0.3.2-beta0",
+  "version": "0.3.2-beta1",
   "private": true,
   "main": "index.js",
   "license": "MIT",

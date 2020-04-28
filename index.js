@@ -22,17 +22,17 @@ const api = new ParseServer({
     mountPath: process.env.PARSE_SERVER_MOUNT_PATH,
     maxUploadSize: '4024mb',
     objectIdSize: 16,
-    filesAdapter: {
-        module: 'parse-server-s3like-adapter',
-        options: {
-            accessKey: process.env.S3_ACCESS_KEY,
-            bucket: process.env.S3_BUCKET,
-            direct: false,
-            endPoint: process.env.S3_ENDPOINT,
-            secretKey: process.env.S3_SECRET_KEY,
-        }
-    },
-    // liveQuery: process.env.PARSE_SERVER_LIVE_QUERY,
+    // filesAdapter: {
+    //     module: 'parse-server-s3like-adapter',
+    //     options: {
+    //         accessKey: process.env.S3_ACCESS_KEY,
+    //         bucket: process.env.S3_BUCKET,
+    //         direct: false,
+    //         endPoint: process.env.S3_ENDPOINT,
+    //         secretKey: process.env.S3_SECRET_KEY,
+    //     }
+    // },
+    liveQuery: process.env.PARSE_SERVER_LIVE_QUERY,
 });
 
 app.use('/', api);
@@ -40,6 +40,6 @@ app.use('/', api);
 const httpServer = app.listen(3000, function () {
     console.log('BFast::Cloud DaaS running at port 3000.');
 });
-// const parseLiveQueryServer = ParseServer.createLiveQueryServer(httpServer, {
-//    // redisURL: 'redis://rdb:6379'
-// });
+const parseLiveQueryServer = ParseServer.createLiveQueryServer(httpServer, {
+   redisURL: 'redis://rdb:6379'
+});
