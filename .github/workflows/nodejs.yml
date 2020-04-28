@@ -23,11 +23,10 @@ jobs:
       - name: install, build, and test
         run: |
           npm install -g yarn
-          npm install -g gulp
-          yarn install --production=true
+          yarn install
           # npm test
           echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
-          gulp publishContainer
+          npm run push
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
