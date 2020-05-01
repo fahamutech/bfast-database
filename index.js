@@ -27,7 +27,7 @@ const api = new ParseServer({
         module: 'bfast-s3like',
         options: {
             accessKey: process.env.S3_ACCESS_KEY,
-            bucket: process.env.S3_BUCKET,
+            bucket: process.env.S3_BUCKET.toLowerCase(),
             direct: false,
             endPoint: process.env.S3_ENDPOINT,
             secretKey: process.env.S3_SECRET_KEY,
