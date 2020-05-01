@@ -1,6 +1,6 @@
 {
   "name": "bfast-ce-daas",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "main": "index.js",
   "license": "MIT",
@@ -9,7 +9,7 @@
     "push": "gulp publishContainer"
   },
   "dependencies": {
-    "bfast-s3like": "^0.0.1",
+    "bfast-s3like": "^2.1.0",
     "express": "^4.17.1",
     "parse-server": "^4.2.0"
   },
