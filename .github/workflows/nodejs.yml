@@ -23,7 +23,7 @@ jobs:
       - name: install, build, and test
         run: |
           npm install -g yarn
-          yarn add gloabl gulp
+          yarn add global gulp
           yarn install --production=true
           # npm test
           echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
