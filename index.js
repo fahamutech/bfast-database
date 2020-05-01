@@ -24,7 +24,7 @@ const api = new ParseServer({
     objectIdSize: 16,
     allowCustomObjectId: true,
     filesAdapter: {
-        module: 'parse-server-s3like-adapter',
+        module: 'bfast-s3like',
         options: {
             accessKey: process.env.S3_ACCESS_KEY,
             bucket: process.env.S3_BUCKET,
