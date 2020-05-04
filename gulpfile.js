@@ -36,4 +36,14 @@ function pushToDocker(cb) {
     handleBuild(pushImage, cb);
 }
 
-exports.publishContainer = gulp.series(buildDockerImage, pushToDocker);
+function pushLatestToDocker(cb) {
+    const pushImage = process.exec(`sudo docker push joshuamshana/bfast-ce-daas`);
+
+    pushImage.on('exit', (code, signal) => {
+        console.log('push latest image exit');
+        cb();
+    });
+    handleBuild(pushImage, cb);
+}
+
+exports.publishContainer = gulp.series(buildDockerImage, pushToDocker, pushLatestToDocker);
