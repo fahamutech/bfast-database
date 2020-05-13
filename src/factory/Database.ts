@@ -66,6 +66,11 @@ export class Database implements DatabaseAdapter {
     }
 
     async writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock): Promise<V> {
+        if (!this.validDomain(domain)){
+            throw {
+                message:`${domain} is not a valid domain name`
+            }
+        }
         let returnFieldsMap = {};
         data.forEach((value, index) => {
             returnFieldsMap[index] = value.return;
@@ -82,6 +87,11 @@ export class Database implements DatabaseAdapter {
     }
 
     async writeOne<T extends BasicAttributesModel, V>(domain: string, data: T, context: ContextBlock): Promise<V> {
+        if (!this.validDomain(domain)){
+            throw {
+                message:`${domain} is not a valid domain name`
+            }
+        }
         const returnFields = data.return;
         const conn = await this.connection();
         const sanitizedData = this.sanitize4Db(data);
@@ -108,9 +118,6 @@ export class Database implements DatabaseAdapter {
     }
 
     addCreateMetadata<T extends BasicAttributesModel>(data: T, context: ContextBlock): T {
-        // if (data._id) {
-        //     data._id = data._id;
-        // }
         data._created_by = context.uid;
         data._created_at = new Date();
         data._updated_at = new Date();
@@ -122,4 +129,7 @@ export class Database implements DatabaseAdapter {
         return data;
     }
 
+    validDomain(domain: string): boolean {
+        return (domain !== '_User' && domain !== '_Token');
+    }
 }

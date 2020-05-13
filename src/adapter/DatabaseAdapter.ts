@@ -15,4 +15,6 @@ export interface DatabaseAdapter {
     addCreateMetadata<T extends BasicAttributesModel>(data: T, context: ContextBlock): T;
 
     addUpdateMetadata<T extends BasicAttributesModel>(data: T, context: ContextBlock): T;
+
+    validDomain(domain: string): boolean;
 }
