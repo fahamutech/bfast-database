@@ -1,5 +1,5 @@
 import {DatabaseAdapter} from "../adapter/DatabaseAdapter";
-import {MongoClient, ObjectId} from "mongodb";
+import {MongoClient} from "mongodb";
 import {ConfigAdapter, DaaSConfig} from "../config";
 import {BasicAttributesModel} from "../model/BasicAttributesModel";
 import {ContextBlock} from "../model/RulesBlockModel";
@@ -65,8 +65,20 @@ export class Database implements DatabaseAdapter {
         }
     }
 
-    writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock): Promise<V> {
-        return Promise.resolve(undefined);
+    async writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock): Promise<V> {
+        let returnFieldsMap = {};
+        data.forEach((value, index) => {
+            returnFieldsMap[index] = value.return;
+        });
+        const conn = await this.connection();
+        const sanitizedData = data.map(value => this.sanitize4Db(value));
+        const freshData = sanitizedData.map(value => this.addCreateMetadata(value, context));
+        const response = await conn.db().collection(domain).insertMany(freshData);
+        Object.keys(response.insertedIds).forEach(index => {
+            freshData[index]._id = response.insertedIds[index];
+            freshData[index] = this.sanitize4User(freshData[index], returnFieldsMap[index])
+        });
+        return freshData as any;
     }
 
     async writeOne<T extends BasicAttributesModel, V>(domain: string, data: T, context: ContextBlock): Promise<V> {

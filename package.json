@@ -6,8 +6,8 @@
   "license": "MIT",
   "scripts": {
     "build": "gulp build",
-    "test": "mocha specs",
-    "test:no-build": "mocha specs",
+    "test": "mocha --recursive  specs/",
+    "test:no-build": "mocha --recursive specs/",
     "prestart": "npm run build",
     "pretest": "yarn run build",
     "start": "node .",
@@ -30,12 +30,10 @@
     "@types/node": "^13.13.5",
     "@types/parse": "^2.12.0",
     "axios": "^0.19.2",
-    "chai": "^4.2.0",
     "del": "^5.1.0",
     "gulp": "^4.0.2",
     "mocha": "^7.1.2",
     "mongodb-memory-server": "^6.6.0",
-    "mongodb-memory-server-global": "^6.6.0",
     "typescript": "^3.8.3"
   }
 }

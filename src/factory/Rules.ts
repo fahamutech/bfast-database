@@ -48,7 +48,11 @@ export class Rules implements RulesAdapter {
                 try {
                     const domain = this.extractDomain(createRule, 'Create');
                     const data = this.rulesBlock[createRule];
-                    this.results[domain] = await database.writeOne(domain, data, this.rulesBlock.context);
+                    if (data && Array.isArray(data)) {
+                        this.results[domain] = await database.writeMany(domain, data, this.rulesBlock.context);
+                    } else {
+                        this.results[domain] = await database.writeOne(domain, data, this.rulesBlock.context);
+                    }
                 } catch (e) {
                     this.results.errors.push({
                         message: e.message ? e.message : e.toString(),

@@ -3,7 +3,8 @@ name: Node CI
 on:
   push:
     branches:
-      - master
+      #      - master
+      - back4daas
 
 jobs:
   build:
@@ -12,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [10.x]
+        node-version: [12.x]
 
     steps:
       - uses: actions/checkout@v1
@@ -24,9 +25,9 @@ jobs:
         run: |
           npm install -g yarn
           yarn install
-          # npm test
-          echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
-          npm run push
+          yarn test
+          # echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
+          # npm run push
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
