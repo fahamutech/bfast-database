@@ -35,7 +35,7 @@ export class Security implements SecurityAdapter {
         }
     }
 
-    async encryptPassword(plainText: string): Promise<string> {
+    async hashPlainText(plainText: string): Promise<string> {
         try {
             return await bcrypt.hash(plainText, 5);
         } catch (e) {

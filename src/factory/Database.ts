@@ -1,8 +1,9 @@
-import {DatabaseAdapter} from "../adapter/DatabaseAdapter";
+import {DatabaseAdapter, WriteOptions} from "../adapter/DatabaseAdapter";
 import {MongoClient} from "mongodb";
 import {ConfigAdapter, DaaSConfig} from "../config";
 import {BasicAttributesModel} from "../model/BasicAttributesModel";
 import {ContextBlock} from "../model/RulesBlockModel";
+import {FilterModel} from "../model/FilterModel";
 
 export class Database implements DatabaseAdapter {
     private _mongoClient: MongoClient;
@@ -65,12 +66,11 @@ export class Database implements DatabaseAdapter {
         }
     }
 
-    async writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock): Promise<V> {
-        if (!this.validDomain(domain)){
-            throw {
-                message:`${domain} is not a valid domain name`
-            }
+    async writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock, options?: WriteOptions): Promise<V> {
+        if (!options?.bypassDomainVerification) {
+            await this.handleValidation(domain);
         }
+        await this.handleIndexesCreation(domain, options);
         let returnFieldsMap = {};
         data.forEach((value, index) => {
             returnFieldsMap[index] = value.return;
@@ -86,16 +86,15 @@ export class Database implements DatabaseAdapter {
         return freshData as any;
     }
 
-    async writeOne<T extends BasicAttributesModel, V>(domain: string, data: T, context: ContextBlock): Promise<V> {
-        if (!this.validDomain(domain)){
-            throw {
-                message:`${domain} is not a valid domain name`
-            }
+    async writeOne<T extends BasicAttributesModel, V>(domain: string, data: T, context: ContextBlock, options?: WriteOptions): Promise<V> {
+        if (!options?.bypassDomainVerification) {
+            await this.handleValidation(domain);
         }
+        await this.handleIndexesCreation(domain, options);
         const returnFields = data.return;
-        const conn = await this.connection();
         const sanitizedData = this.sanitize4Db(data);
         const freshData = this.addCreateMetadata(sanitizedData, context);
+        const conn = await this.connection();
         const response = await conn.db().collection(domain).insertOne(freshData);
         freshData._id = response.insertedId;
         return this.sanitize4User(freshData, returnFields) as any;
@@ -117,19 +116,46 @@ export class Database implements DatabaseAdapter {
         return Promise.resolve(undefined);
     }
 
-    addCreateMetadata<T extends BasicAttributesModel>(data: T, context: ContextBlock): T {
-        data._created_by = context.uid;
+    addCreateMetadata<T extends BasicAttributesModel>(data: T, context?: ContextBlock): T {
+        data._created_by = context?.uid;
         data._created_at = new Date();
         data._updated_at = new Date();
         return data;
     }
 
-    addUpdateMetadata<T extends BasicAttributesModel>(data: T, context: ContextBlock): T {
+    addUpdateMetadata<T extends BasicAttributesModel>(data: T, context?: ContextBlock): T {
         data._updated_at = new Date();
         return data;
     }
 
     validDomain(domain: string): boolean {
         return (domain !== '_User' && domain !== '_Token');
+    }
+
+    private async handleValidation(domain: string) {
+        if (!this.validDomain(domain)) {
+            throw {
+                message: `${domain} is not a valid domain name`
+            }
+        }
+    }
+
+    private async handleIndexesCreation(domain: string, options: WriteOptions) {
+        if (options && options.indexes && Array.isArray(options.indexes)) {
+            const conn = await this.connection();
+            for (const value of options.indexes) {
+                await conn.db().collection(domain).createIndex({[value.field]: 1}, {
+                    unique: value.unique,
+                    collation: value.collation
+                });
+            }
+            return;
+        } else {
+            return;
+        }
+    }
+
+    query(domain: string, filter: FilterModel, context: ContextBlock, options?: WriteOptions): Promise<any> {
+        return Promise.resolve(undefined);
     }
 }

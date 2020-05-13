@@ -7,7 +7,7 @@ export interface SecurityAdapter {
 
     revokeToken(token: string): Promise<any>;
 
-    encryptPassword(plainText: string): Promise<string>;
+    hashPlainText(plainText: string): Promise<string>;
 
     comparePassword(plainPassword: string, hashPassword: string): Promise<boolean>;
 }

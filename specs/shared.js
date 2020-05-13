@@ -2,7 +2,7 @@ const {DaaSServer} = require("../dist/daas");
 const {MongoMemoryServer} = require('mongodb-memory-server');
 
 
-exports.mongoServer = () => {
+const mongoServer = () => {
     return new MongoMemoryServer({
         autoStart: false,
         replSet: {storageEngine: 'wiredTiger'},
@@ -14,7 +14,7 @@ exports.mongoServer = () => {
  * @param uri {string}
  * @return {Promise<DaaSServer>}
  */
-exports.daas = async (uri) => {
+const daas = async (uri) => {
     return new DaaSServer({
         mongoDbUri: uri,
         applicationId: 'daas',
@@ -23,3 +23,13 @@ exports.daas = async (uri) => {
         masterKey: 'daas'
     });
 }
+
+exports.initiateServer = async (mongoMemoryServer, daaSServer) => {
+    mongoMemoryServer = mongoServer();
+    await mongoMemoryServer.start();
+    daaSServer = await daas(await mongoMemoryServer.getUri());
+    await daaSServer.start();
+}
+exports.serverUrl = 'http://localhost:3000/daas';
+exports.mongoServer = mongoServer;
+exports.daas = daas;

@@ -1,9 +1,8 @@
-export interface BasicUserAttributes {
+import {BasicAttributesModel} from "./BasicAttributesModel";
+
+export interface BasicUserAttributes extends BasicAttributesModel {
     username: string;
     email?: string;
     password?: string;
     token?: string;
-    id?: string;
-    createdAt?: Date;
-    updatedAt?: Date;
 }

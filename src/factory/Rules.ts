@@ -3,8 +3,11 @@ import {RulesBlockModel} from "../model/RulesBlockModel";
 import {DatabaseAdapter} from "../adapter/DatabaseAdapter";
 import {ConfigAdapter} from "../config";
 import {Database} from "./Database";
+import {AuthAdapter} from "../adapter/AuthAdapter";
+import {Auth} from "./Auth";
 
 let database: DatabaseAdapter;
+let auth: AuthAdapter;
 
 export class Rules implements RulesAdapter {
     rulesBlock: RulesBlockModel;
@@ -13,14 +16,9 @@ export class Rules implements RulesAdapter {
     constructor(private readonly config: ConfigAdapter) {
         database = (config.adapters && config.adapters.database) ?
             this.config.adapters.database(config) : new Database(config);
+        auth = (config.adapters && config.adapters.auth) ?
+            this.config.adapters.auth(config) : new Auth(config);
     }
-
-    // const queryRules = rules.filter(rule => rule.toLowerCase().startsWith('query'));
-    // const updateRules = rules.filter(rule => rule.toLowerCase().startsWith('update'));
-    // const deleteRules = rules.filter(rule => rule.toLowerCase().startsWith('delete'));
-    // const transactionRule = rules.filter(rule => rule.toLowerCase().startsWith('transaction'));
-    // const authenticationRule = rules.filter(rule => rule.toLowerCase().startsWith('authentication'));
-    // const authorizationRule = rules.filter(rule => rule.toLowerCase().startsWith('authorization'));
 
     private getRulesKey(): string[] {
         if (this.rulesBlock) {
@@ -30,12 +28,45 @@ export class Rules implements RulesAdapter {
         }
     }
 
-    handleAuthenticationRule(): Promise<void> {
-        return Promise.resolve(undefined);
+    async handleAuthenticationRule(): Promise<void> {
+        try {
+            const authenticationRules = this.getRulesKey().filter(rule => rule.startsWith('Authentication'));
+            if (authenticationRules.length === 0) {
+                return;
+            }
+            const authenticationRule = authenticationRules[0];
+            const authentication = this.rulesBlock[authenticationRule];
+            for (const action of Object.keys(authentication)) {
+                console.log(action);
+                try {
+                    if (action === 'signUp') {
+                        this.results["Authentication"] = {};
+                        this.results["Authentication"].signUp = await auth.signUp(authentication[action], this.rulesBlock.context);
+                    }
+                    if (action === 'signIn') {
+                        this.results["Authentication"].signIn = await auth.signIn(authentication[action], this.rulesBlock.context);
+                    }
+                    if (action === 'resetPassword') {
+                        this.results["Authentication"].resetPassword = await auth.resetPassword(authentication[action].email);
+                    }
+                } catch (e) {
+                    this.results.errors.push({
+                        message: e.message ? e.message : e.toString(),
+                        path: authenticationRule[action]
+                    });
+                }
+            }
+            return;
+        } catch (e) {
+            this.results.errors.push({
+                message: e.message ? e.message : e.toString()
+            });
+            return;
+        }
     }
 
     handleAuthorizationRule(): Promise<void> {
-        return Promise.resolve(undefined);
+        return;
     }
 
     async handleCreateRules(): Promise<void> {
@@ -70,19 +101,19 @@ export class Rules implements RulesAdapter {
     }
 
     handleDeleteRules(): Promise<void> {
-        return Promise.resolve(undefined);
+        return;
     }
 
     handleQueryRules(): Promise<void> {
-        return Promise.resolve(undefined);
+        return;
     }
 
     handleTransactionRule(): Promise<void> {
-        return Promise.resolve(undefined);
+        return;
     }
 
     handleUpdateRules(): Promise<void> {
-        return Promise.resolve(undefined);
+        return;
     }
 
     extractDomain(rule: string, remove: 'Create' | 'Query' | 'Update' | 'Delete'): string {
