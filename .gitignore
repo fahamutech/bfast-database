@@ -6,3 +6,4 @@ specs
 *.log
 *.log.*
 *.err.*
+dist
