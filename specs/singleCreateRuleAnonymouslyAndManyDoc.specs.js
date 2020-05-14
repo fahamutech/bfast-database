@@ -1,11 +1,11 @@
-const axios = require('axios');
 const {
     describe,
     it,
     after,
     before
 } = require('mocha');
-const {daas, mongoServer} = require('./shared');
+const {daas, mongoServer, serverUrl} = require('./shared');
+const {createMany} = require('./controller/createController');
 const assert = require('assert');
 let mongoMemoryServer;
 let daaSServer;
@@ -23,21 +23,16 @@ describe('CreateRule with Many Document & Default Database', function () {
     });
 
     it('Create Many Resource Anonymously and Return specified fields', async function () {
-        const rule = {
-            applicationId: 'daas',
-            CreateTest: [
-                {
-                    name: 'joshua',
-                    return: ['id', 'createdAt']
-                },
-                {
-                    name: 'eitan',
-                    return: ['id']
-                }
-            ]
-        }
-        const response = await axios.post('http://localhost:3000/daas', rule);
-        const data = response.data;
+        const data = await createMany([
+            {
+                name: 'joshua',
+                return: ['id', 'createdAt']
+            },
+            {
+                name: 'eitan',
+                return: ['id']
+            }
+        ]);
         console.log(data);
         assert(typeof data === 'object');
         assert(Array.isArray(data.Test));
