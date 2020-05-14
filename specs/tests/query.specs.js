@@ -3,7 +3,8 @@ const {
     describe,
     it,
     after,
-    before
+    beforeEach,
+    afterEach
 } = require('mocha');
 const {mongoServer, daas, serverUrl} = require('../shared');
 const {createMany} = require('../controller/createController');
@@ -12,7 +13,7 @@ let mongoMemoryServer;
 let daaSServer;
 
 describe('QueryRule Integration Test', function () {
-    before(async function () {
+    beforeEach(async function () {
         mongoMemoryServer = mongoServer();
         await mongoMemoryServer.start();
         daaSServer = await daas(await mongoMemoryServer.getUri());
@@ -41,7 +42,7 @@ describe('QueryRule Integration Test', function () {
             }
         ]);
     });
-    after(async function () {
+    afterEach(async function () {
         await daaSServer.stop();
         await mongoMemoryServer.stop();
     });

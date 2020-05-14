@@ -3,7 +3,8 @@ const {
     describe,
     it,
     after,
-    before
+    beforeEach,
+    afterEach
 } = require('mocha');
 const {daas, mongoServer} = require('../shared');
 const assert = require('assert');
@@ -11,13 +12,13 @@ let mongoMemoryServer;
 let daaSServer;
 
 describe('CreateRule With Single Document & Default Database', function () {
-    before(async function () {
+    beforeEach(async function () {
         mongoMemoryServer = mongoServer();
         await mongoMemoryServer.start();
         daaSServer = await daas(await mongoMemoryServer.getUri());
         await daaSServer.start();
     });
-    after(async function () {
+    afterEach(async function () {
         await daaSServer.stop();
         await mongoMemoryServer.stop();
     });

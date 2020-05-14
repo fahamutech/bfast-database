@@ -3,7 +3,9 @@ const {
     describe,
     it,
     after,
-    before
+    before,
+    beforeEach,
+    afterEach
 } = require('mocha');
 const {mongoServer, daas, serverUrl} = require('../shared');
 const assert = require('assert');
@@ -11,13 +13,13 @@ let mongoMemoryServer;
 let daaSServer;
 
 describe('Authentication Integration Test', function () {
-    before(async function () {
+    beforeEach(async function () {
         mongoMemoryServer = mongoServer();
         await mongoMemoryServer.start();
         daaSServer = await daas(await mongoMemoryServer.getUri());
         await daaSServer.start();
     });
-    after(async function () {
+    afterEach(async function () {
         await daaSServer.stop();
         await mongoMemoryServer.stop();
     });
