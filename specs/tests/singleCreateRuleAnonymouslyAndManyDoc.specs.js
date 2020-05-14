@@ -4,8 +4,8 @@ const {
     after,
     before
 } = require('mocha');
-const {daas, mongoServer, serverUrl} = require('./shared');
-const {createMany} = require('./controller/createController');
+const {daas, mongoServer, serverUrl} = require('../shared');
+const {createMany} = require('../controller/createController');
 const assert = require('assert');
 let mongoMemoryServer;
 let daaSServer;
