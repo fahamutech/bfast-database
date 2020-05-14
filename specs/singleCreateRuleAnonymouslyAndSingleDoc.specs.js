@@ -41,7 +41,6 @@ describe('CreateRule With Single Document & Default Database', function () {
         assert(data.Test["id"]);
         assert(data.Test["createdBy"] === null);
         assert(data.Test["name"] === 'joshua');
-
     });
 
     it('should create a resource anonymous with a specified id and return all fields include defaults', async function () {
