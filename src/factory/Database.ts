@@ -3,7 +3,7 @@ import {MongoClient} from "mongodb";
 import {ConfigAdapter, DaaSConfig} from "../config";
 import {BasicAttributesModel} from "../model/BasicAttributesModel";
 import {ContextBlock} from "../model/RulesBlockModel";
-import {FilterModel} from "../model/FilterModel";
+import {QueryModel} from "../model/QueryModel";
 
 export class Database implements DatabaseAdapter {
     private _mongoClient: MongoClient;
@@ -32,6 +32,10 @@ export class Database implements DatabaseAdapter {
             delete data.createdBy;
         }
         return data;
+    }
+
+    sanitizeQueryData4Db<T extends BasicAttributesModel>(data: T) {
+
     }
 
     sanitize4User<T extends BasicAttributesModel>(data: T, returnFields: string[]): T {
@@ -68,7 +72,7 @@ export class Database implements DatabaseAdapter {
 
     async writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock, options?: WriteOptions): Promise<V> {
         if (!options?.bypassDomainVerification) {
-            await this.handleValidation(domain);
+            await this.handleDomainValidation(domain);
         }
         await this.handleIndexesCreation(domain, options);
         let returnFieldsMap = {};
@@ -88,7 +92,7 @@ export class Database implements DatabaseAdapter {
 
     async writeOne<T extends BasicAttributesModel, V>(domain: string, data: T, context: ContextBlock, options?: WriteOptions): Promise<V> {
         if (!options?.bypassDomainVerification) {
-            await this.handleValidation(domain);
+            await this.handleDomainValidation(domain);
         }
         await this.handleIndexesCreation(domain, options);
         const returnFields = data.return;
@@ -132,7 +136,7 @@ export class Database implements DatabaseAdapter {
         return (domain !== '_User' && domain !== '_Token');
     }
 
-    private async handleValidation(domain: string) {
+    private async handleDomainValidation(domain: string) {
         if (!this.validDomain(domain)) {
             throw {
                 message: `${domain} is not a valid domain name`
@@ -155,7 +159,25 @@ export class Database implements DatabaseAdapter {
         }
     }
 
-    query(domain: string, filter: FilterModel, context: ContextBlock, options?: WriteOptions): Promise<any> {
-        return Promise.resolve(undefined);
+    async query<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>,
+                                                context: ContextBlock, options?: WriteOptions): Promise<any> {
+        if (!options?.bypassDomainVerification) {
+            await this.handleDomainValidation(domain);
+        }
+        const conn = await this.connection();
+        if (queryModel.id) {
+            const result = await conn.db().collection(domain).findOne<T>({_id: queryModel.id});
+            return this.sanitize4User(result, queryModel.return);
+        } else {
+            const query = conn.db().collection(domain).find(queryModel.filter);
+            if (queryModel.skip) {
+                query.skip(queryModel.skip)
+            }
+            if (queryModel.size) {
+                query.limit(queryModel.size)
+            }
+            const result = await query.toArray();
+            return result.map(value => this.sanitize4User(value, queryModel.return));
+        }
     }
 }

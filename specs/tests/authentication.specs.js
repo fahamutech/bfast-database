@@ -5,7 +5,7 @@ const {
     after,
     before
 } = require('mocha');
-const {mongoServer, daas, serverUrl} = require('./shared');
+const {mongoServer, daas, serverUrl} = require('../shared');
 const assert = require('assert');
 let mongoMemoryServer;
 let daaSServer;

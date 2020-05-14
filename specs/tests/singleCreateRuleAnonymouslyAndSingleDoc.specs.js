@@ -5,7 +5,7 @@ const {
     after,
     before
 } = require('mocha');
-const {daas, mongoServer} = require('./shared');
+const {daas, mongoServer} = require('../shared');
 const assert = require('assert');
 let mongoMemoryServer;
 let daaSServer;
@@ -41,7 +41,6 @@ describe('CreateRule With Single Document & Default Database', function () {
         assert(data.Test["id"]);
         assert(data.Test["createdBy"] === null);
         assert(data.Test["name"] === 'joshua');
-
     });
 
     it('should create a resource anonymous with a specified id and return all fields include defaults', async function () {

@@ -6,8 +6,8 @@
   "license": "MIT",
   "scripts": {
     "build": "gulp build",
-    "test": "mocha --recursive  specs/",
-    "test:no-build": "mocha --recursive specs/",
+    "test": "mocha  ./specs/tests/**/*.js --recursive",
+    "test:no-build": "mocha  ./specs/tests/**/*.js --recursive",
     "prestart": "npm run build",
     "pretest": "yarn run build",
     "start": "node .",

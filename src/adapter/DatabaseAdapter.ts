@@ -1,6 +1,6 @@
 import {BasicAttributesModel} from "../model/BasicAttributesModel";
 import {ContextBlock} from "../model/RulesBlockModel";
-import {FilterModel} from "../model/FilterModel";
+import {QueryModel} from "../model/QueryModel";
 
 export interface DatabaseAdapter {
     init(): Promise<any>;
@@ -9,15 +9,16 @@ export interface DatabaseAdapter {
 
     writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock, options?: WriteOptions): Promise<V>;
 
-    query(domain: string, filter: FilterModel, context: ContextBlock, options?: WriteOptions): Promise<any>;
+    query<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>, context: ContextBlock, options?: WriteOptions): Promise<any>;
 
-    sanitize4Db<T extends BasicAttributesModel>(data: T): T;
-
-    sanitize4User<T extends BasicAttributesModel>(data: T, returns: string[]): T;
-
-    addCreateMetadata<T extends BasicAttributesModel>(data: T, context?: ContextBlock): T;
-
-    addUpdateMetadata<T extends BasicAttributesModel>(data: T, context?: ContextBlock): T;
+    // this must be moved to controller
+    // sanitize4Db<T extends BasicAttributesModel>(data: T): T;
+    //
+    // sanitize4User<T extends BasicAttributesModel>(data: T, returns: string[]): T;
+    //
+    // addCreateMetadata<T extends BasicAttributesModel>(data: T, context?: ContextBlock): T;
+    //
+    // addUpdateMetadata<T extends BasicAttributesModel>(data: T, context?: ContextBlock): T;
 
     validDomain(domain: string): boolean;
 }

@@ -104,8 +104,38 @@ export class Rules implements RulesAdapter {
         return;
     }
 
-    handleQueryRules(): Promise<void> {
-        return;
+    async handleQueryRules(): Promise<void> {
+        try {
+            const queryRules = this.getRulesKey().filter(rule => rule.startsWith('Query'));
+            if (queryRules.length === 0) {
+                return;
+            }
+            for (const queryRule of queryRules) {
+                try {
+                    const domain = this.extractDomain(queryRule, 'Query');
+                    const data = this.rulesBlock[queryRule];
+                    if (data && Array.isArray(data)) {
+                        this.results.errors.push({
+                            message: 'Query data must be a map',
+                            path: queryRule
+                        });
+                    } else {
+                        this.results[domain] = await database.query(domain, data, this.rulesBlock.context);
+                    }
+                } catch (e) {
+                    this.results.errors.push({
+                        message: e.message ? e.message : e.toString(),
+                        path: queryRule
+                    });
+                }
+            }
+            return;
+        } catch (e) {
+            this.results.errors.push({
+                message: e.message ? e.message : e.toString()
+            });
+            return;
+        }
     }
 
     handleTransactionRule(): Promise<void> {
