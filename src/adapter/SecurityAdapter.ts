@@ -1,5 +1,5 @@
 export interface SecurityAdapter {
-    generateToken<T>(data: T, expire?: string): Promise<string>;
+    generateToken<T extends { uid: string, [key: string]: any }>(data: T, expire?: string): Promise<string>;
 
     verifyToken<T>(token: string): Promise<T>;
 

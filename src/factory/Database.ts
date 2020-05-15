@@ -1,9 +1,10 @@
-import {DatabaseAdapter, WriteOptions} from "../adapter/DatabaseAdapter";
+import {DatabaseAdapter, UpdateOptions, WriteOptions} from "../adapter/DatabaseAdapter";
 import {MongoClient} from "mongodb";
 import {ConfigAdapter, DaaSConfig} from "../config";
 import {BasicAttributesModel} from "../model/BasicAttributesModel";
 import {ContextBlock} from "../model/RulesBlockModel";
 import {QueryModel} from "../model/QueryModel";
+import {UpdateModel} from "../model/UpdateModel";
 
 export class Database implements DatabaseAdapter {
     private _mongoClient: MongoClient;
@@ -117,7 +118,7 @@ export class Database implements DatabaseAdapter {
     }
 
     init(): Promise<any> {
-        return Promise.resolve(undefined);
+        return Promise.resolve();
     }
 
     addCreateMetadata<T extends BasicAttributesModel>(data: T, context?: ContextBlock): T {
@@ -128,7 +129,7 @@ export class Database implements DatabaseAdapter {
     }
 
     addUpdateMetadata<T extends BasicAttributesModel>(data: T, context?: ContextBlock): T {
-        data._updated_at = new Date();
+        data['$currentDate'] = {_updated_at: true}
         return data;
     }
 
@@ -148,10 +149,10 @@ export class Database implements DatabaseAdapter {
         if (options && options.indexes && Array.isArray(options.indexes)) {
             const conn = await this.connection();
             for (const value of options.indexes) {
-                await conn.db().collection(domain).createIndex({[value.field]: 1}, {
-                    unique: value.unique,
-                    collation: value.collation
-                });
+                const indexOptions: any = {};
+                Object.assign(indexOptions, value);
+                delete indexOptions.field;
+                await conn.db().collection(domain).createIndex({[value.field]: 1}, indexOptions);
             }
             return;
         } else {
@@ -176,8 +177,48 @@ export class Database implements DatabaseAdapter {
             if (queryModel.size) {
                 query.limit(queryModel.size)
             }
+            if (queryModel.orderBy && Array.isArray(queryModel.orderBy) && queryModel.orderBy.length > 0) {
+                queryModel.orderBy.forEach(value => {
+                    query.sort(value);
+                });
+            }
             const result = await query.toArray();
             return result.map(value => this.sanitize4User(value, queryModel.return));
         }
+    }
+
+    async updateOne<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateModel<T>,
+                                                       context: ContextBlock, options?: UpdateOptions): Promise<V> {
+        if (!options?.bypassDomainVerification) {
+            await this.handleDomainValidation(domain);
+        }
+        await this.handleIndexesCreation(domain, options);
+        const returnFields = updateModel.return;
+        const sanitizedData = this.sanitize4Db(updateModel.update);
+        const freshData = this.addUpdateMetadata(sanitizedData, context);
+        const conn = await this.connection();
+        const response = await conn.db().collection(domain).updateOne(updateModel.filter, freshData, {
+            upsert: updateModel.upsert === true ? updateModel.upsert : false
+        });
+        return response.result as any;
+       // return this.sanitize4User(<any>response.result, returnFields);
+    }
+
+    async updateMany<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateModel<T>,
+                                                        context: ContextBlock, options?: UpdateOptions): Promise<V> {
+        if (!options?.bypassDomainVerification) {
+            await this.handleDomainValidation(domain);
+        }
+        await this.handleIndexesCreation(domain, options);
+        const returnFields = updateModel.return;
+        const sanitizedData = this.sanitize4Db(updateModel.update);
+        const freshData = this.addUpdateMetadata(sanitizedData, context);
+        const conn = await this.connection();
+        const response = await conn.db().collection(domain).updateMany(updateModel.filter, freshData, {
+            upsert: updateModel.upsert === true ? updateModel.upsert : false
+        });
+        return response.result as any;
+        // console.log(response.result);
+        // return this.sanitize4User(<any>response.result, returnFields);
     }
 }

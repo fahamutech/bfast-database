@@ -3,6 +3,7 @@ import {AuthAdapter} from "../adapter/AuthAdapter";
 import {RestAdapter} from "../adapter/RestAdapter";
 import {SecurityAdapter} from "../adapter/SecurityAdapter";
 import {RulesAdapter} from "../adapter/RulesAdapter";
+import {EmailAdapter} from "../adapter/EmailAdapter";
 
 export class DaaSConfig implements ConfigAdapter {
     private static instance: DaaSConfig;
@@ -33,7 +34,8 @@ export class DaaSConfig implements ConfigAdapter {
         auth?: (config: ConfigAdapter) => AuthAdapter,
         rest?: (config: ConfigAdapter) => RestAdapter,
         security?: (config: ConfigAdapter) => SecurityAdapter,
-        rules?: (config: ConfigAdapter) => RulesAdapter
+        rules?: (config: ConfigAdapter) => RulesAdapter,
+        email?: (config: ConfigAdapter) => EmailAdapter,
     }
 }
 
@@ -49,6 +51,7 @@ export interface ConfigAdapter {
         auth?: (config: ConfigAdapter) => AuthAdapter,
         rest?: (config: ConfigAdapter) => RestAdapter,
         security?: (config: ConfigAdapter) => SecurityAdapter,
-        rules?: (config: ConfigAdapter) => RulesAdapter
+        rules?: (config: ConfigAdapter) => RulesAdapter,
+        email?: (config: ConfigAdapter) => EmailAdapter,
     }
 }

@@ -1,13 +1,13 @@
 {
-  "name": "bfast-ce-daas",
-  "version": "1.0.4",
+  "name": "bfast-daas",
+  "version": "2.0.0-beta0",
   "private": true,
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
     "build": "gulp build",
-    "test": "mocha  ./specs/tests/**/*.js --recursive",
-    "test:no-build": "mocha  ./specs/tests/**/*.js --recursive",
+    "test": "mocha  ./specs/tests/",
+    "test:no-build": "mocha  ./specs/tests/",
     "prestart": "npm run build",
     "pretest": "yarn run build",
     "start": "node .",

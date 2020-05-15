@@ -2,6 +2,8 @@ import * as bcrypt from 'bcrypt';
 import * as _jwt from "jsonwebtoken";
 import {SecurityAdapter} from "../adapter/SecurityAdapter";
 import {ConfigAdapter} from "../config";
+import {DatabaseAdapter} from "../adapter/DatabaseAdapter";
+import {Database} from "./Database";
 
 let _jwtPassword =
     `MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDFg6797ocIzEPK
@@ -21,9 +23,13 @@ bzrJW7JZAgMBAAECggEABAX9r5CHUaePjfX8vnil129vDKa1ibKEi0cjI66CQGbB
 3ZW+HRzcQMmnFKpxdHnSiruupq+MwnYoSvDv21hfCfkQDXvppQkXe72S+oS2vrJr
 JLcWQ6hFDpecIaaCJiqAXvFACr`;
 
+let database: DatabaseAdapter;
+
 export class Security implements SecurityAdapter {
 
     constructor(private readonly config: ConfigAdapter) {
+        database = (config.adapters && config.adapters.database) ?
+            config.adapters.database(config) : new Database(config)
     }
 
     async comparePassword(plainPassword: string, hashPassword: string): Promise<boolean> {
@@ -60,16 +66,33 @@ export class Security implements SecurityAdapter {
         // });
     }
 
-    async generateToken(data: { [key: string]: any; }, expire?: string): Promise<string> {
+    async generateToken(data: { uid: string, [key: string]: any }, expire?: string): Promise<string> {
         return new Promise((resolve, reject) => {
             _jwt.sign(data, _jwtPassword, {
-                expiresIn: expire ? expire : '30d',
+                expiresIn: expire ? expire : '7d',
                 issuer: 'bfast::cloud'
-            }, (err, encoded) => {
+            }, async (err, encoded) => {
                 if (err) {
                     reject({message: 'Fails to generate a token', reason: err.toString()});
                     return;
                 }
+
+                await database.writeOne('_Token', {
+                    _id: data.uid,
+                    token: encoded,
+                }, null, {
+                    bypassDomainVerification: true,
+                    indexes: [
+                        {
+                            field: 'token',
+                            unique: true,
+                        },
+                        {
+                            field: '_created_at',
+                            expireAfterSeconds: Security.dayToSecond(expire)
+                        },
+                    ]
+                });
                 resolve(encoded);
             });
         });
@@ -101,4 +124,9 @@ export class Security implements SecurityAdapter {
         });
     }
 
+    private static dayToSecond(day: string) {
+        const days = day ? day : '7d';
+        const daysInNumber = days.replace('d', '') as unknown as number;
+        return (daysInNumber * 86400);
+    }
 }

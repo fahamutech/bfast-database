@@ -5,6 +5,7 @@ import {ConfigAdapter} from "../config";
 import {Database} from "./Database";
 import {AuthAdapter} from "../adapter/AuthAdapter";
 import {Auth} from "./Auth";
+import {UpdateModel} from "../model/UpdateModel";
 
 let database: DatabaseAdapter;
 let auth: AuthAdapter;
@@ -37,29 +38,31 @@ export class Rules implements RulesAdapter {
             const authenticationRule = authenticationRules[0];
             const authentication = this.rulesBlock[authenticationRule];
             for (const action of Object.keys(authentication)) {
-                console.log(action);
                 try {
                     if (action === 'signUp') {
                         this.results["Authentication"] = {};
                         this.results["Authentication"].signUp = await auth.signUp(authentication[action], this.rulesBlock.context);
                     }
                     if (action === 'signIn') {
+                        this.results["Authentication"] = {};
                         this.results["Authentication"].signIn = await auth.signIn(authentication[action], this.rulesBlock.context);
                     }
                     if (action === 'resetPassword') {
+                        this.results["Authentication"] = {};
                         this.results["Authentication"].resetPassword = await auth.resetPassword(authentication[action].email);
                     }
                 } catch (e) {
                     this.results.errors.push({
                         message: e.message ? e.message : e.toString(),
-                        path: authenticationRule[action]
+                        path: `Authentication.${action}`,
                     });
                 }
             }
             return;
         } catch (e) {
             this.results.errors.push({
-                message: e.message ? e.message : e.toString()
+                message: e.message ? e.message : e.toString(),
+                path: 'Authentication'
             });
             return;
         }
@@ -80,9 +83,13 @@ export class Rules implements RulesAdapter {
                     const domain = this.extractDomain(createRule, 'Create');
                     const data = this.rulesBlock[createRule];
                     if (data && Array.isArray(data)) {
-                        this.results[domain] = await database.writeMany(domain, data, this.rulesBlock.context);
+                        this.results[domain] = await database.writeMany(domain, data, this.rulesBlock.context, {
+                            bypassDomainVerification: !!this.rulesBlock.context.masterKey
+                        });
                     } else {
-                        this.results[domain] = await database.writeOne(domain, data, this.rulesBlock.context);
+                        this.results[domain] = await database.writeOne(domain, data, this.rulesBlock.context, {
+                            bypassDomainVerification: !!this.rulesBlock.context.masterKey
+                        });
                     }
                 } catch (e) {
                     this.results.errors.push({
@@ -94,7 +101,8 @@ export class Rules implements RulesAdapter {
             return;
         } catch (e) {
             this.results.errors.push({
-                message: e.message ? e.message : e.toString()
+                message: e.message ? e.message : e.toString(),
+                path: 'Create'
             });
             return;
         }
@@ -120,7 +128,9 @@ export class Rules implements RulesAdapter {
                             path: queryRule
                         });
                     } else {
-                        this.results[domain] = await database.query(domain, data, this.rulesBlock.context);
+                        this.results[domain] = await database.query(domain, data, this.rulesBlock.context, {
+                            bypassDomainVerification: !!this.rulesBlock.context.masterKey
+                        });
                     }
                 } catch (e) {
                     this.results.errors.push({
@@ -132,7 +142,8 @@ export class Rules implements RulesAdapter {
             return;
         } catch (e) {
             this.results.errors.push({
-                message: e.message ? e.message : e.toString()
+                message: e.message ? e.message : e.toString(),
+                path: 'Query'
             });
             return;
         }
@@ -142,8 +153,44 @@ export class Rules implements RulesAdapter {
         return;
     }
 
-    handleUpdateRules(): Promise<void> {
-        return;
+    async handleUpdateRules(): Promise<void> {
+        try {
+            const updateRules = this.getRulesKey().filter(rule => rule.startsWith('Update'));
+            if (updateRules.length === 0) {
+                return;
+            }
+            for (const updateRule of updateRules) {
+                try {
+                    const domain = this.extractDomain(updateRule, 'Update');
+                    const data: UpdateModel<any> = this.rulesBlock[updateRule];
+                    if (data.id) {
+                        const filter: any = {};
+                        delete data.filter;
+                        filter['_id'] = data.id;
+                        data.filter = filter;
+                        this.results[domain] = await database.updateOne(domain, data, this.rulesBlock.context, {
+                            bypassDomainVerification: !!this.rulesBlock.context.masterKey
+                        });
+                    } else {
+                        this.results[domain] = await database.updateMany(domain, data, this.rulesBlock.context, {
+                            bypassDomainVerification: !!this.rulesBlock.context.masterKey
+                        });
+                    }
+                } catch (e) {
+                    this.results.errors.push({
+                        message: e.message ? e.message : e.toString(),
+                        path: updateRule
+                    });
+                }
+            }
+            return;
+        } catch (e) {
+            this.results.errors.push({
+                message: e.message ? e.message : e.toString(),
+                path: 'Update'
+            });
+            return;
+        }
     }
 
     extractDomain(rule: string, remove: 'Create' | 'Query' | 'Update' | 'Delete'): string {
