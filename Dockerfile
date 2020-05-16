@@ -7,4 +7,4 @@ COPY . .
 RUN apk update
 RUN yarn install --production=true
 
-CMD ["node","/daas/index.js"]
+CMD ["node","/daas/src/index.js"]

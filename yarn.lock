@@ -939,10 +939,10 @@ better-assert@~1.0.0:
   dependencies:
     callsite "1.0.0"
 
-bfast-s3like@^0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/bfast-s3like/-/bfast-s3like-0.0.1.tgz#2e3c13e63f95c96ea490467630a110817d425f71"
-  integrity sha512-r39qXxBsZRYSdEn4ES8vSl+Z2UcliR42qrYpXRzUdmgRR5jOTqLmeFA1qxwYHrPqC4Gq2CsfwQqAEn1orOokYA==
+bfast-s3like@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/bfast-s3like/-/bfast-s3like-2.1.0.tgz#d667535b2b58db6d439532c1b24c0fc3a33a8a21"
+  integrity sha512-wELsMj/tjTBh9k8v0jgawfLD91I+rHtlCQ2UZCwrmibQTX8e5qS89PxeDSUEDrepbOeSZffN+fge4DF8ExACrA==
   dependencies:
     minio "^7.0.16"
     url-join "^4.0.1"
@@ -3895,6 +3895,19 @@ parse@2.8.0:
     ws "7.1.2"
     xmlhttprequest "1.8.0"
 
+parse@^2.13.0:
+  version "2.13.0"
+  resolved "https://registry.yarnpkg.com/parse/-/parse-2.13.0.tgz#6f102e55c30bdef1b6136fefbf3a1b5293fd3969"
+  integrity sha512-0W7FBmtjtVpaxf+AK8S2+o6rosV4vzzvB9ba/8Y+7wWNPiy/9L8s+F0gI5ADYx/KbRqF0uR/9Q+FzbJB6IZ0Sw==
+  dependencies:
+    "@babel/runtime" "7.9.2"
+    "@babel/runtime-corejs3" "7.9.2"
+    crypto-js "4.0.0"
+    react-native-crypto-js "1.0.0"
+    uuid "3.3.3"
+    ws "7.2.5"
+    xmlhttprequest "1.8.0"
+
 parseqs@0.0.5:
   version "0.0.5"
   resolved "https://registry.yarnpkg.com/parseqs/-/parseqs-0.0.5.tgz#d5208a3738e46766e291ba2ea173684921a8b89d"
@@ -4246,7 +4259,7 @@ rc@^1.2.7:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-react-native-crypto-js@^1.0.0:
+react-native-crypto-js@1.0.0, react-native-crypto-js@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/react-native-crypto-js/-/react-native-crypto-js-1.0.0.tgz#e677e022e147f41b35614416c92d655f87e2450a"
   integrity sha512-FNbLuG/HAdapQoybeZSoes1PWdOj0w242gb+e1R0hicf3Gyj/Mf8M9NaED2AnXVOX01b2FXomwUiw1xP1K+8sA==
@@ -5510,6 +5523,11 @@ ws@7.2.3:
   version "7.2.3"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.2.3.tgz#a5411e1fb04d5ed0efee76d26d5c46d830c39b46"
   integrity sha512-HTDl9G9hbkNDk98naoR/cHDws7+EyYMOdL1BmjsZXRUjf7d+MficC4B7HLUPlSiho0vg+CWKrGIt/VJBd1xunQ==
+
+ws@7.2.5:
+  version "7.2.5"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-7.2.5.tgz#abb1370d4626a5a9cd79d8de404aa18b3465d10d"
+  integrity sha512-C34cIU4+DB2vMyAbmEKossWq2ZQDr6QEyuuCzWrM9zfw1sGc0mYiJ0UnG9zzNykt49C2Fi34hvr2vssFQRS6EA==
 
 ws@^5.2.0:
   version "5.2.2"
