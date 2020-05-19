@@ -1,6 +1,6 @@
 import {RestAdapter} from "../adapter/RestAdapter";
 import {NextFunction, Request, Response} from "express";
-import {ConfigAdapter, DaaSConfig} from "../config";
+import {ConfigAdapter, DaaSConfig} from "../utils/config";
 import * as httpStatus from "http-status-codes";
 import {SecurityAdapter} from "../adapter/SecurityAdapter";
 import {Security} from "./Security";
@@ -32,17 +32,18 @@ export class Rest implements RestAdapter {
         const token = request.body.token;
         const masterKey = request.body.masterKey;
 
-        // override token check if masterKey present
         if (masterKey === DaaSConfig.getInstance().masterKey) {
-            request.body.context.auth = null;
-            request.body.context.uid = null;
+            request.body.context.auth = true;
+            request.body.context.uid = `masterKey_${masterKey}`;
             request.body.context.masterKey = masterKey;
+            request.body.context.useMasterKey = true;
             next();
             return;
         }
 
+        request.body.context.useMasterKey = false;
         if (!token) {
-            request.body.context.auth = null;
+            request.body.context.auth = false;
             request.body.context.uid = null;
             next();
         } else {
@@ -67,9 +68,9 @@ export class Rest implements RestAdapter {
     verifyBodyData(request: Request, response: Response, next: NextFunction) {
         const body = request.body;
         if (!body) {
-            response.status(httpStatus.BAD_REQUEST).json({message: 'require non empty request'});
+            response.status(httpStatus.BAD_REQUEST).json({message: 'require non empty rule blocks request'});
         } else if (Object.keys(body).length === 0) {
-            response.status(httpStatus.BAD_REQUEST).json({message: 'require non empty request'});
+            response.status(httpStatus.BAD_REQUEST).json({message: 'require non empty rule blocks request'});
         } else {
             delete body.context;
             next();
@@ -82,13 +83,13 @@ export class Rest implements RestAdapter {
             _config.adapters.rules(_config) : new Rules(_config);
         rules.rulesBlock = body;
         Promise.all([
+            rules.handleAuthenticationRule(),
+            rules.handleAuthorizationRule(),
             rules.handleCreateRules(),
-            rules.handleQueryRules(),
             rules.handleUpdateRules(),
             rules.handleDeleteRules(),
-            rules.handleTransactionRule(),
-            rules.handleAuthenticationRule(),
-            rules.handleAuthorizationRule()
+            rules.handleQueryRules(),
+            rules.handleTransactionRule()
         ]).then(_ => {
             const results = rules.results;
             if (!(results.errors && Array.isArray(results.errors) && results.errors.length > 0)) {
@@ -96,7 +97,7 @@ export class Rest implements RestAdapter {
             }
             response.status(httpStatus.OK).json(rules.results);
         }).catch(reason => {
-            response.status(httpStatus.EXPECTATION_FAILED).json({message: reason.message ? reason.message : reason})
+            response.status(httpStatus.EXPECTATION_FAILED).json({message: reason.message ? reason.message : reason.toString()})
         });
     }
 

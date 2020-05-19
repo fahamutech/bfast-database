@@ -1,6 +1,6 @@
 import {DaaSAdapter} from "./adapter/DaaSAdapter";
 import {FaaS} from 'bfast-faas';
-import {ConfigAdapter, DaaSConfig} from "./config";
+import {ConfigAdapter, DaaSConfig} from "./utils/config";
 import {Database} from "./factory/Database";
 
 
@@ -17,7 +17,7 @@ export class DaaSServer implements DaaSAdapter {
                 port: this.config.port,
                 functionsConfig: {
                     functionsDirPath: __dirname,
-                    bfastJsonPath: __dirname + '/config/bfast.json'
+                    bfastJsonPath: __dirname + '/utils/bfast.json'
                 }
             });
             await this.faas.start();

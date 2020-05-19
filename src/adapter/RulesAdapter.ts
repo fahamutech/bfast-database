@@ -6,13 +6,13 @@ export interface RulesAdapter {
 
     extractDomain(rule: string, remove: 'Create' | 'Query' | 'Update' | 'Delete'): string;
 
-    handleCreateRules(): Promise<void>;
+    handleCreateRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void>;
 
-    handleQueryRules(): Promise<void>;
+    handleQueryRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void>;
 
-    handleDeleteRules(): Promise<void>;
+    handleDeleteRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void>;
 
-    handleUpdateRules(): Promise<void>;
+    handleUpdateRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void>;
 
     handleTransactionRule(): Promise<void>;
 

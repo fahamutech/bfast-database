@@ -1,10 +1,11 @@
-import {DatabaseAdapter, UpdateOptions, WriteOptions} from "../adapter/DatabaseAdapter";
+import {DatabaseAdapter, DatabaseBasicOptions, UpdateOptions, WriteOptions} from "../adapter/DatabaseAdapter";
 import {MongoClient} from "mongodb";
-import {ConfigAdapter, DaaSConfig} from "../config";
+import {ConfigAdapter, DaaSConfig} from "../utils/config";
 import {BasicAttributesModel} from "../model/BasicAttributesModel";
 import {ContextBlock} from "../model/RulesBlockModel";
 import {QueryModel} from "../model/QueryModel";
 import {UpdateModel} from "../model/UpdateModel";
+import {DeleteModel} from "../model/DeleteModel";
 
 export class Database implements DatabaseAdapter {
     private _mongoClient: MongoClient;
@@ -40,6 +41,9 @@ export class Database implements DatabaseAdapter {
     }
 
     sanitize4User<T extends BasicAttributesModel>(data: T, returnFields: string[]): T {
+        if (!data) {
+            return null;
+        }
         if (data && data._id !== undefined) {
             data.id = data._id.toString();
             delete data._id;
@@ -83,7 +87,9 @@ export class Database implements DatabaseAdapter {
         const conn = await this.connection();
         const sanitizedData = data.map(value => this.sanitize4Db(value));
         const freshData = sanitizedData.map(value => this.addCreateMetadata(value, context));
-        const response = await conn.db().collection(domain).insertMany(freshData);
+        const response = await conn.db().collection(domain).insertMany(freshData, {
+            session: options && options.transaction ? options.transaction : undefined
+        });
         Object.keys(response.insertedIds).forEach(index => {
             freshData[index]._id = response.insertedIds[index];
             freshData[index] = this.sanitize4User(freshData[index], returnFieldsMap[index])
@@ -100,7 +106,9 @@ export class Database implements DatabaseAdapter {
         const sanitizedData = this.sanitize4Db(data);
         const freshData = this.addCreateMetadata(sanitizedData, context);
         const conn = await this.connection();
-        const response = await conn.db().collection(domain).insertOne(freshData);
+        const response = await conn.db().collection(domain).insertOne(freshData, {
+            session: options && options.transaction ? options.transaction : undefined
+        });
         freshData._id = response.insertedId;
         return this.sanitize4User(freshData, returnFields) as any;
     }
@@ -167,10 +175,14 @@ export class Database implements DatabaseAdapter {
         }
         const conn = await this.connection();
         if (queryModel.id) {
-            const result = await conn.db().collection(domain).findOne<T>({_id: queryModel.id});
+            const result = await conn.db().collection(domain).findOne<T>({_id: queryModel.id}, {
+                session: options && options.transaction ? options.transaction : undefined
+            });
             return this.sanitize4User(result, queryModel.return);
         } else {
-            const query = conn.db().collection(domain).find(queryModel.filter);
+            const query = conn.db().collection(domain).find(queryModel.filter, {
+                session: options && options.transaction ? options.transaction : undefined
+            });
             if (queryModel.skip) {
                 query.skip(queryModel.skip)
             }
@@ -197,28 +209,65 @@ export class Database implements DatabaseAdapter {
         const sanitizedData = this.sanitize4Db(updateModel.update);
         const freshData = this.addUpdateMetadata(sanitizedData, context);
         const conn = await this.connection();
-        const response = await conn.db().collection(domain).updateOne(updateModel.filter, freshData, {
-            upsert: updateModel.upsert === true ? updateModel.upsert : false
+        const response = await conn.db().collection(domain).findOneAndUpdate(updateModel.filter, freshData, {
+            upsert: updateModel.upsert === true ? updateModel.upsert : false,
+            returnOriginal: false,
+            session: options && options.transaction ? options.transaction : undefined
         });
-        return response.result as any;
-       // return this.sanitize4User(<any>response.result, returnFields);
+        return this.sanitize4User(<any>response.value, returnFields);
     }
 
     async updateMany<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateModel<T>,
                                                         context: ContextBlock, options?: UpdateOptions): Promise<V> {
+        // if (!options?.bypassDomainVerification) {
+        //     await this.handleDomainValidation(domain);
+        // }
+        // await this.handleIndexesCreation(domain, options);
+        // const returnFields = updateModel.return;
+        // const sanitizedData = this.sanitize4Db(updateModel.update);
+        // const freshData = this.addUpdateMetadata(sanitizedData, context);
+        // const conn = await this.connection();
+        // const response = await conn.db().collection(domain).updateMany(updateModel.filter, freshData, {
+        //     upsert: updateModel.upsert === true ? updateModel.upsert : false
+        // });
+        // // console.log(response);
+        // return response as any;
+        // console.log(response.result);
+        // return this.sanitize4User(<any>response.result, returnFields);
+        return null;
+    }
+
+    async deleteOne<T extends BasicAttributesModel, V>(domain: string, deleteModel: DeleteModel<T>,
+                                                       context: ContextBlock, options?: DatabaseBasicOptions): Promise<V> {
         if (!options?.bypassDomainVerification) {
             await this.handleDomainValidation(domain);
         }
         await this.handleIndexesCreation(domain, options);
-        const returnFields = updateModel.return;
-        const sanitizedData = this.sanitize4Db(updateModel.update);
-        const freshData = this.addUpdateMetadata(sanitizedData, context);
+        const returnFields = deleteModel.return;
         const conn = await this.connection();
-        const response = await conn.db().collection(domain).updateMany(updateModel.filter, freshData, {
-            upsert: updateModel.upsert === true ? updateModel.upsert : false
+        const response = await conn.db().collection(domain).findOneAndDelete(deleteModel.filter, {
+            session: options && options.transaction ? options.transaction : undefined
         });
-        return response.result as any;
-        // console.log(response.result);
-        // return this.sanitize4User(<any>response.result, returnFields);
+        return this.sanitize4User(<any>response.value, returnFields);
+    }
+
+    async transaction<V>(operations: (session: any) => Promise<any>): Promise<any> {
+        const conn = await this.connection();
+        const session = conn.startSession();
+        try {
+            await session.withTransaction(async _ => {
+                return operations(session);
+            }, {
+                readPreference: "primary",
+                readConcern: {
+                    level: "local"
+                },
+                writeConcern: {
+                    w: "majority"
+                }
+            });
+        } finally {
+            await session.endSession();
+        }
     }
 }

@@ -19,7 +19,11 @@ export interface RulesBlockModel {
     Authorization?: {
         rules?: { [key: string]: string }
     },
-    errors?: { [key: string]: any }[]
+    errors?: {
+        message: string,
+        path: string,
+        data: any
+    }[]
 }
 
 
@@ -28,7 +32,8 @@ export interface ContextBlock {
     uid?: string,
     auth?: boolean,
     applicationId?: string,
-    masterKey?: string
+    masterKey?: string,
+    useMasterKey?: boolean
 }
 
 export interface TransactionBlock {

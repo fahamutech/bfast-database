@@ -7,4 +7,4 @@ COPY ./dist/* .
 RUN apk update
 RUN yarn install --production=true
 
-CMD ["node","/daas/index.ts"]
+CMD ["node","/daas/config.ts"]

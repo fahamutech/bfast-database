@@ -1,6 +1,6 @@
 import {EmailAdapter} from "../adapter/EmailAdapter";
 import {MailModel} from "../model/MailModel";
-import {ConfigAdapter} from "../config";
+import {ConfigAdapter} from "../utils/config";
 
 export class Email implements EmailAdapter {
     constructor(config: ConfigAdapter) {

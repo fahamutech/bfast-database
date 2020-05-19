@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import * as _jwt from "jsonwebtoken";
 import {SecurityAdapter} from "../adapter/SecurityAdapter";
-import {ConfigAdapter} from "../config";
+import {ConfigAdapter} from "../utils/config";
 import {DatabaseAdapter} from "../adapter/DatabaseAdapter";
 import {Database} from "./Database";
 

@@ -1,5 +1,5 @@
 import {AuthAdapter} from "../adapter/AuthAdapter";
-import {ConfigAdapter} from "../config";
+import {ConfigAdapter} from "../utils/config";
 import {BasicUserAttributes} from "../model/BasicUserAttributes";
 import {DatabaseAdapter} from "../adapter/DatabaseAdapter";
 import {Database} from "./Database";

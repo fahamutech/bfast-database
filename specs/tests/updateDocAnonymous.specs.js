@@ -4,7 +4,7 @@ const assert = require('assert');
 let mongoMemoryServer;
 let daaSServer;
 
-describe('Authentication Integration Test', function () {
+describe('Update document anonymous', function () {
     before(async function () {
         mongoMemoryServer = mongoServer();
         await mongoMemoryServer.start();
@@ -19,27 +19,36 @@ describe('Authentication Integration Test', function () {
     it('should update a document with an id supplied and without login and any authorization permission set', async function () {
         const createTest = {
             applicationId: 'daas',
-            CreateTest: {
-                id: 'ethan',
-                age: 20,
-                year: 2020,
-                message: 'hello, world!',
-                return: []
-            }
+            CreateTest: [
+                {
+                    id: 'ethan',
+                    age: 20,
+                    year: 2020,
+                    message: 'hello, world!',
+                    return: []
+                },
+                {
+                    id: "568576g78ti78",
+                    age: 20,
+                    year: 2090,
+                    message: 'hello, Z!',
+                    return: []
+                }
+            ]
         }
-        const createResponse = await axios.post(serverUrl, createTest);
-        console.log(createResponse.data);
+        await axios.post(serverUrl, createTest);
+       // console.log(createResponse.data);
         const updateTest = {
             applicationId: 'daas',
             UpdateTest: {
-              id: 'ethan',
-                // filter: {
-                //     age: 20
-                // },
+               // id: 'ethan',
+                filter: {
+                    age: 20
+                },
                 update: {
                     $set: {age: 30},
-                    return: ['age']
-                }
+                },
+                return: ['updatedAt']
             }
         }
         const updateResponse = await axios.post(serverUrl, updateTest);

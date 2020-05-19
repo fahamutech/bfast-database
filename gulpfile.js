@@ -52,7 +52,7 @@ function devStart(cb) {
 }
 
 function copyBFastJson(cb) {
-    gulp.src('./src/config/bfast.json').pipe(gulp.dest('./dist/config'));
+    gulp.src('./src/utils/bfast.json').pipe(gulp.dest('./dist/utils'));
     cb();
 }
 
