@@ -82,15 +82,19 @@ export class Rest implements RestAdapter {
         const rules = (_config.adapters && _config.adapters.rules) ?
             _config.adapters.rules(_config) : new Rules(_config);
         rules.rulesBlock = body;
-        Promise.all([
-            rules.handleAuthenticationRule(),
-            rules.handleAuthorizationRule(),
-            rules.handleCreateRules(),
-            rules.handleUpdateRules(),
-            rules.handleDeleteRules(),
-            rules.handleQueryRules(),
-            rules.handleTransactionRule()
-        ]).then(_ => {
+        rules.handleAuthenticationRule().then(_ => {
+            return rules.handleAuthorizationRule();
+        }).then(_ => {
+            return rules.handleCreateRules();
+        }).then(_ => {
+            return rules.handleUpdateRules();
+        }).then(_ => {
+            return rules.handleDeleteRules();
+        }).then(_ => {
+            return rules.handleQueryRules();
+        }).then(_ => {
+            return rules.handleTransactionRule();
+        }).then(_ => {
             const results = rules.results;
             if (!(results.errors && Array.isArray(results.errors) && results.errors.length > 0)) {
                 delete results.errors;

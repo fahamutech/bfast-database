@@ -256,7 +256,7 @@ export class Database implements DatabaseAdapter {
         const session = conn.startSession();
         try {
             await session.withTransaction(async _ => {
-                return operations(session);
+                return await operations(session);
             }, {
                 readPreference: "primary",
                 readConcern: {

@@ -1,11 +1,30 @@
 const {DaaSServer} = require("../dist/daas");
 const {MongoMemoryServer} = require('mongodb-memory-server');
+const {MongoMemoryReplSet} = require('mongodb-memory-server');
 
 
+/**
+ *
+ * @return {MongoMemoryServer}
+ */
 const mongoServer = () => {
     return new MongoMemoryServer({
         autoStart: false,
         replSet: {storageEngine: 'wiredTiger'},
+    });
+}
+
+/**
+ *
+ * @return {MongoMemoryReplSet | MongoMemoryServer}
+ */
+const mongoMemoryReplSet = () => {
+    return new MongoMemoryReplSet({
+        autoStart: false,
+        replSet: {
+            count: 3,
+            storageEngine: "wiredTiger",
+        }
     });
 }
 
@@ -32,4 +51,5 @@ exports.initiateServer = async (mongoMemoryServer, daaSServer) => {
 }
 exports.serverUrl = 'http://localhost:3000/daas';
 exports.mongoServer = mongoServer;
+exports.mongoRepSet = mongoMemoryReplSet;
 exports.daas = daas;

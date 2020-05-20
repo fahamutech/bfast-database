@@ -112,18 +112,24 @@ export class Rules implements RulesAdapter {
                 } catch (e) {
                     this.results.errors.push({
                         message: e.message ? e.message : e.toString(),
-                        path: `Create.${domain}`,
+                        path: `${transaction ? 'Transaction.' : ''}Create.${domain}`,
                         data: data
                     });
+                    if (transaction) {
+                        throw e;
+                    }
                 }
             }
             return;
         } catch (e) {
             this.results.errors.push({
                 message: e.message ? e.message : e.toString(),
-                path: 'Create',
+                path: `${transaction ? 'Transaction.' : ''}Create`,
                 data: null
             });
+            if (transaction) {
+                throw e;
+            }
             return;
         }
     }
@@ -181,18 +187,24 @@ export class Rules implements RulesAdapter {
                 } catch (e) {
                     this.results.errors.push({
                         message: e.message ? e.message : e.toString(),
-                        path: `Delete.${domain}`,
+                        path: `${transaction ? 'Transaction.' : ''}Delete.${domain}`,
                         data: data
                     });
+                    if (transaction) {
+                        throw e;
+                    }
                 }
             }
             return;
         } catch (e) {
             this.results.errors.push({
                 message: e.message ? e.message : e.toString(),
-                path: 'Delete',
+                path: `${transaction ? 'Transaction.' : ''}Delete`,
                 data: null
             });
+            if (transaction) {
+                throw e;
+            }
             return;
         }
     }
@@ -227,18 +239,24 @@ export class Rules implements RulesAdapter {
                 } catch (e) {
                     this.results.errors.push({
                         message: e.message ? e.message : e.toString(),
-                        path: `Query.${domain}`,
+                        path: `${transaction ? 'Transaction.' : ''}Query.${domain}`,
                         data: data
                     });
+                    if (transaction) {
+                        throw e;
+                    }
                 }
             }
             return;
         } catch (e) {
             this.results.errors.push({
                 message: e.message ? e.message : e.toString(),
-                path: 'Query',
+                path: `${transaction ? 'Transaction.' : ''}Query`,
                 data: null
             });
+            if (transaction) {
+                throw e;
+            }
             return;
         }
     }
@@ -253,11 +271,13 @@ export class Rules implements RulesAdapter {
             const transaction = this.rulesBlock[transactionRule];
             const transactionOperationRules = transaction.commit;
             const resultObject = {};
-            await database.transaction(session => {
-                return Promise.all([
-                    this.handleCreateRules(transactionOperationRules, resultObject, session)
-                ]);
-            })
+            await database.transaction(async session => {
+                await this.handleCreateRules(transactionOperationRules, resultObject, session);
+                await this.handleUpdateRules(transactionOperationRules, resultObject, session);
+                await this.handleDeleteRules(transactionOperationRules, resultObject, session);
+                await this.handleQueryRules(transactionOperationRules, resultObject, session);
+            });
+            this.results[`ResultOfTransaction`] = resultObject;
         } catch (e) {
             this.results.errors.push({
                 message: e.message ? e.message : e.toString(),
@@ -319,18 +339,24 @@ export class Rules implements RulesAdapter {
                 } catch (e) {
                     this.results.errors.push({
                         message: e.message ? e.message : e.toString(),
-                        path: `Update.${domain}`,
+                        path: `${transaction ? 'Transaction.' : ''}Update.${domain}`,
                         data: data
                     });
+                    if (transaction) {
+                        throw e;
+                    }
                 }
             }
             return;
         } catch (e) {
             this.results.errors.push({
                 message: e.message ? e.message : e.toString(),
-                path: 'Update',
+                path: `${transaction ? 'Transaction.' : ''}Update`,
                 data: null
             });
+            if (transaction) {
+                throw e;
+            }
             return;
         }
     }
