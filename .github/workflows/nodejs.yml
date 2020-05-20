@@ -4,7 +4,7 @@ on:
   push:
     branches:
       #      - master
-      - back4daas
+      - 2.0.x
 
 jobs:
   build:
