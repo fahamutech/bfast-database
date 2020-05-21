@@ -4,6 +4,7 @@ import {SecurityAdapter} from "../adapter/SecurityAdapter";
 import {ConfigAdapter} from "../utils/config";
 import {DatabaseAdapter} from "../adapter/DatabaseAdapter";
 import {Database} from "./Database";
+import {BasicUserAttributes} from "../model/BasicUserAttributes";
 
 let _jwtPassword =
     `MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDFg6797ocIzEPK
@@ -76,10 +77,13 @@ export class Security implements SecurityAdapter {
                     reject({message: 'Fails to generate a token', reason: err.toString()});
                     return;
                 }
-
-                await database.writeOne('_Token', {
-                    _id: data.uid,
-                    token: encoded,
+                await database.updateOne<BasicUserAttributes, any>('_Token', {
+                    id: data.uid,
+                    update: {
+                        id: data.uid,
+                        token: encoded,
+                    },
+                    upsert: true
                 }, null, {
                     bypassDomainVerification: true,
                     indexes: [

@@ -26,22 +26,23 @@ export interface DatabaseAdapter {
 
 export interface WriteOptions extends DatabaseBasicOptions {
     indexes?: {
-        field: string,
+        field?: string,
         unique?: boolean,
         collation?: { locale: string, strength: number },
         expireAfterSeconds?: number;
-    }[]
+    }[];
 }
 
 export interface UpdateOptions extends DatabaseBasicOptions {
     indexes?: {
-        field: string,
-        unique: boolean,
-        collation: { locale: string, strength: number }
-    }[]
+        field?: string;
+        unique?: boolean;
+        collation?: { locale: string, strength: number };
+        expireAfterSeconds?: number;
+    }[];
 }
 
 export interface DatabaseBasicOptions {
-    bypassDomainVerification: boolean,
-    transaction?: any
+    bypassDomainVerification: boolean;
+    transaction?: any;
 }

@@ -37,7 +37,7 @@ const daas = async (uri) => {
     return new DaaSServer({
         mongoDbUri: uri,
         applicationId: 'daas',
-        port: "3000",
+        port: "3001",
         mountPath: '/daas',
         masterKey: 'daas'
     });
@@ -49,7 +49,7 @@ exports.initiateServer = async (mongoMemoryServer, daaSServer) => {
     daaSServer = await daas(await mongoMemoryServer.getUri());
     await daaSServer.start();
 }
-exports.serverUrl = 'http://localhost:3000/daas';
+exports.serverUrl = 'http://localhost:3001/daas';
 exports.mongoServer = mongoServer;
 exports.mongoRepSet = mongoMemoryReplSet;
 exports.daas = daas;

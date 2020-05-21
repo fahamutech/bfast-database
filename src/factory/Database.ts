@@ -142,7 +142,7 @@ export class Database implements DatabaseAdapter {
     }
 
     validDomain(domain: string): boolean {
-        return (domain !== '_User' && domain !== '_Token');
+        return (domain !== '_User' && domain !== '_Token' && domain !== '_Policy');
     }
 
     private async handleDomainValidation(domain: string) {
@@ -184,10 +184,10 @@ export class Database implements DatabaseAdapter {
                 session: options && options.transaction ? options.transaction : undefined
             });
             if (queryModel.skip) {
-                query.skip(queryModel.skip)
+                query.skip(queryModel.skip);
             }
             if (queryModel.size) {
-                query.limit(queryModel.size)
+                query.limit(queryModel.size);
             }
             if (queryModel.orderBy && Array.isArray(queryModel.orderBy) && queryModel.orderBy.length > 0) {
                 queryModel.orderBy.forEach(value => {
@@ -210,7 +210,7 @@ export class Database implements DatabaseAdapter {
         const freshData = this.addUpdateMetadata(sanitizedData, context);
         const conn = await this.connection();
         const response = await conn.db().collection(domain).findOneAndUpdate(updateModel.filter, freshData, {
-            upsert: updateModel.upsert === true ? updateModel.upsert : false,
+            upsert: updateModel.upsert === true,
             returnOriginal: false,
             session: options && options.transaction ? options.transaction : undefined
         });

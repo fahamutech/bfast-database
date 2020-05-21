@@ -74,8 +74,50 @@ export class Rules implements RulesAdapter {
         }
     }
 
-    handleAuthorizationRule(): Promise<void> {
-        return;
+    async handleAuthorizationRule(): Promise<void> {
+        try {
+            const authorizationRules = this.getRulesKey().filter(rule => rule.startsWith('Authorization'));
+            if (authorizationRules.length === 0) {
+                return;
+            }
+            if (!(this.rulesBlock.context && this.rulesBlock.context.useMasterKey === true)) {
+                this.results.errors.push({
+                    message: 'Authorization rule require masterKey',
+                    path: 'Authorization',
+                    data: null
+                });
+                return;
+            }
+            const authorizationRule = authorizationRules[0];
+            const authorization = this.rulesBlock[authorizationRule];
+            for (const action of Object.keys(authorization)) {
+                const data = authorization[action];
+                try {
+                    if (action === 'rules' && typeof data === 'object') {
+                        const authorizationResults = {};
+                        for (const rule of Object.keys(data)) {
+                            authorizationResults[rule] = await auth.addAuthorizationRule(rule, data[rule], this.rulesBlock.context);
+                        }
+                        this.results["ResultOfAuthorization"] = {};
+                        this.results["ResultOfAuthorization"][action] = authorizationResults;
+                    }
+                } catch (e) {
+                    this.results.errors.push({
+                        message: e.message ? e.message : e.toString(),
+                        path: `Authorization.${action}`,
+                        data: data
+                    });
+                }
+            }
+            return;
+        } catch (e) {
+            this.results.errors.push({
+                message: e.message ? e.message : e.toString(),
+                path: 'Authorization',
+                data: null
+            });
+            return;
+        }
     }
 
     async handleCreateRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void> {
@@ -87,6 +129,16 @@ export class Rules implements RulesAdapter {
             for (const createRule of createRules) {
                 const domain = this.extractDomain(createRule, 'Create');
                 const data = rulesBlockModel ? rulesBlockModel[createRule] : this.rulesBlock[createRule];
+                // checkPermission
+                const allowed = await auth.hasPermission(`create.${domain}`, this.rulesBlock.context);
+                if (allowed !== true) {
+                    this.results.errors.push({
+                        message: 'You have insufficient permission to this resource',
+                        path: `${transaction ? 'Transaction.' : ''}Create.${domain}`,
+                        data: data
+                    });
+                    return;
+                }
                 try {
                     if (data && Array.isArray(data)) {
                         const result = await database.writeMany(domain, data, this.rulesBlock.context, {

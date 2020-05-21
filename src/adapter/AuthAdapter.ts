@@ -7,4 +7,8 @@ export interface AuthAdapter {
     signIn<T extends BasicUserAttributes>(userModel: T, context?: ContextBlock,): Promise<T>;
 
     resetPassword(email: string): Promise<any>;
+
+    addAuthorizationRule(ruleId:string,rule:string, context: ContextBlock):Promise<any>;
+
+    hasPermission(ruleId:string,context: ContextBlock):Promise<boolean>;
 }

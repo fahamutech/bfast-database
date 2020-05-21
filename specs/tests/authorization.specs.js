@@ -16,30 +16,41 @@ describe('Authorization', function () {
         await mongoMemoryServer.stop();
     });
 
-    it('should add an auth permission to a resource', async function () {
-        const user = {
+    it('should add a permission policy to a resource url', async function () {
+        const authorization = {
             applicationId: 'daas',
-            Authentication: {
-                signUp: {
-                    username: 'joshua1',
-                    password: 'joshua1',
-                    email: 'joshua1@gmail.com'
+            masterKey: 'daas',
+            Authorization: {
+                rules: {
+                    "create.Test": 'console.log(context);return false;',
+                    // "create.*": `const auth = context.auth;return auth === true;`,
                 }
+            },
+            // Query_Policy: {
+            //     return: []
+            // }
+        };
+        const response = await axios.post(serverUrl, authorization);
+        // console.log(JSON.stringify(response.data));
+    });
+
+    it('should protect a resource for non authorized request', async function () {
+        const authorization = {
+            applicationId: 'daas',
+            masterKey: 'daas',
+            // Authorization: {
+            //     rules: {
+            //         "create.Test": `const auth = context.auth;return auth === true;`,
+            //     }
+            // },
+            CreateTest: {
+                name: 'joshua',
+                age: 20,
+                return: []
             }
         };
-        const response = await axios.post(serverUrl, user);
-        // console.log(response.data);
-        const user1 = {
-            applicationId: 'daas',
-            Authentication: {
-                signIn: {
-                    username: 'joshua1',
-                    password: 'joshua1',
-                }
-            }
-        };
-        const response1 = await axios.post(serverUrl, user1);
-        console.log(response1.data);
+        const response = await axios.post(serverUrl, authorization);
+        console.log(response.data);
     });
 
 });
