@@ -22,6 +22,7 @@ export class Rules implements RulesAdapter {
             this.config.adapters.auth(config) : new Auth(config);
     }
 
+
     private getRulesKey(rulesBlockModel?: RulesBlockModel): string[] {
         if (rulesBlockModel) {
             return Object.keys(rulesBlockModel);
@@ -195,6 +196,16 @@ export class Rules implements RulesAdapter {
             for (const deleteRule of deleteRules) {
                 const domain = this.extractDomain(deleteRule, 'Delete');
                 const data: DeleteModel<any> = rulesBlockModel ? rulesBlockModel[deleteRule] : this.rulesBlock[deleteRule];
+                // checkPermission
+                const allowed = await auth.hasPermission(`delete.${domain}`, this.rulesBlock.context);
+                if (allowed !== true) {
+                    this.results.errors.push({
+                        message: 'You have insufficient permission to this resource',
+                        path: `${transaction ? 'Transaction.' : ''}Delete.${domain}`,
+                        data: data
+                    });
+                    return;
+                }
                 try {
                     if (data.id) {
                         const filter: any = {};
@@ -270,6 +281,16 @@ export class Rules implements RulesAdapter {
             for (const queryRule of queryRules) {
                 const domain = this.extractDomain(queryRule, 'Query');
                 const data = rulesBlockModel ? rulesBlockModel[queryRule] : this.rulesBlock[queryRule];
+                // checkPermission
+                const allowed = await auth.hasPermission(`query.${domain}`, this.rulesBlock.context);
+                if (allowed !== true) {
+                    this.results.errors.push({
+                        message: 'You have insufficient permission to this resource',
+                        path: `${transaction ? 'Transaction.' : ''}Query.${domain}`,
+                        data: data
+                    });
+                    return;
+                }
                 try {
                     if (data && Array.isArray(data)) {
                         this.results.errors.push({
@@ -349,6 +370,16 @@ export class Rules implements RulesAdapter {
             for (const updateRule of updateRules) {
                 const domain = this.extractDomain(updateRule, 'Update');
                 const data: UpdateModel<any> = rulesBlockModel ? rulesBlockModel[updateRule] : this.rulesBlock[updateRule];
+                // checkPermission
+                const allowed = await auth.hasPermission(`update.${domain}`, this.rulesBlock.context);
+                if (allowed !== true) {
+                    this.results.errors.push({
+                        message: 'You have insufficient permission to this resource',
+                        path: `${transaction ? 'Transaction.' : ''}Update.${domain}`,
+                        data: data
+                    });
+                    return;
+                }
                 try {
                     if (data.id) {
                         const filter: any = {};
@@ -413,7 +444,63 @@ export class Rules implements RulesAdapter {
         }
     }
 
-    extractDomain(rule: string, remove: 'Create' | 'Query' | 'Update' | 'Delete'): string {
+    async handleAggregationRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void> {
+        try {
+            const aggregateRules = this.getRulesKey(rulesBlockModel).filter(rule => rule.startsWith('Aggregate'));
+            if (aggregateRules.length === 0) {
+                return;
+            }
+            if (!(this.rulesBlock.context && this.rulesBlock.context.useMasterKey === true)) {
+                this.results.errors.push({
+                    message: 'Aggregate rule require masterKey',
+                    path: 'Aggregate',
+                    data: null
+                });
+                return;
+            }
+            for (const aggregateRule of aggregateRules) {
+                const domain = this.extractDomain(aggregateRule, 'Aggregate');
+                const data = rulesBlockModel ? rulesBlockModel[aggregateRule] : this.rulesBlock[aggregateRule];
+                try {
+                    if (!(data && Array.isArray(data))) {
+                        throw {message: "A pipeline must be an array"};
+                    }
+                    const result = await database.aggregate(domain, data, this.rulesBlock.context, {
+                        bypassDomainVerification: true,
+                        transaction: transaction
+                    });
+                    if (resultsObj) {
+                        resultsObj[`ResultOf${aggregateRule}`] = result;
+                    } else {
+                        this.results[`ResultOf${aggregateRule}`] = result;
+                    }
+
+                } catch (e) {
+                    this.results.errors.push({
+                        message: e.message ? e.message : e.toString(),
+                        path: `${transaction ? 'Transaction.' : ''}Aggregate.${domain}`,
+                        data: data
+                    });
+                    if (transaction) {
+                        throw e;
+                    }
+                }
+            }
+            return;
+        } catch (e) {
+            this.results.errors.push({
+                message: e.message ? e.message : e.toString(),
+                path: `${transaction ? 'Transaction.' : ''}Aggregate`,
+                data: null
+            });
+            if (transaction) {
+                throw e;
+            }
+            return;
+        }
+    }
+
+    extractDomain(rule: string, remove: 'Create' | 'Query' | 'Update' | 'Delete' | 'Aggregate'): string {
         return rule.replace(remove, '');
     }
 

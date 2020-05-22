@@ -8,6 +8,8 @@ export interface AuthAdapter {
 
     resetPassword(email: string): Promise<any>;
 
+    // updatePassword()
+
     addAuthorizationRule(ruleId:string,rule:string, context: ContextBlock):Promise<any>;
 
     hasPermission(ruleId:string,context: ContextBlock):Promise<boolean>;

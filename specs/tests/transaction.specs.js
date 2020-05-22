@@ -4,8 +4,6 @@ const assert = require('assert');
 let mongoMemoryServer;
 let daaSServer;
 
-// mongodb://fahamuskills:it69ZUHYEWZeUnVNBTSlBiAhIZ3BDEG8@1.mongo.fahamutech.com:27017,2.mongo.fahamutech.com:27017,3.mongo.fahamutech.com:27017/fahamuskills?authSource=admin\u0026replicaSet=mdbRepl
-
 describe('Transaction', function () {
     before(async function () {
         this.timeout(10000);

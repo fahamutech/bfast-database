@@ -37,7 +37,7 @@ export class Security implements SecurityAdapter {
         try {
             return await bcrypt.compare(plainPassword, hashPassword);
         } catch (e) {
-            console.error(e);
+            // console.error(e);
             throw e.toString();
         }
     }
@@ -46,13 +46,13 @@ export class Security implements SecurityAdapter {
         try {
             return await bcrypt.hash(plainText, 5);
         } catch (e) {
-            console.error(e);
+            // console.error(e);
             throw e.toString();
         }
     }
 
     async revokeToken(token: string): Promise<any> {
-        return {message: 'Token revoked', value: false};
+        return {message: 'Token not revoked', value: false};
         // return new Promise((resolve, reject) => {
         //     _redisClient.del(token, (err, reply) => {
         //         if (err) {
@@ -67,7 +67,7 @@ export class Security implements SecurityAdapter {
         // });
     }
 
-    async generateToken(data: { uid: string, [key: string]: any }, expire?: string): Promise<string> {
+    async  generateToken(data: { uid: string, [key: string]: any }, expire?: string): Promise<string> {
         return new Promise((resolve, reject) => {
             _jwt.sign(data, _jwtPassword, {
                 expiresIn: expire ? expire : '7d',
@@ -77,26 +77,27 @@ export class Security implements SecurityAdapter {
                     reject({message: 'Fails to generate a token', reason: err.toString()});
                     return;
                 }
-                await database.updateOne<BasicUserAttributes, any>('_Token', {
-                    id: data.uid,
-                    update: {
-                        id: data.uid,
-                        token: encoded,
-                    },
-                    upsert: true
-                }, null, {
-                    bypassDomainVerification: true,
-                    indexes: [
-                        {
-                            field: 'token',
-                            unique: true,
-                        },
-                        {
-                            field: '_created_at',
-                            expireAfterSeconds: Security.dayToSecond(expire)
-                        },
-                    ]
-                });
+                // await database.updateOne<BasicUserAttributes, any>('_Token', {
+                //     id: data.uid,
+                //     filter
+                //     update: {
+                //         id: data.uid,
+                //         token: encoded,
+                //     },
+                //     upsert: true
+                // }, null, {
+                //     bypassDomainVerification: true,
+                //     indexes: [
+                //         {
+                //             field: 'token',
+                //             unique: true,
+                //         },
+                //         {
+                //             field: '_created_at',
+                //             expireAfterSeconds: Security.dayToSecond(expire)
+                //         },
+                //     ]
+                // });
                 resolve(encoded);
             });
         });

@@ -22,6 +22,8 @@ export interface DatabaseAdapter {
     transaction<V>(operations: (session: V) => Promise<any>): Promise<any>;
 
     validDomain(domain: string): boolean;
+
+    aggregate(domain: string, pipelines: Object[], context: ContextBlock, options?: WriteOptions): Promise<any>;
 }
 
 export interface WriteOptions extends DatabaseBasicOptions {

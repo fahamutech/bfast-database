@@ -10,6 +10,8 @@ export interface RulesAdapter {
 
     handleQueryRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void>;
 
+    handleAggregationRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void>;
+
     handleDeleteRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void>;
 
     handleUpdateRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void>;

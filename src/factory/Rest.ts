@@ -94,6 +94,8 @@ export class Rest implements RestAdapter {
             return rules.handleQueryRules();
         }).then(_ => {
             return rules.handleTransactionRule();
+        }).then(_=>{
+            return rules.handleAggregationRules();
         }).then(_ => {
             const results = rules.results;
             if (!(results.errors && Array.isArray(results.errors) && results.errors.length > 0)) {

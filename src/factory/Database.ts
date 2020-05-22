@@ -230,9 +230,7 @@ export class Database implements DatabaseAdapter {
         // const response = await conn.db().collection(domain).updateMany(updateModel.filter, freshData, {
         //     upsert: updateModel.upsert === true ? updateModel.upsert : false
         // });
-        // // console.log(response);
         // return response as any;
-        // console.log(response.result);
         // return this.sanitize4User(<any>response.result, returnFields);
         return null;
     }
@@ -269,5 +267,13 @@ export class Database implements DatabaseAdapter {
         } finally {
             await session.endSession();
         }
+    }
+
+    async aggregate(domain: string, pipelines: Object[], context: ContextBlock, options?: WriteOptions): Promise<any> {
+        if (!options?.bypassDomainVerification) {
+            await this.handleDomainValidation(domain);
+        }
+        const conn = await this.connection();
+        return conn.db().collection(domain).aggregate(pipelines).toArray();
     }
 }
