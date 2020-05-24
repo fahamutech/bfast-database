@@ -1,5 +1,5 @@
 import {DatabaseAdapter, DatabaseBasicOptions, UpdateOptions, WriteOptions} from "../adapter/DatabaseAdapter";
-import {MongoClient} from "mongodb";
+import {MongoClient, ObjectId} from "mongodb";
 import {ConfigAdapter, DaaSConfig} from "../utils/config";
 import {BasicAttributesModel} from "../model/BasicAttributesModel";
 import {ContextBlock} from "../model/RulesBlockModel";
@@ -18,7 +18,11 @@ export class Database implements DatabaseAdapter {
             delete data.return;
         }
         if (data && data.id) {
-            data._id = data.id;
+            try {
+                data._id = new ObjectId(data.id);
+            } catch (e) {
+                data._id = data.id;
+            }
             delete data.id;
         }
         if (data && data.createdAt) {
@@ -34,10 +38,6 @@ export class Database implements DatabaseAdapter {
             delete data.createdBy;
         }
         return data;
-    }
-
-    sanitizeQueryData4Db<T extends BasicAttributesModel>(data: T) {
-
     }
 
     sanitize4User<T extends BasicAttributesModel>(data: T, returnFields: string[]): T {
@@ -175,19 +175,25 @@ export class Database implements DatabaseAdapter {
         }
         const conn = await this.connection();
         if (queryModel.id) {
-            const result = await conn.db().collection(domain).findOne<T>({_id: queryModel.id}, {
+            const returnFields = queryModel.return;
+            const sanitizedData = this.sanitize4Db(queryModel)
+            const result = await conn.db().collection(domain).findOne<T>({_id: sanitizedData._id}, {
                 session: options && options.transaction ? options.transaction : undefined
             });
-            return this.sanitize4User(result, queryModel.return);
+            return this.sanitize4User(result, returnFields);
         } else {
-            const query = conn.db().collection(domain).find(queryModel.filter, {
+            const query = conn.db().collection(domain).find(this.sanitize4Db(queryModel.filter), {
                 session: options && options.transaction ? options.transaction : undefined
             });
             if (queryModel.skip) {
                 query.skip(queryModel.skip);
+            } else {
+                query.skip(0)
             }
             if (queryModel.size) {
                 query.limit(queryModel.size);
+            } else {
+                query.limit(20);
             }
             if (queryModel.orderBy && Array.isArray(queryModel.orderBy) && queryModel.orderBy.length > 0) {
                 queryModel.orderBy.forEach(value => {
