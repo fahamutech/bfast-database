@@ -2,6 +2,7 @@ const process = require('child_process');
 const pkg = require('./package');
 const gulp = require('gulp');
 const del = require('del');
+const glob = require('glob');
 
 function handleBuild(childProcess, cb) {
     childProcess.on('error', (err) => {
@@ -66,10 +67,26 @@ function compileTs(cb) {
 }
 
 function deleteBuild(cb) {
-    del(['dist/**','!dist'], {force:true});
+    del(['dist/**', '!dist'], {force: true});
     cb();
 }
 
+function test(cb) {
+    const testPath = __dirname + '/specs/tests';
+    glob('**/*.js', {absolute: true, cwd: testPath}, (err, files) => {
+        if (err) {
+            console.error(err);
+        }
+        files.forEach(file=>{
+            const result = process.execSync(`npx mocha ${file}`);
+            console.log(result.toString());
+        });
+        cb();
+    });
+}
+
+exports.test = gulp.series(test);
+
 exports.build = gulp.series(deleteBuild, compileTs, copyBFastJson);
-exports.devStart = gulp.series(deleteBuild, compileTs, copyBFastJson,devStart);
+exports.devStart = gulp.series(deleteBuild, compileTs, copyBFastJson, devStart);
 exports.publishContainer = gulp.series(buildDockerImage, pushToDocker);

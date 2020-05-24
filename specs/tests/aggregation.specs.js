@@ -22,23 +22,23 @@ describe('Aggregation', function () {
             masterKey: 'daas',
             CreateTest: [
                 {
-                    role:'manager',
-                    salary:20
+                    role: 'manager',
+                    salary: 20
                 },
                 {
-                    role:'manager',
-                    salary:26
+                    role: 'manager',
+                    salary: 26
                 },
                 {
-                    role:'cashier',
-                    salary:10
+                    role: 'cashier',
+                    salary: 10
                 }
             ],
             AggregateTest: [
                 {
                     $group: {
                         _id: '$role',
-                        salary: {$sum:'$salary'}
+                        salary: {$sum: '$salary'}
                     }
                 }
             ]

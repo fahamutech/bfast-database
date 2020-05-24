@@ -1,13 +1,13 @@
 {
   "name": "bfast-daas",
-  "version": "2.0.0-beta0",
+  "version": "2.0.0-beta.0",
   "private": true,
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
     "build": "gulp build",
-    "test": "mocha  ./specs/tests/",
-    "test:no-build": "mocha  ./specs/tests/",
+    "test": "gulp test",
+    "test:no-build": "gulp test",
     "prestart": "npm run build",
     "pretest": "yarn run build",
     "start": "node .",
@@ -16,9 +16,9 @@
   },
   "dependencies": {
     "bcrypt": "^4.0.1",
-    "bfast-faas": "^1.10.1",
+    "bfast-faas": "^1.10.2",
     "bfast-s3like": "^2.1.0",
-    "bfastnode": "^2.0.0-beta3",
+    "bfastnode": "^2.0.0-beta.4",
     "express": "^4.17.1",
     "http-status-codes": "^1.4.0",
     "jsonwebtoken": "^8.5.1",
@@ -33,6 +33,7 @@
     "del": "^5.1.0",
     "gulp": "^4.0.2",
     "mocha": "^7.1.2",
+    "glob": "^7.1.6",
     "mongodb-memory-server": "^6.6.0",
     "typescript": "^3.8.3"
   }

@@ -537,10 +537,10 @@ better-assert@~1.0.0:
   dependencies:
     callsite "1.0.0"
 
-bfast-faas@^1.10.1:
-  version "1.10.1"
-  resolved "https://registry.yarnpkg.com/bfast-faas/-/bfast-faas-1.10.1.tgz#8db26926e163159db247a50207c149cfeaa8d966"
-  integrity sha512-qIKRhEEt1LSWHhqkYH9G7kbnvN9tTa8Yu4jd9A1BJKdO7HouoXz2Q9eS7rh9z2jdh4TTZ67qjbU2VS4yxFrFUw==
+bfast-faas@^1.10.2:
+  version "1.10.2"
+  resolved "https://registry.yarnpkg.com/bfast-faas/-/bfast-faas-1.10.2.tgz#1302a2e0a6b143bf9a07cd4fa886d33ef3c978c0"
+  integrity sha512-etnABC0w/FjWS6SLG+qCCs7L0DVqXyfXERyo12o8J68kHVGDOn1Ml+79i50o3t9T1REk5UfZXhX8ZDEUuNXLiQ==
   dependencies:
     cookie-parser "^1.4.5"
     cors "^2.8.5"
@@ -559,10 +559,10 @@ bfast-s3like@^2.1.0:
     minio "^7.0.16"
     url-join "^4.0.1"
 
-bfastnode@^2.0.0-beta3:
-  version "2.0.0-beta3"
-  resolved "https://registry.yarnpkg.com/bfastnode/-/bfastnode-2.0.0-beta3.tgz#bb8b5d7466732e52b32075da3b9f28e2bf1a2a4d"
-  integrity sha512-9PnvGFefdWfE6xGTvmtxfBkgup3PgS/VW/DIoIdN7SxLCgu7mRWMJ13ghB1v2+uEUBPTisDxo0CtdrYNt00rVg==
+bfastnode@^2.0.0-beta.4:
+  version "2.0.0-beta.4"
+  resolved "https://registry.yarnpkg.com/bfastnode/-/bfastnode-2.0.0-beta.4.tgz#d5b3a46f3c8bb148479a67e35fda38cd20bde2fd"
+  integrity sha512-ttMTPeoEQkapmSM+m+/FIke9CodgE7+B5xYneoQ2OOkFzTHmfaBQr9qcMEapRUOknEv6Qe94qq/CYWnVfuuYEg==
 
 binary-extensions@^1.0.0:
   version "1.13.1"

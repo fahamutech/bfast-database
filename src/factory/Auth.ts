@@ -26,7 +26,7 @@ export class Auth implements AuthAdapter {
             config.adapters.email(config) : new Email(config);
     }
 
-    async resetPassword(email: string): Promise<any> {
+    async resetPassword(email: string, context?: ContextBlock): Promise<any> {
         if (!email) {
             throw new Error('Email required');
         }
@@ -91,15 +91,15 @@ export class Auth implements AuthAdapter {
     async addAuthorizationRule(ruleId: string, rule: string, context: ContextBlock): Promise<any> {
         return database.updateOne(this.policyDomainName, {
             filter: {
-                _id: ruleId
+                ruleId: ruleId
             },
             upsert: true,
             return: [],
             update: {
                 // @ts-ignore
                 $set: {
-                    _id: ruleId,
-                    rule: rule,
+                    ruleId: ruleId,
+                    ruleBody: rule,
                 }
             }
         }, context, {
@@ -120,9 +120,9 @@ export class Auth implements AuthAdapter {
         if (ruleIdInArray.length >= 2) {
             ruleIdInArray[1] = '*';
             globalRule = ruleIdInArray.join('.');
-            filter.$or.push({_id: globalRule});
+            filter.$or.push({ruleId: globalRule});
         }
-        filter.$or.push({_id: originalRule});
+        filter.$or.push({ruleId: originalRule});
         const query: any[] = await database.query(this.policyDomainName, {
             return: [],
             filter: filter,
@@ -132,14 +132,14 @@ export class Auth implements AuthAdapter {
         if (query.length === 0) {
             return false;
         }
-        const originalRuleResult = query.filter(value => value.id === originalRule);
-        if (originalRuleResult && originalRuleResult.length === 1 && originalRuleResult[0].rule) {
-            const execRule = new Function('context', originalRuleResult[0].rule);
+        const originalRuleResult = query.filter(value => value.ruleId === originalRule);
+        if (originalRuleResult && originalRuleResult.length === 1 && originalRuleResult[0].ruleBody) {
+            const execRule = new Function('context', originalRuleResult[0].ruleBody);
             return execRule(context) === true;
         }
-        const globalRuleResult = query.filter(value => value.id === globalRule);
-        if (globalRuleResult && globalRuleResult.length === 1 && globalRuleResult[0].rule) {
-            const execRule = new Function('context', globalRuleResult[0].rule);
+        const globalRuleResult = query.filter(value => value.ruleId === globalRule);
+        if (globalRuleResult && globalRuleResult.length === 1 && globalRuleResult[0].ruleBody) {
+            const execRule = new Function('context', globalRuleResult[0].ruleBody);
             return execRule(context) === true;
         }
         return false;
@@ -155,5 +155,21 @@ export class Auth implements AuthAdapter {
         } else {
             return;
         }
+    }
+
+    async deleteUser(context?: ContextBlock): Promise<any> {
+        return Promise.resolve(undefined);
+    }
+
+    async sendVerificationEmail(email: string, context?: ContextBlock): Promise<any> {
+        return Promise.resolve(undefined);
+    }
+
+    async update<T extends BasicUserAttributes>(userModel: T, context?: ContextBlock): Promise<T> {
+        return Promise.resolve(undefined);
+    }
+
+    async updatePassword(password: string, context?: ContextBlock): Promise<any> {
+        return Promise.resolve(undefined);
     }
 }
