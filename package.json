@@ -1,8 +1,7 @@
 {
   "name": "bfast-daas",
   "version": "2.0.0-beta.0",
-  "private": true,
-  "main": "dist/index.js",
+  "main": "dist/daas.js",
   "license": "MIT",
   "scripts": {
     "build": "gulp build",
@@ -10,6 +9,8 @@
     "test:no-build": "gulp test",
     "prestart": "npm run build",
     "pretest": "yarn run build",
+    "prepublishOnly": "npm run build",
+    "publish:beta": "npm publish --tag beta",
     "start": "node .",
     "start:dev": "gulp devStart",
     "push": "gulp publishContainer"
