@@ -282,4 +282,16 @@ export class Database implements DatabaseAdapter {
         const conn = await this.connection();
         return conn.db().collection(domain).aggregate(pipelines).toArray();
     }
+
+    async changes(domain: string, pipeline: any[], listener: (doc: any) => void): Promise<any> {
+        if (this.validDomain(domain)) {
+            const conn = await this.connection();
+            conn.db().collection(domain).watch(pipeline).on("change", doc => {
+                listener(doc);
+            });
+            return;
+        } else {
+            throw new Error('Invalid domain/table/collection name');
+        }
+    }
 }

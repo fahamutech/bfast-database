@@ -19,6 +19,8 @@ export interface DatabaseAdapter {
 
     query<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>, context: ContextBlock, options?: WriteOptions): Promise<any>;
 
+    changes(domain: string, pipeline: any[], listener: (doc: any) => void): Promise<any>;
+
     transaction<V>(operations: (session: V) => Promise<any>): Promise<any>;
 
     validDomain(domain: string): boolean;

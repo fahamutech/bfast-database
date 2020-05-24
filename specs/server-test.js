@@ -7,6 +7,6 @@ async function run(){
     await mongoMemoryServer.start();
     daaSServer = await daas('mongodb://localhost/smartstock');
     await daaSServer.start();
-};
+}
 
 run().catch(console.log);
