@@ -1,19 +1,11 @@
 const axios = require('axios');
-const {mongoServer, daas, serverUrl} = require('../shared');
+const {serverUrl} = require('../shared');
 const assert = require('assert');
-let mongoMemoryServer;
-let daaSServer;
 
 describe('Aggregation', function () {
     before(async function () {
-        mongoMemoryServer = mongoServer();
-        await mongoMemoryServer.start();
-        daaSServer = await daas(await mongoMemoryServer.getUri());
-        await daaSServer.start();
     });
     after(async function () {
-        await daaSServer.stop();
-        await mongoMemoryServer.stop();
     });
 
     it('should be able to perform aggregation', async function () {

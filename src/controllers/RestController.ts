@@ -1,19 +1,13 @@
 import {RestAdapter} from "../adapter/RestAdapter";
 import {NextFunction, Request, Response} from "express";
-import {ConfigAdapter, DaaSConfig} from "../utils/config";
 import * as httpStatus from "http-status-codes";
-import {SecurityAdapter} from "../adapter/SecurityAdapter";
-import {Security} from "./Security";
-import {Rules} from "./Rules";
+import {SecurityController} from "./SecurityController";
+import {RulesController} from "./RulesController";
+import {DaaSConfig} from "../config";
 
-let security: SecurityAdapter;
-let _config: ConfigAdapter;
+export class RestController implements RestAdapter {
 
-export class Rest implements RestAdapter {
-    constructor(private readonly config: ConfigAdapter) {
-        _config = this.config;
-        security = (_config.adapters && _config.adapters.security) ?
-            _config.adapters.security(_config) : new Security(_config);
+    constructor(private readonly _security: SecurityController) {
     }
 
     verifyApplicationId(request: Request, response: Response, next: NextFunction) {
@@ -47,7 +41,7 @@ export class Rest implements RestAdapter {
             request.body.context.uid = null;
             next();
         } else {
-            security.verifyToken<{ uid: string }>(token).then(value => {
+            this._security.verifyToken<{ uid: string }>(token).then(value => {
                 request.body.context.auth = true;
                 request.body.context.uid = value.uid;
                 next();
@@ -79,8 +73,7 @@ export class Rest implements RestAdapter {
 
     handleRuleBlocks(request: Request, response: Response, next: NextFunction) {
         const body = request.body;
-        const rules = (_config.adapters && _config.adapters.rules) ?
-            _config.adapters.rules(_config) : new Rules(_config);
+        const rules = new RulesController(DaaSConfig.getInstance());
         rules.rulesBlock = body;
         rules.handleAuthenticationRule().then(_ => {
             return rules.handleAuthorizationRule();
@@ -94,7 +87,7 @@ export class Rest implements RestAdapter {
             return rules.handleQueryRules();
         }).then(_ => {
             return rules.handleTransactionRule();
-        }).then(_=>{
+        }).then(_ => {
             return rules.handleAggregationRules();
         }).then(_ => {
             const results = rules.results;

@@ -1,26 +1,17 @@
 const axios = require('axios');
 const {
-    describe,
-    it,
+    before,
     after,
-    beforeEach,
-    afterEach
+    it,
+    describe
 } = require('mocha');
-const {daas, mongoServer} = require('../shared');
+const {serverUrl} = require('../shared');
 const assert = require('assert');
-let mongoMemoryServer;
-let daaSServer;
 
 describe('CreateRule With Single Document & Default Database', function () {
-    beforeEach(async function () {
-        mongoMemoryServer = mongoServer();
-        await mongoMemoryServer.start();
-        daaSServer = await daas(await mongoMemoryServer.getUri());
-        await daaSServer.start();
+    before(async function () {
     });
-    afterEach(async function () {
-        await daaSServer.stop();
-        await mongoMemoryServer.stop();
+    after(async function () {
     });
 
     it('should create a resource anonymous and return all fields include defaults', async function () {

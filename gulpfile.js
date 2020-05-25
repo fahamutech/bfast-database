@@ -38,22 +38,25 @@ function pushToDocker(cb) {
 }
 
 function devStart(cb) {
-    const devStart = process.exec('node .', {
-        env: {
-            PORT: '3000',
-            APPLICATION_ID: 'daas',
-            MONGO_URL: 'mongodb://localhost:27017/daas',
-            MASTER_KEY: 'daas'
-        }
-    });
-    devStart.on('exit', _ => {
+    const {mongoServer, daas} = require('./specs/shared');
+    let mongoMemoryServer;
+    let daaSServer;
+
+    async function run() {
+        mongoMemoryServer = mongoServer();
+        await mongoMemoryServer.start();
+        daaSServer = await daas('mongodb://localhost/smartstock', 3003);
+        await daaSServer.start();
+    }
+
+    run().catch(reason => {
+        console.log(reason);
         cb();
     });
-    handleBuild(devStart, cb);
 }
 
 function copyBFastJson(cb) {
-    gulp.src('./src/utils/bfast.json').pipe(gulp.dest('./dist/utils'));
+    gulp.src('./src/bfast.json').pipe(gulp.dest('./dist/'));
     cb();
 }
 
@@ -77,7 +80,7 @@ function test(cb) {
         if (err) {
             console.error(err);
         }
-        files.forEach(file=>{
+        files.forEach(file => {
             const result = process.execSync(`npx mocha ${file}`);
             console.log(result.toString());
         });
@@ -86,7 +89,6 @@ function test(cb) {
 }
 
 exports.test = gulp.series(test);
-
 exports.build = gulp.series(deleteBuild, compileTs, copyBFastJson);
 exports.devStart = gulp.series(deleteBuild, compileTs, copyBFastJson, devStart);
 exports.publishContainer = gulp.series(buildDockerImage, pushToDocker);

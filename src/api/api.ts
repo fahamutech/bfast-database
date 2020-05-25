@@ -1,17 +1,20 @@
 import {BFast} from "bfastnode";
-import {ConfigAdapter, DaaSConfig} from "../utils/config";
-import {Rest} from "../factory/Rest";
-import {DatabaseAdapter} from "../adapter/DatabaseAdapter";
+import {ConfigAdapter, DaaSConfig} from "../config";
 import {Database} from "../factory/Database";
+import {RestController} from "../controllers/RestController";
+import {SecurityController} from "../controllers/SecurityController";
+import {DatabaseController} from "../controllers/DatabaseController";
 
 const config: ConfigAdapter = DaaSConfig.getInstance();
 
-const database: DatabaseAdapter = (config.adapters && config.adapters.database)
-    ? config.adapters.database(config) : new Database(config);
+const database: DatabaseController = new DatabaseController(
+    (config && config.adapters && config.adapters.database)
+        ? config.adapters.database(config)
+        : new Database(),
+    new SecurityController()
+)
 
-const rest = (config.adapters && config.adapters.rest)
-    ? config.adapters.rest(config) : new Rest(config);
-
+const rest = new RestController(new SecurityController());
 
 exports.daas = BFast.functions().onPostHttpRequest(DaaSConfig.getInstance().mountPath, [
     rest.verifyMethod,

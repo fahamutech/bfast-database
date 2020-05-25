@@ -1,21 +1,16 @@
 const axios = require('axios');
 const {
-    describe,
-    it,
+    before,
     after,
+    it,
+    describe
 } = require('mocha');
-const {mongoServer, daas, serverUrl} = require('../shared');
+const {serverUrl} = require('../shared');
 const assert = require('assert');
-let mongoMemoryServer;
-let daaSServer;
 
 describe('QueryRule Integration Test', function () {
     let token;
     before(async function () {
-        mongoMemoryServer = mongoServer();
-        await mongoMemoryServer.start();
-        daaSServer = await daas(await mongoMemoryServer.getUri());
-        await daaSServer.start();
         const authorizationRule = {
             applicationId: 'daas',
             masterKey: 'daas',
@@ -61,8 +56,6 @@ describe('QueryRule Integration Test', function () {
     });
 
     after(async function () {
-        await daaSServer.stop();
-        await mongoMemoryServer.stop();
     });
 
     it('should query by id when applicationId supplied and and authorization require to auth', async function () {

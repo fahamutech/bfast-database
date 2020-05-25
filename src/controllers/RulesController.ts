@@ -1,25 +1,39 @@
 import {RulesAdapter} from "../adapter/RulesAdapter";
 import {RulesBlockModel} from "../model/RulesBlockModel";
-import {DatabaseAdapter} from "../adapter/DatabaseAdapter";
-import {ConfigAdapter} from "../utils/config";
-import {Database} from "./Database";
-import {AuthAdapter} from "../adapter/AuthAdapter";
-import {Auth} from "./Auth";
 import {UpdateModel} from "../model/UpdateModel";
 import {DeleteModel} from "../model/DeleteModel";
+import {DatabaseController} from "./DatabaseController";
+import {Database} from "../factory/Database";
+import {Auth} from "../factory/Auth";
+import {AuthController} from "./AuthController";
+import {SecurityController} from "./SecurityController";
+import {Email} from "../factory/Email";
+import {EmailController} from "./EmailController";
+import {ConfigAdapter} from "../config";
 
-let database: DatabaseAdapter;
-let auth: AuthAdapter;
-
-export class Rules implements RulesAdapter {
+export class RulesController implements RulesAdapter {
     rulesBlock: RulesBlockModel;
     results: RulesBlockModel = {errors: []};
+    database: DatabaseController;
+    auth: AuthController;
 
     constructor(private readonly config: ConfigAdapter) {
-        database = (config.adapters && config.adapters.database) ?
-            this.config.adapters.database(config) : new Database(config);
-        auth = (config.adapters && config.adapters.auth) ?
-            this.config.adapters.auth(config) : new Auth(config);
+        this.database = new DatabaseController(
+            (config.adapters && config.adapters.database) ?
+                this.config.adapters.database(config) : new Database(),
+            new SecurityController()
+        );
+
+        const _defaultEmail = (config && config.adapters && config.adapters.email)
+            ? config.adapters.email(config)
+            : new Email();
+
+        const _defaultAuth = (config && config.adapters && config.adapters.auth)
+            ? config.adapters.auth(config)
+            : new Auth(this.database, new SecurityController(), new EmailController(_defaultEmail));
+
+        this.auth = new AuthController(_defaultAuth, this.database);
+
     }
 
 
@@ -46,15 +60,15 @@ export class Rules implements RulesAdapter {
                 try {
                     if (action === 'signUp') {
                         this.results["ResultOfAuthentication"] = {};
-                        this.results["ResultOfAuthentication"].signUp = await auth.signUp(data, this.rulesBlock.context);
+                        this.results["ResultOfAuthentication"].signUp = await this.auth.signUp(data, this.rulesBlock.context);
                     }
                     if (action === 'signIn') {
                         this.results["ResultOfAuthentication"] = {};
-                        this.results["ResultOfAuthentication"].signIn = await auth.signIn(data, this.rulesBlock.context);
+                        this.results["ResultOfAuthentication"].signIn = await this.auth.signIn(data, this.rulesBlock.context);
                     }
                     if (action === 'resetPassword') {
                         this.results["ResultOfAuthentication"] = {};
-                        this.results["ResultOfAuthentication"].resetPassword = await auth.resetPassword(data.email ? data.email : data);
+                        this.results["ResultOfAuthentication"].resetPassword = await this.auth.resetPassword(data.email ? data.email : data);
                     }
                 } catch (e) {
                     this.results.errors.push({
@@ -97,7 +111,7 @@ export class Rules implements RulesAdapter {
                     if (action === 'rules' && typeof data === 'object') {
                         const authorizationResults = {};
                         for (const rule of Object.keys(data)) {
-                            authorizationResults[rule] = await auth.addAuthorizationRule(rule, data[rule], this.rulesBlock.context);
+                            authorizationResults[rule] = await this.auth.addAuthorizationRule(rule, data[rule], this.rulesBlock.context);
                         }
                         this.results["ResultOfAuthorization"] = {};
                         this.results["ResultOfAuthorization"][action] = authorizationResults;
@@ -131,7 +145,7 @@ export class Rules implements RulesAdapter {
                 const domain = this.extractDomain(createRule, 'Create');
                 const data = rulesBlockModel ? rulesBlockModel[createRule] : this.rulesBlock[createRule];
                 // checkPermission
-                const allowed = await auth.hasPermission(`create.${domain}`, this.rulesBlock.context);
+                const allowed = await this.auth.hasPermission(`create.${domain}`, this.rulesBlock.context);
                 if (allowed !== true) {
                     this.results.errors.push({
                         message: 'You have insufficient permission to this resource',
@@ -142,7 +156,7 @@ export class Rules implements RulesAdapter {
                 }
                 try {
                     if (data && Array.isArray(data)) {
-                        const result = await database.writeMany(domain, data, this.rulesBlock.context, {
+                        const result = await this.database.writeMany(domain, data, this.rulesBlock.context, {
                             bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
                             transaction: transaction
                         });
@@ -152,7 +166,7 @@ export class Rules implements RulesAdapter {
                             this.results[`ResultOf${createRule}`] = result
                         }
                     } else {
-                        const result = await database.writeOne(domain, data, this.rulesBlock.context, {
+                        const result = await this.database.writeOne(domain, data, this.rulesBlock.context, {
                             bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
                             transaction: transaction
                         });
@@ -197,7 +211,7 @@ export class Rules implements RulesAdapter {
                 const domain = this.extractDomain(deleteRule, 'Delete');
                 const data: DeleteModel<any> = rulesBlockModel ? rulesBlockModel[deleteRule] : this.rulesBlock[deleteRule];
                 // checkPermission
-                const allowed = await auth.hasPermission(`delete.${domain}`, this.rulesBlock.context);
+                const allowed = await this.auth.hasPermission(`delete.${domain}`, this.rulesBlock.context);
                 if (allowed !== true) {
                     this.results.errors.push({
                         message: 'You have insufficient permission to this resource',
@@ -212,40 +226,15 @@ export class Rules implements RulesAdapter {
                         delete data.filter;
                         filter['_id'] = data.id;
                         data.filter = filter;
-                        const result = await database.deleteOne(domain, data, this.rulesBlock.context, {
-                            bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
-                            transaction: transaction
-                        });
-                        if (resultsObj) {
-                            resultsObj[`ResultOf${deleteRule}`] = result;
-                        } else {
-                            this.results[`ResultOf${deleteRule}`] = result;
-                        }
+                    }
+                    const result = await this.database.delete(domain, data, this.rulesBlock.context, {
+                        bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
+                        transaction: transaction
+                    });
+                    if (resultsObj) {
+                        resultsObj[`ResultOf${deleteRule}`] = result;
                     } else {
-                        const query: any[] = await database.query(domain, data, this.rulesBlock.context, {
-                            bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
-                            transaction: transaction
-                        });
-                        const deleteResults = [];
-                        if (query && Array.isArray(query)) {
-                            for (const value of query) {
-                                data.filter = {
-                                    _id: value.id
-                                };
-                                const result = await database.deleteOne(domain, data, this.rulesBlock.context, {
-                                    bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
-                                    transaction: transaction
-                                });
-                                if (result) {
-                                    deleteResults.push(result);
-                                }
-                            }
-                        }
-                        if (resultsObj) {
-                            resultsObj[`ResultOf${deleteRule}`] = deleteResults;
-                        } else {
-                            this.results[`ResultOf${deleteRule}`] = deleteResults;
-                        }
+                        this.results[`ResultOf${deleteRule}`] = result;
                     }
                 } catch (e) {
                     this.results.errors.push({
@@ -282,7 +271,7 @@ export class Rules implements RulesAdapter {
                 const domain = this.extractDomain(queryRule, 'Query');
                 const data = rulesBlockModel ? rulesBlockModel[queryRule] : this.rulesBlock[queryRule];
                 // checkPermission
-                const allowed = await auth.hasPermission(`query.${domain}`, this.rulesBlock.context);
+                const allowed = await this.auth.hasPermission(`query.${domain}`, this.rulesBlock.context);
                 if (allowed !== true) {
                     this.results.errors.push({
                         message: 'You have insufficient permission to this resource',
@@ -299,7 +288,7 @@ export class Rules implements RulesAdapter {
                             data: data,
                         });
                     } else {
-                        const result = await database.query(domain, data, this.rulesBlock.context, {
+                        const result = await this.database.query(domain, data, this.rulesBlock.context, {
                             bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
                             transaction: transaction
                         });
@@ -344,7 +333,7 @@ export class Rules implements RulesAdapter {
             const transaction = this.rulesBlock[transactionRule];
             const transactionOperationRules = transaction.commit;
             const resultObject = {};
-            await database.transaction(async session => {
+            await this.database.transaction(async session => {
                 await this.handleCreateRules(transactionOperationRules, resultObject, session);
                 await this.handleUpdateRules(transactionOperationRules, resultObject, session);
                 await this.handleDeleteRules(transactionOperationRules, resultObject, session);
@@ -371,7 +360,7 @@ export class Rules implements RulesAdapter {
                 const domain = this.extractDomain(updateRule, 'Update');
                 const data: UpdateModel<any> = rulesBlockModel ? rulesBlockModel[updateRule] : this.rulesBlock[updateRule];
                 // checkPermission
-                const allowed = await auth.hasPermission(`update.${domain}`, this.rulesBlock.context);
+                const allowed = await this.auth.hasPermission(`update.${domain}`, this.rulesBlock.context);
                 if (allowed !== true) {
                     this.results.errors.push({
                         message: 'You have insufficient permission to this resource',
@@ -386,7 +375,7 @@ export class Rules implements RulesAdapter {
                         delete data.filter;
                         filter['_id'] = data.id;
                         data.filter = filter;
-                        const result = await database.updateOne(domain, data, this.rulesBlock.context, {
+                        const result = await this.database.update(domain, data, this.rulesBlock.context, {
                             bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
                             transaction: transaction
                         });
@@ -396,7 +385,7 @@ export class Rules implements RulesAdapter {
                             this.results[`ResultOf${updateRule}`] = result
                         }
                     } else {
-                        const query: any[] = await database.query(domain, data, this.rulesBlock.context, {
+                        const query: any[] = await this.database.query(domain, data, this.rulesBlock.context, {
                             bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
                             transaction: transaction
                         });
@@ -406,7 +395,7 @@ export class Rules implements RulesAdapter {
                                 data.filter = {
                                     _id: value.id
                                 };
-                                const result = await database.updateOne(domain, data, this.rulesBlock.context, {
+                                const result = await this.database.update(domain, data, this.rulesBlock.context, {
                                     bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
                                     transaction: transaction
                                 });
@@ -465,7 +454,7 @@ export class Rules implements RulesAdapter {
                     if (!(data && Array.isArray(data))) {
                         throw {message: "A pipeline must be an array"};
                     }
-                    const result = await database.aggregate(domain, data, this.rulesBlock.context, {
+                    const result = await this.database.aggregate(domain, data, this.rulesBlock.context, {
                         bypassDomainVerification: true,
                         transaction: transaction
                     });

@@ -1,19 +1,17 @@
 const axios = require('axios');
-const {mongoServer, daas, serverUrl} = require('../shared');
+const {serverUrl} = require('../shared');
 const assert = require('assert');
-let mongoMemoryServer;
-let daaSServer;
+const {
+    before,
+    after,
+    it,
+    describe
+} = require('mocha');
 
 describe('Delete document anonymous', function () {
     before(async function () {
-        mongoMemoryServer = mongoServer();
-        await mongoMemoryServer.start();
-        daaSServer = await daas(await mongoMemoryServer.getUri());
-        await daaSServer.start();
     });
     after(async function () {
-        await daaSServer.stop();
-        await mongoMemoryServer.stop();
     });
 
     it('should delete a document with an id supplied and without login and any authorization permission set', async function () {

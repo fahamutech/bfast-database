@@ -1,21 +1,17 @@
 const axios = require('axios');
 const {
-    describe,
-    it,
+    before,
     after,
+    it,
+    describe
 } = require('mocha');
-const {mongoServer, daas, serverUrl} = require('../shared');
+const {serverUrl} = require('../shared');
 const assert = require('assert');
-let mongoMemoryServer;
-let daaSServer;
+
 
 describe('QueryRule Integration Test', function () {
 
     before(async function () {
-        mongoMemoryServer = mongoServer();
-        await mongoMemoryServer.start();
-        daaSServer = await daas(await mongoMemoryServer.getUri());
-        await daaSServer.start();
         const authorizationRule = {
             applicationId: 'daas',
             masterKey: 'daas',
@@ -53,8 +49,6 @@ describe('QueryRule Integration Test', function () {
     });
 
     after(async function () {
-        await daaSServer.stop();
-        await mongoMemoryServer.stop();
     });
 
     it('should query by id when applicationId supplied and authorization is anonymously', async function () {
@@ -72,6 +66,21 @@ describe('QueryRule Integration Test', function () {
         assert(typeof response.data['ResultOfQueryTest'] === "object");
         assert(!Array.isArray(response.data['ResultOfQueryTest']));
         assert(response.data['ResultOfQueryTest'].id === "joshua");
+    });
+
+    it('should query with empty fields when applicationId supplied and authorization is anonymously', async function () {
+        const queryRule = {
+            applicationId: 'daas',
+            QueryTest: {}
+        };
+        const response = await axios.post(serverUrl, queryRule);
+        // console.log(response.data);
+        assert(response.data.errors === undefined);
+        assert(response.data['ResultOfQueryTest'] !== undefined);
+        assert(typeof response.data['ResultOfQueryTest'] === "object");
+        assert(Array.isArray(response.data['ResultOfQueryTest']));
+        assert(response.data['ResultOfQueryTest'][0].id !== undefined);
+        assert(typeof response.data['ResultOfQueryTest'][0].id === "string");
     });
 
     it('should  not query if applicationId not supplied and authorization is anonymously', async function () {

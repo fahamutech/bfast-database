@@ -31,13 +31,14 @@ const mongoMemoryReplSet = () => {
 /**
  *
  * @param uri {string}
+ * @param port
  * @return {Promise<DaaSServer>}
  */
-const daas = async (uri) => {
+const daas = async (uri, port = 3111) => {
     return new DaaSServer({
         mongoDbUri: uri,
         applicationId: 'daas',
-        port: "3111",
+        port: port,
         mountPath: '/daas',
         masterKey: 'daas'
     });

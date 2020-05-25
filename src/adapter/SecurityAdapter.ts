@@ -9,5 +9,7 @@ export interface SecurityAdapter {
 
     hashPlainText(plainText: string): Promise<string>;
 
+    generateUUID(): string;
+
     comparePassword(plainPassword: string, hashPassword: string): Promise<boolean>;
 }

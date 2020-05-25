@@ -16,7 +16,7 @@ export interface AuthAdapter {
 
     sendVerificationEmail(email: string, context?: ContextBlock): Promise<any>;
 
-    addAuthorizationRule(ruleId: string, rule: string, context: ContextBlock): Promise<any>;
+    // addAuthorizationRule(ruleId: string, rule: string, context: ContextBlock): Promise<any>;
 
-    hasPermission(ruleId: string, context: ContextBlock): Promise<boolean>;
+   // hasPermission(ruleId: string, context: ContextBlock): Promise<boolean>;
 }

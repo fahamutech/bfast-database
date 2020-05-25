@@ -1,28 +1,25 @@
 const axios = require('axios');
-const {mongoServer, mongoRepSet, daas, serverUrl} = require('../shared');
+const {serverUrl} = require('../shared');
+const {
+    before,
+    after,
+    it,
+    describe
+} = require('mocha');
 const assert = require('assert');
-let mongoMemoryServer;
-let daaSServer;
 
 describe('Transaction', function () {
     before(async function () {
-        this.timeout(10000);
-        mongoMemoryServer = mongoRepSet();
-        await mongoMemoryServer.start();
-        await mongoMemoryServer.waitUntilRunning();
-        daaSServer = await daas(await mongoMemoryServer.getUri());
-        await daaSServer.start();
     });
     after(async function () {
-        await daaSServer.stop();
-        await mongoMemoryServer.stop();
+
     });
 
     it('should be able to perform transaction anonymously', async function () {
         const transaction = {
             applicationId: 'daas',
             CreateTest: {
-                 id: 'ethan',
+                id: 'ethan',
                 // // age: 20,
                 // // // year: 2020,
                 // // // message: 'hello, world!',

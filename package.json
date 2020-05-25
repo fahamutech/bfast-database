@@ -5,12 +5,11 @@
   "license": "MIT",
   "scripts": {
     "build": "gulp build",
-    "test": "gulp test",
-    "test:no-build": "gulp test",
-    "prestart": "npm run build",
-    "pretest": "yarn run build",
+    "test": "yarn run build && mocha specs/tests/all.specs.js",
+    "test:no-build": "mocha specs/tests/all.specs.js",
+    "prestart": "yarn run build",
     "prepublishOnly": "npm run build",
-    "publish:beta": "npm publish --tag beta",
+    "publish:beta": "yarn publish --tag beta",
     "start": "node .",
     "start:dev": "gulp devStart",
     "push": "gulp publishContainer"
@@ -23,7 +22,8 @@
     "express": "^4.17.1",
     "http-status-codes": "^1.4.0",
     "jsonwebtoken": "^8.5.1",
-    "mongodb": "^3.5.7"
+    "mongodb": "^3.5.7",
+    "uuid": "^8.1.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.6",
@@ -32,9 +32,9 @@
     "@types/parse": "^2.12.0",
     "axios": "^0.19.2",
     "del": "^5.1.0",
+    "glob": "^7.1.6",
     "gulp": "^4.0.2",
     "mocha": "^7.1.2",
-    "glob": "^7.1.6",
     "mongodb-memory-server": "^6.6.0",
     "typescript": "^3.8.3"
   }
