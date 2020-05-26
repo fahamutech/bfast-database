@@ -6,11 +6,15 @@ const glob = require('glob');
 describe('All Test', function () {
     before(async function () {
         this.timeout(100000000);
-        mongoMemoryServer = mongoRepSet();
-        await mongoMemoryServer.start();
-        await mongoMemoryServer.waitUntilRunning();
-        daaSServer = await daas(await mongoMemoryServer.getUri());
-        await daaSServer.start();
+        try{
+            mongoMemoryServer = mongoRepSet();
+            await mongoMemoryServer.start();
+            await mongoMemoryServer.waitUntilRunning();
+            daaSServer = await daas(await mongoMemoryServer.getUri());
+            await daaSServer.start();
+        }catch (e) {
+            console.log(e);
+        }
     });
     after(async function () {
         await daaSServer.stop();

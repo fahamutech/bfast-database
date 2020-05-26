@@ -24,6 +24,18 @@ exports.daas = BFast.functions().onPostHttpRequest(DaaSConfig.getInstance().moun
     rest.handleRuleBlocks
 ]);
 
+// support backward parse-server files compatibility
+exports.getFile = BFast.functions().onGetHttpRequest('/files/:applicationId/:filename', [
+    rest.verifyBodyData,
+    (request, _, next) => {
+        request.body.applicationId = request.params.applicationId;
+        next();
+    },
+    rest.verifyApplicationId,
+    rest.verifyToken,
+    rest.storage
+]);
+
 exports.realtimeEvents = BFast.functions().onEvent('realtimeDb', data => {
     const {payload, socket, auth} = data;
     if (!(payload && payload.domain && payload.pipeline && Array.isArray(payload.pipeline))) {

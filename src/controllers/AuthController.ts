@@ -3,15 +3,20 @@ import {ContextBlock} from "../model/RulesBlockModel";
 import {BasicUserAttributes} from "../model/BasicUserAttributes";
 import {DatabaseController} from "./DatabaseController";
 
+let _auth: AuthAdapter;
+let _database: DatabaseController;
+
 export class AuthController {
     private policyDomainName = '_Policy';
 
-    constructor(private readonly _auth: AuthAdapter,
-                private readonly _database: DatabaseController) {
+    constructor(private readonly auth: AuthAdapter,
+                private readonly database: DatabaseController) {
+        _auth = this.auth;
+        _database = this.database
     }
 
     async addAuthorizationRule(ruleId: string, rule: string, context: ContextBlock): Promise<any> {
-        return this._database.update(this.policyDomainName, {
+        return _database.update(this.policyDomainName, {
             filter: {
                 ruleId: ruleId
             },
@@ -45,7 +50,7 @@ export class AuthController {
             filter.$or.push({ruleId: globalRule});
         }
         filter.$or.push({ruleId: originalRule});
-        const query: any[] = await this._database.query(this.policyDomainName, {
+        const query: any[] = await _database.query(this.policyDomainName, {
             return: [],
             filter: filter,
         }, context, {
@@ -72,7 +77,7 @@ export class AuthController {
     }
 
     async resetPassword(email: string, context?: ContextBlock): Promise<any> {
-        return this._auth.resetPassword(email, context);
+        return _auth.resetPassword(email, context);
     }
 
     async sendVerificationEmail(email: string, context?: ContextBlock): Promise<any> {
@@ -82,13 +87,13 @@ export class AuthController {
     async signIn<T extends BasicUserAttributes>(userModel: T, context?: ContextBlock): Promise<T> {
         AuthController.validateData(userModel, true);
         userModel.return = [];
-        return this._auth.signIn(userModel, context);
+        return _auth.signIn(userModel, context);
     }
 
     async signUp<T extends BasicUserAttributes>(userModel: T, context?: ContextBlock): Promise<T> {
         AuthController.validateData(userModel);
         userModel.return = [];
-        return this._auth.signUp(userModel, context);
+        return _auth.signUp(userModel, context);
     }
 
     async update<T extends BasicUserAttributes>(userModel: T, context?: ContextBlock): Promise<T> {

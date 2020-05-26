@@ -21,4 +21,6 @@ export interface RulesAdapter {
     handleAuthenticationRule(): Promise<void>;
 
     handleAuthorizationRule(): Promise<void>;
+
+    // handleStorageRule(): Promise<void>;
 }

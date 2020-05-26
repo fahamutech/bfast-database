@@ -15,8 +15,4 @@ export interface AuthAdapter {
     update<T extends BasicUserAttributes>(userModel: T, context?: ContextBlock): Promise<T>;
 
     sendVerificationEmail(email: string, context?: ContextBlock): Promise<any>;
-
-    // addAuthorizationRule(ruleId: string, rule: string, context: ContextBlock): Promise<any>;
-
-   // hasPermission(ruleId: string, context: ContextBlock): Promise<boolean>;
 }

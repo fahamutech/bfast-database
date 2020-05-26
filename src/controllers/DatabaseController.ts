@@ -6,10 +6,15 @@ import {DeleteModel} from "../model/DeleteModel";
 import {QueryModel} from "../model/QueryModel";
 import {SecurityController} from "./SecurityController";
 
+let _database: DatabaseAdapter;
+let _security: SecurityController;
+
 export class DatabaseController {
 
-    constructor(private readonly _database: DatabaseAdapter,
-                private readonly _security: SecurityController) {
+    constructor(private readonly database: DatabaseAdapter,
+                private readonly security: SecurityController) {
+        _database = this.database;
+        _security = this.security;
     }
 
     private async handleDomainValidation(domain: string) {
@@ -21,7 +26,12 @@ export class DatabaseController {
     }
 
     init(): Promise<any> {
-        return this._database.init();
+        try {
+            return _database.init();
+        } catch (e) {
+            console.warn(e);
+            return;
+        }
     }
 
     async writeOne<T extends BasicAttributesModel, V>(domain: string, data: T, context: ContextBlock, options?: WriteOptions): Promise<V> {
@@ -31,7 +41,7 @@ export class DatabaseController {
         const returnFields = data.return;
         const sanitizedData = this.sanitize4Db(data);
         const freshData = this.addCreateMetadata(sanitizedData, context);
-        freshData._id = await this._database.writeOne<any>(domain, data, context, options);
+        freshData._id = await _database.writeOne<any>(domain, data, context, options);
         return this.sanitize4User(freshData, returnFields) as any;
     }
 
@@ -41,9 +51,10 @@ export class DatabaseController {
             await this.handleDomainValidation(domain);
         }
         const returnFields = updateModel.return;
-        const sanitizedData = this.sanitize4Db(updateModel.update);
-        const freshData = this.addUpdateMetadata(sanitizedData, context);
-        const updatedDoc = await this._database.update<any, any>(domain, freshData as any, context, options)
+        updateModel.update = this.sanitize4Db(updateModel.update);
+        updateModel.filter = this.sanitize4Db(updateModel.filter);
+        updateModel.update = this.addUpdateMetadata(updateModel.update, context);
+        const updatedDoc = await _database.update<any, any>(domain, updateModel, context, options)
         return this.sanitize4User(updatedDoc, returnFields);
     }
 
@@ -52,26 +63,26 @@ export class DatabaseController {
         if (!options?.bypassDomainVerification) {
             await this.handleDomainValidation(domain);
         }
-        const returnFields = deleteModel.return;
-        const sanitizedData = this.sanitize4Db(deleteModel.filter ? deleteModel.filter : {});
-        const result = await this._database.delete<any, any>(domain, sanitizedData as any, context, options);
-        return this.sanitize4User(result, returnFields);
+        // const returnFields = deleteModel.return;
+        deleteModel.filter = this.sanitize4Db(deleteModel.filter);
+        const result = await _database.deleteOne<any, any>(domain, deleteModel, context, options);
+        return this.sanitize4User(result, ["id"]);
     }
 
     async transaction<V>(operations: (session: any) => Promise<any>): Promise<any> {
-        return this._database.transaction(operations);
+        return _database.transaction(operations);
     }
 
     async aggregate(domain: string, pipelines: Object[], context: ContextBlock, options?: WriteOptions): Promise<any> {
         if (!options?.bypassDomainVerification) {
             await this.handleDomainValidation(domain);
         }
-        return this._database.aggregate(domain, pipelines, context, options);
+        return _database.aggregate(domain, pipelines, context, options);
     }
 
     async changes(domain: string, pipeline: any[], listener: (doc: any) => void): Promise<any> {
         await this.handleDomainValidation(domain);
-        return this._database.changes(domain, pipeline, listener);
+        return _database.changes(domain, pipeline, listener);
     }
 
     async query<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>,
@@ -81,12 +92,15 @@ export class DatabaseController {
             await this.handleDomainValidation(domain);
         }
         if (queryModel.id) {
-            const sanitizedData = this.sanitize4Db(queryModel)
-            const result = await this._database.findOne(domain, sanitizedData, context, options);
+            queryModel = this.sanitize4Db(queryModel);
+            queryModel.filter = this.sanitize4Db(queryModel.filter);
+
+            const result = await _database.findOne(domain, queryModel, context, options);
             return this.sanitize4User(result, returnFields);
         } else {
-            const sanitizedData = this.sanitize4Db(queryModel.filter ? queryModel.filter : {});
-            const result = await this._database.find(domain, sanitizedData, context, options);
+            queryModel = this.sanitize4Db(queryModel);
+            queryModel.filter = this.sanitize4Db(queryModel.filter);
+            const result = await _database.findMany(domain, queryModel, context, options);
             return result.map(value => this.sanitize4User(value, returnFields));
         }
     }
@@ -101,7 +115,7 @@ export class DatabaseController {
         });
         const sanitizedData = data.map(value => this.sanitize4Db(value));
         const freshData = sanitizedData.map(value => this.addCreateMetadata(value, context));
-        const insertedIds = await this._database.writeMany<any, object>(domain,freshData,context,options);
+        const insertedIds = await _database.writeMany<any, object>(domain, freshData, context, options);
         Object.keys(insertedIds).forEach(index => {
             freshData[index]._id = insertedIds[index];
             freshData[index] = this.sanitize4User(freshData[index], returnFieldsMap[index]);
@@ -122,11 +136,19 @@ export class DatabaseController {
         data._created_by = context?.uid;
         data._created_at = new Date();
         data._updated_at = new Date();
-        data._id = this._security.generateUUID();
+        if (data.id) {
+            data._id = data.id
+        } else if (data._id) {
+        } else {
+            data._id = _security.generateUUID();
+        }
         return data;
     }
 
     sanitize4Db<T extends BasicAttributesModel>(data: T): T {
+        if (!data) {
+            return null;
+        }
         if (data.return) {
             delete data.return;
         }
@@ -168,6 +190,18 @@ export class DatabaseController {
         if (data && data._created_by !== undefined) {
             data.createdBy = data._created_by;
             delete data._created_by;
+        }
+        if (data && data._hashed_password) {
+            delete data._hashed_password;
+        }
+        if (data && data._rperm) {
+            delete data._rperm;
+        }
+        if (data && data._wperm) {
+            delete data._wperm;
+        }
+        if (data && data._acl){
+            delete data._acl;
         }
         let returnedData: any = {};
         if (!returnFields) {

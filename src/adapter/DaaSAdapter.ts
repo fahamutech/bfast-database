@@ -1,4 +1,4 @@
-import {ConfigAdapter} from "../utils/config";
+import {ConfigAdapter} from "../config";
 
 export interface DaaSAdapter {
     start(config: ConfigAdapter): Promise<boolean>;

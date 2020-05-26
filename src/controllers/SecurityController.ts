@@ -28,19 +28,11 @@ export class SecurityController implements SecurityAdapter {
     }
 
     async comparePassword(plainPassword: string, hashPassword: string): Promise<boolean> {
-        try {
-            return await bcrypt.compare(plainPassword, hashPassword);
-        } catch (e) {
-            throw e.toString();
-        }
+        return await bcrypt.compare(plainPassword, hashPassword);
     }
 
     async hashPlainText(plainText: string): Promise<string> {
-        try {
-            return await bcrypt.hash(plainText, 5);
-        } catch (e) {
-            throw e.toString();
-        }
+        return await bcrypt.hash(plainText, 10);
     }
 
     async revokeToken(token: string): Promise<any> {

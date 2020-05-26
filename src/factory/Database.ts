@@ -39,6 +39,7 @@ export class Database implements DatabaseAdapter {
     }
 
     async init(): Promise<any> {
+        await this.dropIndexes('_User');
         await this.createIndexes('_User', [
             {
                 field: 'email',
@@ -75,6 +76,12 @@ export class Database implements DatabaseAdapter {
         }
     }
 
+    async dropIndexes(domain: string) {
+        const conn = await this.connection();
+        await conn.db().collection(domain).dropIndexes();
+        return;
+    }
+
     async findOne<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>,
                                                   context: ContextBlock, options?: WriteOptions): Promise<any> {
         const conn = await this.connection();
@@ -83,10 +90,10 @@ export class Database implements DatabaseAdapter {
         });
     }
 
-    async find<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>,
-                                               context: ContextBlock, options?: WriteOptions): Promise<any> {
+    async findMany<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>,
+                                                   context: ContextBlock, options?: WriteOptions): Promise<any> {
         const conn = await this.connection();
-        const query = conn.db().collection(domain).find(queryModel, {
+        const query = conn.db().collection(domain).find(queryModel.filter, {
             session: options && options.transaction ? options.transaction : undefined
         });
         if (queryModel.skip) {
@@ -110,7 +117,7 @@ export class Database implements DatabaseAdapter {
     async update<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateModel<T>,
                                                     context: ContextBlock, options?: UpdateOptions): Promise<V> {
         const conn = await this.connection();
-        const response = await conn.db().collection(domain).findOneAndUpdate(updateModel.filter, updateModel, {
+        const response = await conn.db().collection(domain).findOneAndUpdate(updateModel.filter, updateModel.update, {
             upsert: false,// updateModel.upsert === true,
             returnOriginal: false,
             session: options && options.transaction ? options.transaction : undefined
@@ -118,15 +125,15 @@ export class Database implements DatabaseAdapter {
         return response.value;
     }
 
-    async delete<T extends BasicAttributesModel, V>(domain: string, deleteModel: DeleteModel<T>,
-                                                    context: ContextBlock, options?: DatabaseBasicOptions): Promise<V> {
+    async deleteOne<T extends BasicAttributesModel, V>(domain: string, deleteModel: DeleteModel<T>,
+                                                       context: ContextBlock, options?: DatabaseBasicOptions): Promise<V> {
         const conn = await this.connection();
         const response = await conn.db()
             .collection(domain)
-            .deleteMany(deleteModel, {
+            .findOneAndDelete(deleteModel.filter, {
                 session: options && options.transaction ? options.transaction : undefined
             });
-        return response.result as any;
+        return response.value as any;
     }
 
     async transaction<V>(operations: (session: any) => Promise<any>): Promise<any> {

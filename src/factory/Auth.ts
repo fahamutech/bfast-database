@@ -31,9 +31,13 @@ export class Auth implements AuthAdapter {
         });
         if (users && Array.isArray(users) && users.length == 1) {
             const user = users[0];
-            if (await this._security.comparePassword(userModel.password, user.password)) {
+            if (await this._security.comparePassword(userModel.password, user.password ? user.password : user._hashed_password)) {
                 delete user.password;
-                user.token = this._security.generateToken({uid: user.id});
+                delete user._hashed_password;
+                delete user._acl;
+                delete user._rperm;
+                delete user._wperm;
+                user.token = await this._security.generateToken({uid: user.id});
                 return user;
             } else {
                 throw new Error("Username/Password is not valid");

@@ -5,9 +5,16 @@ import {SecurityController} from "./SecurityController";
 import {RulesController} from "./RulesController";
 import {DaaSConfig} from "../config";
 
+let _security: SecurityController;
+
 export class RestController implements RestAdapter {
 
-    constructor(private readonly _security: SecurityController) {
+    constructor(private readonly security: SecurityController) {
+        _security = this.security;
+    }
+
+    storage(request: Request, Response, next: NextFunction) {
+        throw new Error("Method not implemented.");
     }
 
     verifyApplicationId(request: Request, response: Response, next: NextFunction) {
@@ -41,7 +48,7 @@ export class RestController implements RestAdapter {
             request.body.context.uid = null;
             next();
         } else {
-            this._security.verifyToken<{ uid: string }>(token).then(value => {
+            _security.verifyToken<{ uid: string }>(token).then(value => {
                 request.body.context.auth = true;
                 request.body.context.uid = value.uid;
                 next();
