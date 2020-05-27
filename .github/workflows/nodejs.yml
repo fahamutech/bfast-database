@@ -3,8 +3,9 @@ name: Node CI
 on:
   push:
     branches:
-      - master
-      - 2.0.x
+     # - master
+     # - 2.0.x
+       - beta
 
 jobs:
   build:
@@ -26,8 +27,8 @@ jobs:
           npm install -g yarn
           yarn install
           yarn test
-          echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
-          yarn run push
+          # echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
+          # yarn run push
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
