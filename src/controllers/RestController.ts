@@ -4,17 +4,33 @@ import * as httpStatus from "http-status-codes";
 import {SecurityController} from "./SecurityController";
 import {RulesController} from "./RulesController";
 import {DaaSConfig} from "../config";
+import {FilesAdapter} from "../adapter/FilesAdapter";
+import mime from "mime";
 
 let _security: SecurityController;
+let _storage: FilesAdapter;
 
 export class RestController implements RestAdapter {
 
-    constructor(private readonly security: SecurityController) {
-        _security = this.security;
+    constructor(security: SecurityController,
+                filesAdapter: FilesAdapter) {
+        _security = security;
+        _storage = filesAdapter;
     }
 
-    storage(request: Request, Response, next: NextFunction) {
-        throw new Error("Method not implemented.");
+    handleGetFile(request: Request, res: Response, next: NextFunction) {
+        const filename = request.params.filename;
+        const contentType = mime.getType(filename);
+        _storage.getFileData(filename).then((data) => {
+            res.status(200);
+            res.set('Content-Type', contentType);
+            res.set('Content-Length', data.length);
+            res.end(data);
+        }).catch(() => {
+            res.status(404);
+            res.set('Content-Type', 'text/plain');
+            res.end('File not found.');
+        });
     }
 
     verifyApplicationId(request: Request, response: Response, next: NextFunction) {
@@ -96,6 +112,8 @@ export class RestController implements RestAdapter {
             return rules.handleTransactionRule();
         }).then(_ => {
             return rules.handleAggregationRules();
+        }).then(_=>{
+            return rules.handleStorageRule();
         }).then(_ => {
             const results = rules.results;
             if (!(results.errors && Array.isArray(results.errors) && results.errors.length > 0)) {

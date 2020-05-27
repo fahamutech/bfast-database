@@ -27,9 +27,19 @@ export class DaaSConfig implements ConfigAdapter {
     mongoDbUri?: string;
     port: string;
     adapters?: {
-        database?: (config: ConfigAdapter) => DatabaseAdapter,
-        auth?: (config: ConfigAdapter) => AuthAdapter,
-        email?: (config: ConfigAdapter) => EmailAdapter,
+        database?: (config: ConfigAdapter) => DatabaseAdapter;
+        auth?: (config: ConfigAdapter) => AuthAdapter;
+        email?: (config: ConfigAdapter) => EmailAdapter;
+        s3Storage?: {
+            accessKey: string;
+            bucket: string;
+            direct: boolean;
+            endPoint: string;
+            prefix: string;
+            region: string;
+            useSSL: boolean;
+            secretKey: string;
+        };
     }
 }
 
@@ -41,8 +51,18 @@ export interface ConfigAdapter {
     mountPath: string;
     mongoDbUri?: string;
     adapters?: {
-        database?: (config: ConfigAdapter) => DatabaseAdapter,
-        auth?: (config: ConfigAdapter) => AuthAdapter,
-        email?: (config: ConfigAdapter) => EmailAdapter,
+        database?: (config: ConfigAdapter) => DatabaseAdapter;
+        auth?: (config: ConfigAdapter) => AuthAdapter;
+        email?: (config: ConfigAdapter) => EmailAdapter;
+        s3Storage?: {
+            accessKey: string;
+            bucket: string;
+            direct: boolean;
+            endPoint: string;
+            prefix: string;
+            region: string;
+            useSSL: boolean;
+            secretKey: string;
+        };
     }
 }

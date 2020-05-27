@@ -12,11 +12,17 @@ import {EmailController} from "./EmailController";
 import {ConfigAdapter} from "../config";
 import {EmailAdapter} from "../adapter/EmailAdapter";
 import {AuthAdapter} from "../adapter/AuthAdapter";
+import {StorageController} from "./StorageController";
+import {FilesAdapter} from "../adapter/FilesAdapter";
+import {S3Storage} from "../factory/S3Storage";
+import {GridFsStorage} from "../factory/GridFsStorage";
 
 let _databaseController: DatabaseController;
 let _authController: AuthController;
+let _storageController: StorageController;
 let _defaultEmail: EmailAdapter;
 let _defaultAuth: AuthAdapter;
+let _fileAdapter: FilesAdapter;
 
 export class RulesController implements RulesAdapter {
     rulesBlock: RulesBlockModel;
@@ -38,6 +44,12 @@ export class RulesController implements RulesAdapter {
             : new Auth(_databaseController, new SecurityController(), new EmailController(_defaultEmail));
 
         _authController = new AuthController(_defaultAuth, _databaseController);
+
+        _fileAdapter = (config && config.adapters && config.adapters.s3Storage)
+            ? new S3Storage(new SecurityController(), config)
+            : new GridFsStorage(new SecurityController(), config.mongoDbUri);
+
+        _storageController = new StorageController(_fileAdapter);
 
     }
 
@@ -66,12 +78,10 @@ export class RulesController implements RulesAdapter {
                     if (action === 'signUp') {
                         this.results["ResultOfAuthentication"] = {};
                         this.results["ResultOfAuthentication"].signUp = await _authController.signUp(data, this.rulesBlock.context);
-                    }
-                    if (action === 'signIn') {
+                    } else if (action === 'signIn') {
                         this.results["ResultOfAuthentication"] = {};
                         this.results["ResultOfAuthentication"].signIn = await _authController.signIn(data, this.rulesBlock.context);
-                    }
-                    if (action === 'resetPassword') {
+                    } else if (action === 'resetPassword') {
                         this.results["ResultOfAuthentication"] = {};
                         this.results["ResultOfAuthentication"].resetPassword = await _authController.resetPassword(data.email ? data.email : data);
                     }
@@ -239,8 +249,8 @@ export class RulesController implements RulesAdapter {
                             this.results[`ResultOf${deleteRule}`] = result;
                         }
 
-                    } else{
-                        if (!data.filter){
+                    } else {
+                        if (!data.filter) {
                             throw "filter field is required if you dont supply id field";
                         }
                         if (data.filter && Object.keys(data).length === 0) {
@@ -528,6 +538,66 @@ export class RulesController implements RulesAdapter {
             if (transaction) {
                 throw e;
             }
+            return;
+        }
+    }
+
+    async handleStorageRule(): Promise<void> {
+        try {
+            const fileRules = this.getRulesKey().filter(rule => rule.startsWith('Files'));
+            if (fileRules.length === 0) {
+                return;
+            }
+            const fileRule = fileRules[0];
+            const file = this.rulesBlock[fileRule];
+            for (const action of Object.keys(file)) {
+                const data = file[action];
+                try {
+                    if (action === 'save') {
+                        // checkPermission
+                        const allowed = await _authController.hasPermission(`files.save`, this.rulesBlock.context);
+                        if (allowed !== true) {
+                            this.results.errors.push({
+                                message: 'You have insufficient permission save file',
+                                path: `Files.save`,
+                                data: data
+                            });
+                        } else {
+                            this.results["ResultOfFiles"] = {};
+                            this.results["ResultOfFiles"].save = await _storageController.save(data, this.rulesBlock.context);
+                        }
+                    } else if (action === 'delete') {
+                        const allowed = await _authController.hasPermission(`files.delete`, this.rulesBlock.context);
+                        if (allowed !== true) {
+                            this.results.errors.push({
+                                message: 'You have insufficient permission delete file',
+                                path: `Files.delete`,
+                                data: data
+                            });
+                        } else {
+                            this.results["ResultOfFiles"] = {};
+                            this.results["ResultOfFiles"].delete = await _storageController.delete(data, this.rulesBlock.context);
+                        }
+                    }
+                    // if (action === 'list') {
+                    //     this.results["ResultOfAuthentication"] = {};
+                    //     this.results["ResultOfAuthentication"].resetPassword = await _authController.resetPassword(data.email ? data.email : data);
+                    // }
+                } catch (e) {
+                    this.results.errors.push({
+                        message: e.message ? e.message : e.toString(),
+                        path: `Files.${action}`,
+                        data: data
+                    });
+                }
+            }
+            return;
+        } catch (e) {
+            this.results.errors.push({
+                message: e.message ? e.message : e.toString(),
+                path: 'Files',
+                data: null
+            });
             return;
         }
     }

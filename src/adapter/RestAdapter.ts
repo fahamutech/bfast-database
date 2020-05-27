@@ -6,5 +6,5 @@ export interface RestAdapter {
     verifyMethod(request: Request,response: Response, next: NextFunction);
     verifyBodyData(request: Request,response: Response, next: NextFunction);
     handleRuleBlocks(request: Request,response: Response, next: NextFunction);
-    storage(request: Request,response: Response, next: NextFunction);
+    handleGetFile(request: Request,response: Response, next: NextFunction);
 }
