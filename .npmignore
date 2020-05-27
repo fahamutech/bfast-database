@@ -9,3 +9,5 @@ yarn.lock
 src
 .github
 .idea
+index.js
+index.d.ts

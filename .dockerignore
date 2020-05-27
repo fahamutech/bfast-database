@@ -2,3 +2,4 @@ specs
 .github
 devStart.sh
 pkg.js
+**/*.ts

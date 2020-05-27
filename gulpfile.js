@@ -91,4 +91,5 @@ function test(cb) {
 exports.test = gulp.series(test);
 exports.build = gulp.series(deleteBuild, compileTs, copyBFastJson);
 exports.devStart = gulp.series(deleteBuild, compileTs, copyBFastJson, devStart);
+exports.buildDocker = gulp.series(deleteBuild, compileTs, copyBFastJson, buildDockerImage);
 exports.publishContainer = gulp.series(buildDockerImage, pushToDocker);

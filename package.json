@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "build": "gulp build",
+    "build:docker": "gulp buildDocker",
     "test": "yarn run build && mocha specs/tests/all.specs.js",
     "test:no-build": "mocha specs/tests/all.specs.js",
     "prestart": "yarn run build",
@@ -30,7 +31,6 @@
     "@types/express": "^4.17.6",
     "@types/mongodb": "^3.5.16",
     "@types/node": "^13.13.5",
-    "@types/parse": "^2.12.0",
     "axios": "^0.19.2",
     "del": "^5.1.0",
     "glob": "^7.1.6",

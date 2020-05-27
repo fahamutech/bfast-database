@@ -158,13 +158,6 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.13.5.tgz#96ec3b0afafd64a4ccea9107b75bf8489f0e5765"
   integrity sha512-3ySmiBYJPqgjiHA7oEaIo2Rzz0HrOZ7yrNO5HWyaE5q0lQ3BppDZ3N53Miz8bw2I7gh1/zir2MGVZBvpb1zq9g==
 
-"@types/parse@^2.12.0":
-  version "2.12.0"
-  resolved "https://registry.yarnpkg.com/@types/parse/-/parse-2.12.0.tgz#9b1f6c8a30dcd46b83baf8b3768d0b2d3eb4edc1"
-  integrity sha512-N2EAR6zDAPxBybmv+c6ao8Vtq5gfY5PDwN4UCU+plYb9nHwNqk/P7CTCRfjUz8+ckWH8bfjmgikhwyLi+YiCpQ==
-  dependencies:
-    "@types/node" "*"
-
 "@types/qs@*":
   version "6.9.1"
   resolved "https://registry.yarnpkg.com/@types/qs/-/qs-6.9.1.tgz#937fab3194766256ee09fcd40b781740758617e7"

@@ -35,11 +35,11 @@ export class DaaSConfig implements ConfigAdapter {
             bucket: string;
             direct: boolean;
             endPoint: string;
-            prefix: string;
-            region: string;
-            useSSL: boolean;
+            prefix?: string;
+            region?: string;
+            useSSL?: boolean;
             secretKey: string;
-        };
+        } | undefined;
     }
 }
 
@@ -59,10 +59,10 @@ export interface ConfigAdapter {
             bucket: string;
             direct: boolean;
             endPoint: string;
-            prefix: string;
-            region: string;
-            useSSL: boolean;
+            prefix?: string;
+            region?: string;
+            useSSL?: boolean;
             secretKey: string;
-        };
+        } | undefined;
     }
 }
