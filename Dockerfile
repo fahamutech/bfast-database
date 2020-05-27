@@ -2,6 +2,8 @@ FROM node:10-alpine AS buildStage
 WORKDIR /daas
 COPY package.json .
 COPY yarn.lock .
+COPY gulpfile.js .
+COPY tsconfig.json .
 RUN yarn add global gulp
 RUN yarn install
 RUN yarn test
