@@ -9,10 +9,6 @@ const {serverUrl} = require('../shared');
 const assert = require('assert');
 
 describe('CreateRule With Single Document & Default Database', function () {
-    before(async function () {
-    });
-    after(async function () {
-    });
 
     it('should create a resource anonymous and return all fields include defaults', async function () {
         const rule = {

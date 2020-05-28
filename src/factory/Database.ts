@@ -39,7 +39,11 @@ export class Database implements DatabaseAdapter {
     }
 
     async init(): Promise<any> {
-        await this.dropIndexes('_User');
+        try {
+            await this.dropIndexes('_User');
+        } catch (e) {
+           // console.warn(e);
+        }
         await this.createIndexes('_User', [
             {
                 field: 'email',

@@ -3,10 +3,6 @@ const {serverUrl} = require('../shared');
 const assert = require('assert');
 
 describe('Aggregation', function () {
-    before(async function () {
-    });
-    after(async function () {
-    });
 
     it('should be able to perform aggregation', async function () {
         const aggregation = {
@@ -36,6 +32,12 @@ describe('Aggregation', function () {
             ]
         }
         const aggregationResponse = await axios.post(serverUrl, aggregation);
-        console.log(aggregationResponse.data);
+        const data = aggregationResponse.data;
+       // console.log(data);
+        assert(typeof data !== "undefined");
+        assert(typeof data === "object");
+        assert(typeof data['ResultOfAggregateTest'] !== "undefined");
+        assert(Array.isArray(data['ResultOfAggregateTest']) === true);
+        assert(data['ResultOfAggregateTest'].length === 2);
     });
 });

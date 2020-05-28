@@ -9,10 +9,6 @@ const {createMany} = require('../controller/createController');
 const assert = require('assert');
 
 describe('CreateRule with Many Document & Default Database', function () {
-    beforeEach(async function () {
-    });
-    afterEach(async function () {
-    });
 
     it('Create Many Resource Anonymously and Return specified fields', async function () {
         const data = await createMany([

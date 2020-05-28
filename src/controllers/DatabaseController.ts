@@ -100,7 +100,10 @@ export class DatabaseController {
             queryModel = this.sanitize4Db(queryModel);
             queryModel.filter = this.sanitize4Db(queryModel.filter);
             const result = await _database.findMany(domain, queryModel, context, options);
-            return result.map(value => this.sanitize4User(value, returnFields));
+            if (result && Array.isArray(result)){
+                return result.map(value => this.sanitize4User(value, returnFields));
+            }
+            return result;
         }
     }
 
