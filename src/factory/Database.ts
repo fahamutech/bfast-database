@@ -102,14 +102,21 @@ export class Database implements DatabaseAdapter {
             query.skip(0)
         }
         if (queryModel.size) {
-            query.limit(queryModel.size);
+            if (queryModel.size !== -1) {
+                query.limit(queryModel.size);
+            }
         } else {
-            query.limit(20);
+            if (queryModel.count === false) {
+                query.limit(20);
+            }
         }
         if (queryModel.orderBy && Array.isArray(queryModel.orderBy) && queryModel.orderBy.length > 0) {
             queryModel.orderBy.forEach(value => {
                 query.sort(value);
             });
+        }
+        if (queryModel.count === true) {
+            return await query.count();
         }
         return await query.toArray();
     }

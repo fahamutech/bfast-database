@@ -45,8 +45,8 @@ export class DatabaseController {
         return this.sanitize4User(freshData, returnFields) as any;
     }
 
-    async update<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateModel<T>,
-                                                    context: ContextBlock, options?: UpdateOptions): Promise<V> {
+    async update(domain: string, updateModel: UpdateModel<any>,
+                 context: ContextBlock, options?: UpdateOptions): Promise<any> {
         if (!options?.bypassDomainVerification) {
             await this.handleDomainValidation(domain);
         }
@@ -58,8 +58,8 @@ export class DatabaseController {
         return this.sanitize4User(updatedDoc, returnFields);
     }
 
-    async delete<T extends BasicAttributesModel, V>(domain: string, deleteModel: DeleteModel<T>,
-                                                    context: ContextBlock, options?: DatabaseBasicOptions): Promise<V> {
+    async delete(domain: string, deleteModel: DeleteModel<any>,
+                 context: ContextBlock, options?: DatabaseBasicOptions): Promise<any> {
         if (!options?.bypassDomainVerification) {
             await this.handleDomainValidation(domain);
         }
@@ -85,8 +85,7 @@ export class DatabaseController {
         return _database.changes(domain, pipeline, listener);
     }
 
-    async query<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>,
-                                                context: ContextBlock, options?: WriteOptions): Promise<any> {
+    async query(domain: string, queryModel: QueryModel<any>, context: ContextBlock, options?: WriteOptions): Promise<any> {
         const returnFields = queryModel.return;
         if (!options?.bypassDomainVerification) {
             await this.handleDomainValidation(domain);
@@ -200,7 +199,7 @@ export class DatabaseController {
         if (data && data._wperm) {
             delete data._wperm;
         }
-        if (data && data._acl){
+        if (data && data._acl) {
             delete data._acl;
         }
         let returnedData: any = {};
