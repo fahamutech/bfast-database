@@ -4,7 +4,7 @@
     "**/specs/**",
     "**/factory/**",
     "**/adapter/**",
-    "**/config/**",
+    "**/controllers/**",
     "**/model/**",
     "**/*.specs.js",
     "**/index.js"

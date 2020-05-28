@@ -1,26 +1,19 @@
 import {AuthAdapter} from "../adapter/AuthAdapter";
-import {ConfigAdapter} from "../config";
 import {BasicUserAttributes} from "../model/BasicUserAttributes";
-import {DatabaseAdapter} from "../adapter/DatabaseAdapter";
-import {Database} from "./Database";
 import {ContextBlock} from "../model/RulesBlockModel";
-import {SecurityAdapter} from "../adapter/SecurityAdapter";
-import {Security} from "./Security";
-
-let database: DatabaseAdapter;
-let security: SecurityAdapter;
+import {DatabaseController} from "../controllers/DatabaseController";
+import {SecurityController} from "../controllers/SecurityController";
+import {EmailController} from "../controllers/EmailController";
 
 export class Auth implements AuthAdapter {
     private domainName = '_User';
 
-    constructor(private readonly config: ConfigAdapter) {
-        database = (config.adapters && config.adapters.database) ?
-            config.adapters.database(config) : new Database(config);
-        security = (config.adapters && config.adapters.security) ?
-            config.adapters.security(config) : new Security(config);
+    constructor(private readonly _database: DatabaseController,
+                private readonly _security: SecurityController,
+                private readonly _email: EmailController) {
     }
 
-    async resetPassword(email: string): Promise<any> {
+    async resetPassword(email: string, context?: ContextBlock): Promise<any> {
         if (!email) {
             throw new Error('Email required');
         }
@@ -28,48 +21,55 @@ export class Auth implements AuthAdapter {
     }
 
     async signIn<T extends BasicUserAttributes>(userModel: T, context?: ContextBlock): Promise<T> {
-        Auth.validateData(userModel);
-        userModel.return = [];
-        throw new Error('Not implemented');
+        const users = await this._database.query<any>(this.domainName, {
+            filter: {
+                username: userModel.username
+            },
+            return: []
+        }, context, {
+            bypassDomainVerification: true
+        });
+        if (users && Array.isArray(users) && users.length == 1) {
+            const user = users[0];
+            if (await this._security.comparePassword(userModel.password, user.password ? user.password : user._hashed_password)) {
+                delete user.password;
+                delete user._hashed_password;
+                delete user._acl;
+                delete user._rperm;
+                delete user._wperm;
+                user.token = await this._security.generateToken({uid: user.id});
+                return user;
+            } else {
+                throw new Error("Username/Password is not valid");
+            }
+        } else {
+            throw new Error("Username/Password is not valid");
+        }
     }
 
     async signUp<T extends BasicUserAttributes>(userModel: T, context?: ContextBlock): Promise<T> {
-        Auth.validateData(userModel);
-        userModel.return = [];
-        userModel.password = await security.hashPlainText(userModel.password);
-        const user = await database.writeOne<BasicUserAttributes, any>(this.domainName, userModel, context, {
-            bypassDomainVerification: true,
-            indexes: [
-                {
-                    field: 'email',
-                    unique: true,
-                    collation: {
-                        locale: 'en',
-                        strength: 2
-                    }
-                },
-                {
-                    field: 'username',
-                    unique: true,
-                    collation: {
-                        locale: 'en',
-                        strength: 2
-                    }
-                }
-            ]
+        userModel.password = await this._security.hashPlainText(userModel.password);
+        const user = await this._database.writeOne<BasicUserAttributes, any>(this.domainName, userModel, context, {
+            bypassDomainVerification: true
         });
         delete user.password;
-        user.token = await security.generateToken({uid:user.id});
+        user.token = await this._security.generateToken({uid: user.id});
         return user;
     }
 
-    private static validateData<T extends BasicUserAttributes>(data: T) {
-        if (!data.username) {
-            throw new Error('username required');
-        } else if (!data.password) {
-            throw new Error('Password required');
-        } else {
-            return;
-        }
+    async deleteUser(context?: ContextBlock): Promise<any> {
+        return Promise.resolve(undefined);
+    }
+
+    async sendVerificationEmail(email: string, context?: ContextBlock): Promise<any> {
+        return Promise.resolve(undefined);
+    }
+
+    async update<T extends BasicUserAttributes>(userModel: T, context?: ContextBlock): Promise<T> {
+        return Promise.resolve(undefined);
+    }
+
+    async updatePassword(password: string, context?: ContextBlock): Promise<any> {
+        return Promise.resolve(undefined);
     }
 }

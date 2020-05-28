@@ -1,5 +1,5 @@
 export interface SecurityAdapter {
-    generateToken<T>(data: T, expire?: string): Promise<string>;
+    generateToken<T extends { uid: string, [key: string]: any }>(data: T, expire?: string): Promise<string>;
 
     verifyToken<T>(token: string): Promise<T>;
 
@@ -8,6 +8,8 @@ export interface SecurityAdapter {
     revokeToken(token: string): Promise<any>;
 
     hashPlainText(plainText: string): Promise<string>;
+
+    generateUUID(): string;
 
     comparePassword(plainPassword: string, hashPassword: string): Promise<boolean>;
 }

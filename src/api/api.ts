@@ -1,17 +1,60 @@
 import {BFast} from "bfastnode";
 import {ConfigAdapter, DaaSConfig} from "../config";
-import {Rest} from "../factory/Rest";
+import {Database} from "../factory/Database";
+import {RestController} from "../controllers/RestController";
+import {SecurityController} from "../controllers/SecurityController";
+import {DatabaseController} from "../controllers/DatabaseController";
+import {FilesAdapter} from "../adapter/FilesAdapter";
+import {S3Storage} from "../factory/S3Storage";
+import {GridFsStorage} from "../factory/GridFsStorage";
 
 const config: ConfigAdapter = DaaSConfig.getInstance();
 
-const rest = (config.adapters && config.adapters.rest) ?
-    config.adapters.rest(config) : new Rest(config);
+const database: DatabaseController = new DatabaseController(
+    (config && config.adapters && config.adapters.database)
+        ? config.adapters.database(config)
+        : new Database(),
+    new SecurityController()
+);
 
+const filesAdapter: FilesAdapter = (config && config.adapters && config.adapters.s3Storage)
+    ? new S3Storage(new SecurityController(), config)
+    : new GridFsStorage(new SecurityController(), config.mongoDbUri);
 
-exports.daas = BFast.functions.onHttpRequest(DaaSConfig.getInstance().mountPath, [
+const rest = new RestController(new SecurityController(), filesAdapter);
+
+export const daas = BFast.functions().onPostHttpRequest(DaaSConfig.getInstance().mountPath, [
     rest.verifyMethod,
     rest.verifyBodyData,
     rest.verifyApplicationId,
     rest.verifyToken,
     rest.handleRuleBlocks
 ]);
+
+// support backward parse-server files compatibility
+export const getFile = BFast.functions().onGetHttpRequest('/files/:applicationId/:filename', [
+    (request, _, next) => {
+        request.body.applicationId = request.params.applicationId;
+        next();
+    },
+    rest.verifyApplicationId,
+    rest.verifyToken,
+    rest.handleGetFile
+]);
+
+export const realtimeEvents = BFast.functions().onEvent('realtimeDb', data => {
+    const {payload, socket, auth} = data;
+    if (!(payload && payload.domain && payload.pipeline && Array.isArray(payload.pipeline))) {
+        socket.emit('realtimeDb', {errors: {message: 'bad payload format'}});
+        return;
+    }
+    const domain = payload.domain;
+    const pipeline = payload.pipeline;
+    database.changes(domain, pipeline, doc => {
+        socket.emit('realtimeDb', {data: doc});
+    }).then(_ => {
+        socket.emit('realtimeDb', {info: {message: 'start listening for database changes'}});
+    }).catch(reason => {
+        socket.emit('realtimeDb', {errors: {message: reason}});
+    });
+});

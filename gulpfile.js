@@ -2,6 +2,7 @@ const process = require('child_process');
 const pkg = require('./package');
 const gulp = require('gulp');
 const del = require('del');
+const glob = require('glob');
 
 function handleBuild(childProcess, cb) {
     childProcess.on('error', (err) => {
@@ -37,22 +38,25 @@ function pushToDocker(cb) {
 }
 
 function devStart(cb) {
-    const devStart = process.exec('node .', {
-        env: {
-            PORT: '3000',
-            APPLICATION_ID: 'daas',
-            MONGO_URL: 'mongodb://localhost:27017/daas',
-            MASTER_KEY: 'daas'
-        }
-    });
-    devStart.on('exit', _ => {
+    const {mongoServer, daas} = require('./specs/shared');
+    let mongoMemoryServer;
+    let daaSServer;
+
+    async function run() {
+        mongoMemoryServer = mongoServer();
+        await mongoMemoryServer.start();
+        daaSServer = await daas('mongodb://localhost/smartstock', 3003);
+        await daaSServer.start();
+    }
+
+    run().catch(reason => {
+        console.log(reason);
         cb();
     });
-    handleBuild(devStart, cb);
 }
 
 function copyBFastJson(cb) {
-    gulp.src('./src/config/bfast.json').pipe(gulp.dest('./dist/config'));
+    gulp.src('./src/bfast.json').pipe(gulp.dest('./dist/'));
     cb();
 }
 
@@ -66,10 +70,26 @@ function compileTs(cb) {
 }
 
 function deleteBuild(cb) {
-    del(['dist/**','!dist'], {force:true});
+    del(['dist/**', '!dist'], {force: true});
     cb();
 }
 
+function test(cb) {
+    const testPath = __dirname + '/specs/tests';
+    glob('**/*.js', {absolute: true, cwd: testPath}, (err, files) => {
+        if (err) {
+            console.error(err);
+        }
+        files.forEach(file => {
+            const result = process.execSync(`npx mocha ${file}`);
+            console.log(result.toString());
+        });
+        cb();
+    });
+}
+
+exports.test = gulp.series(test);
 exports.build = gulp.series(deleteBuild, compileTs, copyBFastJson);
-exports.devStart = gulp.series(deleteBuild, compileTs, copyBFastJson,devStart);
-exports.publishContainer = gulp.series(buildDockerImage, pushToDocker);
+exports.devStart = gulp.series(deleteBuild, compileTs, copyBFastJson, devStart);
+exports.buildDocker = gulp.series(deleteBuild, compileTs, copyBFastJson, buildDockerImage);
+exports.publishContainer = gulp.series(deleteBuild, compileTs, copyBFastJson, buildDockerImage, pushToDocker);

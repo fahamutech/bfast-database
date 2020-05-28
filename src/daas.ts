@@ -1,7 +1,9 @@
 import {DaaSAdapter} from "./adapter/DaaSAdapter";
 import {FaaS} from 'bfast-faas';
-import {ConfigAdapter, DaaSConfig} from "./config";
 import {Database} from "./factory/Database";
+import {DatabaseController} from "./controllers/DatabaseController";
+import {SecurityController} from "./controllers/SecurityController";
+import {ConfigAdapter, DaaSConfig} from "./config";
 
 
 export class DaaSServer implements DaaSAdapter {
@@ -17,7 +19,7 @@ export class DaaSServer implements DaaSAdapter {
                 port: this.config.port,
                 functionsConfig: {
                     functionsDirPath: __dirname,
-                    bfastJsonPath: __dirname + '/config/bfast.json'
+                    bfastJsonPath: __dirname + '/bfast.json'
                 }
             });
             await this.faas.start();
@@ -29,8 +31,7 @@ export class DaaSServer implements DaaSAdapter {
     }
 
     async stop(): Promise<boolean> {
-        process.exit(0);
-        return true;
+        return await this.faas.stop();
     }
 
     private validateOptions(): { valid: boolean, message: string } {
@@ -67,8 +68,12 @@ export class DaaSServer implements DaaSAdapter {
     }
 
     private static async setUpDatabase(config: ConfigAdapter) {
-        const database: any = (config.adapters && config.adapters.database) ?
-            config.adapters.database(config) : new Database(config);
+        const database: any = new DatabaseController(
+            (config && config.adapters && config.adapters.database)
+            ? config.adapters.database(config)
+            : new Database(),
+            new SecurityController()
+        )
         return database.init();
     }
 

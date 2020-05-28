@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import * as _jwt from "jsonwebtoken";
+import * as uuid from 'uuid';
 import {SecurityAdapter} from "../adapter/SecurityAdapter";
-import {ConfigAdapter} from "../config";
 
 let _jwtPassword =
     `MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDFg6797ocIzEPK
@@ -21,51 +21,30 @@ bzrJW7JZAgMBAAECggEABAX9r5CHUaePjfX8vnil129vDKa1ibKEi0cjI66CQGbB
 3ZW+HRzcQMmnFKpxdHnSiruupq+MwnYoSvDv21hfCfkQDXvppQkXe72S+oS2vrJr
 JLcWQ6hFDpecIaaCJiqAXvFACr`;
 
-export class Security implements SecurityAdapter {
 
-    constructor(private readonly config: ConfigAdapter) {
+export class SecurityController implements SecurityAdapter {
+
+    constructor() {
     }
 
     async comparePassword(plainPassword: string, hashPassword: string): Promise<boolean> {
-        try {
-            return await bcrypt.compare(plainPassword, hashPassword);
-        } catch (e) {
-            console.error(e);
-            throw e.toString();
-        }
+        return await bcrypt.compare(plainPassword, hashPassword);
     }
 
     async hashPlainText(plainText: string): Promise<string> {
-        try {
-            return await bcrypt.hash(plainText, 5);
-        } catch (e) {
-            console.error(e);
-            throw e.toString();
-        }
+        return await bcrypt.hash(plainText, 10);
     }
 
     async revokeToken(token: string): Promise<any> {
-        return {message: 'Token revoked', value: false};
-        // return new Promise((resolve, reject) => {
-        //     _redisClient.del(token, (err, reply) => {
-        //         if (err) {
-        //             reject({
-        //                 message: 'Fails to revoke a token',
-        //                 reason: err.toString()
-        //             });
-        //             return;
-        //         }
-        //         resolve({message: 'Token revoked', value: reply});
-        //     });
-        // });
+        return {message: 'Token not revoked', value: false};
     }
 
-    async generateToken(data: { [key: string]: any; }, expire?: string): Promise<string> {
+    async generateToken(data: { uid: string, [key: string]: any }, expire?: string): Promise<string> {
         return new Promise((resolve, reject) => {
             _jwt.sign(data, _jwtPassword, {
-                expiresIn: expire ? expire : '30d',
+                expiresIn: expire ? expire : '7d',
                 issuer: 'bfast::cloud'
-            }, (err, encoded) => {
+            }, async (err, encoded) => {
                 if (err) {
                     reject({message: 'Fails to generate a token', reason: err.toString()});
                     return;
@@ -101,4 +80,13 @@ export class Security implements SecurityAdapter {
         });
     }
 
+    private static dayToSecond(day: string) {
+        const days = day ? day : '7d';
+        const daysInNumber = days.replace('d', '') as unknown as number;
+        return (daysInNumber * 86400);
+    }
+
+    generateUUID(): string {
+        return uuid.v4();
+    }
 }
