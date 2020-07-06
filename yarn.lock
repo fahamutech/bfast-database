@@ -33,6 +33,14 @@
   resolved "https://registry.yarnpkg.com/@apollographql/graphql-playground-html/-/graphql-playground-html-1.6.24.tgz#3ce939cb127fb8aaa3ffc1e90dff9b8af9f2e3dc"
   integrity sha512-8GqG48m1XqyXh4mIZrtB5xOhUwSsh1WsrrsaZQOEYYql3YN9DEu9OOSg0ILzXHZo/h2Q74777YE4YzlArQzQEQ==
 
+"@babel/runtime-corejs3@7.10.2":
+  version "7.10.2"
+  resolved "https://registry.yarnpkg.com/@babel/runtime-corejs3/-/runtime-corejs3-7.10.2.tgz#3511797ddf9a3d6f3ce46b99cc835184817eaa4e"
+  integrity sha512-+a2M/u7r15o3dV1NEizr9bRi+KUVnrs/qYxF0Z06DAPx/4VCWaz1WA7EcbE+uqGgt39lp5akWGmHsTseIkHkHg==
+  dependencies:
+    core-js-pure "^3.0.0"
+    regenerator-runtime "^0.13.4"
+
 "@babel/runtime-corejs3@7.6.3":
   version "7.6.3"
   resolved "https://registry.yarnpkg.com/@babel/runtime-corejs3/-/runtime-corejs3-7.6.3.tgz#a2b2b7ceea6ecb37ff822d293a312f1f00c29b84"
@@ -55,6 +63,13 @@
   integrity sha512-HHxmgxbIzOfFlZ+tdeRKtaxWOMUoCG5Mu3wKeUmOxjYrwb3AAHgnmtCUbPPK11/raIWLIBK250t8E2BPO0p7jA==
   dependencies:
     core-js-pure "^3.0.0"
+    regenerator-runtime "^0.13.4"
+
+"@babel/runtime@7.10.2":
+  version "7.10.2"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.10.2.tgz#d103f21f2602497d38348a32e008637d506db839"
+  integrity sha512-6sF3uQw2ivImfVIl62RZ7MXhO2tap69WeWK57vAaimT6AZbE4FbqjdEJIN1UqoD6wI6B+1n9UiagafH1sxjOtg==
+  dependencies:
     regenerator-runtime "^0.13.4"
 
 "@babel/runtime@7.6.3":
@@ -3895,17 +3910,17 @@ parse@2.8.0:
     ws "7.1.2"
     xmlhttprequest "1.8.0"
 
-parse@^2.13.0:
-  version "2.13.0"
-  resolved "https://registry.yarnpkg.com/parse/-/parse-2.13.0.tgz#6f102e55c30bdef1b6136fefbf3a1b5293fd3969"
-  integrity sha512-0W7FBmtjtVpaxf+AK8S2+o6rosV4vzzvB9ba/8Y+7wWNPiy/9L8s+F0gI5ADYx/KbRqF0uR/9Q+FzbJB6IZ0Sw==
+parse@^2.14.0:
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/parse/-/parse-2.14.0.tgz#47b01837795a250d631e1b96e901893b44b5a16c"
+  integrity sha512-S4bbF80Aom/xDk4YNkzZG1xBHYbiFQGueJWyO4DpYlajfkEs3gp0oszFDnGadTARyCgoQGxNE4Qkege/QqNETA==
   dependencies:
-    "@babel/runtime" "7.9.2"
-    "@babel/runtime-corejs3" "7.9.2"
+    "@babel/runtime" "7.10.2"
+    "@babel/runtime-corejs3" "7.10.2"
     crypto-js "4.0.0"
     react-native-crypto-js "1.0.0"
     uuid "3.3.3"
-    ws "7.2.5"
+    ws "7.3.0"
     xmlhttprequest "1.8.0"
 
 parseqs@0.0.5:
@@ -5524,10 +5539,10 @@ ws@7.2.3:
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.2.3.tgz#a5411e1fb04d5ed0efee76d26d5c46d830c39b46"
   integrity sha512-HTDl9G9hbkNDk98naoR/cHDws7+EyYMOdL1BmjsZXRUjf7d+MficC4B7HLUPlSiho0vg+CWKrGIt/VJBd1xunQ==
 
-ws@7.2.5:
-  version "7.2.5"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-7.2.5.tgz#abb1370d4626a5a9cd79d8de404aa18b3465d10d"
-  integrity sha512-C34cIU4+DB2vMyAbmEKossWq2ZQDr6QEyuuCzWrM9zfw1sGc0mYiJ0UnG9zzNykt49C2Fi34hvr2vssFQRS6EA==
+ws@7.3.0:
+  version "7.3.0"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-7.3.0.tgz#4b2f7f219b3d3737bc1a2fbf145d825b94d38ffd"
+  integrity sha512-iFtXzngZVXPGgpTlP1rBqsUK82p9tKqsWRPg5L56egiljujJT3vGAYnHANvFxBieXrTFavhzhxW52jnaWV+w2w==
 
 ws@^5.2.0:
   version "5.2.2"

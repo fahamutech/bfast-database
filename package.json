@@ -10,7 +10,7 @@
   "dependencies": {
     "bfast-s3like": "^2.1.0",
     "express": "^4.17.1",
-    "parse": "^2.13.0",
+    "parse": "^2.14.0",
     "parse-server": "^4.2.0"
   },
   "devDependencies": {
