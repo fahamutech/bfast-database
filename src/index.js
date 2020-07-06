@@ -33,8 +33,7 @@ const api = new ParseServer({
             endPoint: process.env.S3_ENDPOINT,
             secretKey: process.env.S3_SECRET_KEY,
         }
-    },
-    liveQuery: process.env.PARSE_SERVER_LIVE_QUERY,
+    }
 });
 
 app.use('/', api);
@@ -64,8 +63,5 @@ app.post('/storage', [
 ]);
 
 const httpServer = app.listen(Number(process.env.PORT), function () {
-    console.log('BFast::Cloud DaaS running at port 3000.');
-});
-const parseLiveQueryServer = ParseServer.createLiveQueryServer(httpServer, {
-    // redisURL: 'redis://rdb:6379'
+    console.log('BFast::Cloud DaaS running at port ' + process.env.PORT);
 });
