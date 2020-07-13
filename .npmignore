@@ -1,0 +1,8 @@
+Dockerfile
+.dockerignore
+gulpfile.js
+pkg.js
+devStart.sh
+.github
+dist
+.idea
