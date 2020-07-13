@@ -6,5 +6,3 @@ logs
 *.log.*
 *.err.*
 dist
-docker-compose.yml
-devStart.sh

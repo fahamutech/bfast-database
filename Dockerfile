@@ -13,4 +13,5 @@ COPY package.json .
 COPY yarn.lock .
 RUN apk --no-cache update
 RUN yarn install --production=true
-CMD ["node","/daas/index.js"]
+
+CMD ["node","/daas/src/index.js"]

@@ -1,13 +1,8 @@
-specs
-.dockerignore
-devStart.sh
 Dockerfile
+.dockerignore
 gulpfile.js
 pkg.js
-tsconfig.json
-yarn.lock
-src
+devStart.sh
 .github
+dist
 .idea
-index.js
-index.d.ts
