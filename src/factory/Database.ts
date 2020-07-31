@@ -1,4 +1,4 @@
-import {DatabaseAdapter, DatabaseBasicOptions, UpdateOptions, WriteOptions} from "../adapter/DatabaseAdapter";
+import {DatabaseAdapter, DatabaseBasicOptions, DatabaseUpdateOptions, DatabaseWriteOptions} from "../adapter/DatabaseAdapter";
 import {MongoClient} from "mongodb";
 import {BasicAttributesModel} from "../model/BasicAttributesModel";
 import {ContextBlock} from "../model/RulesBlockModel";
@@ -10,7 +10,7 @@ import {DaaSConfig} from "../config";
 export class Database implements DatabaseAdapter {
     private _mongoClient: MongoClient;
 
-    async writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock, options?: WriteOptions): Promise<V> {
+    async writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock, options?: DatabaseWriteOptions): Promise<V> {
         const conn = await this.connection();
         const response = await conn.db().collection(domain).insertMany(data, {
             session: options && options.transaction ? options.transaction : undefined
@@ -18,9 +18,10 @@ export class Database implements DatabaseAdapter {
         return response.insertedIds as any;
     }
 
-    async writeOne<T extends BasicAttributesModel, V>(domain: string, data: T, context: ContextBlock, options?: WriteOptions): Promise<V> {
+    async writeOne<T extends BasicAttributesModel>(domain: string, data: T,context: ContextBlock, options?: DatabaseWriteOptions): Promise<any> {
         const conn = await this.connection();
         const response = await conn.db().collection(domain).insertOne(data, {
+            w: "majority",
             session: options && options.transaction ? options.transaction : undefined
         });
         return response.insertedId;
@@ -87,15 +88,15 @@ export class Database implements DatabaseAdapter {
     }
 
     async findOne<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>,
-                                                  context: ContextBlock, options?: WriteOptions): Promise<any> {
+                                                  context: ContextBlock, options?: DatabaseWriteOptions): Promise<any> {
         const conn = await this.connection();
         return await conn.db().collection(domain).findOne<T>({_id: queryModel._id}, {
             session: options && options.transaction ? options.transaction : undefined
         });
     }
 
-    async findMany<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>,
-                                                   context: ContextBlock, options?: WriteOptions): Promise<any> {
+    async query<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>,
+                                                context: ContextBlock, options?: DatabaseWriteOptions): Promise<any> {
         const conn = await this.connection();
         const query = conn.db().collection(domain).find(queryModel.filter, {
             session: options && options.transaction ? options.transaction : undefined
@@ -126,7 +127,7 @@ export class Database implements DatabaseAdapter {
     }
 
     async update<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateModel<T>,
-                                                    context: ContextBlock, options?: UpdateOptions): Promise<V> {
+                                                    context: ContextBlock, options?: DatabaseUpdateOptions): Promise<V> {
         const conn = await this.connection();
         const response = await conn.db().collection(domain).findOneAndUpdate(updateModel.filter, updateModel.update, {
             upsert: false,// updateModel.upsert === true,
@@ -167,7 +168,7 @@ export class Database implements DatabaseAdapter {
         }
     }
 
-    async aggregate(domain: string, pipelines: Object[], context: ContextBlock, options?: WriteOptions): Promise<any> {
+    async aggregate(domain: string, pipelines: Object[], context: ContextBlock, options?: DatabaseWriteOptions): Promise<any> {
         const conn = await this.connection();
         return conn.db().collection(domain).aggregate(pipelines).toArray();
     }

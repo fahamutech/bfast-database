@@ -9,33 +9,44 @@ import {ConfigAdapter, DaaSConfig} from "./config";
 export class DaaSServer implements DaaSAdapter {
     private faas: FaaS;
 
-    constructor(private readonly config: ConfigAdapter) {
-        DaaSServer.registerOptions(config);
+    constructor() {
+        DaaSServer._registerOptions(config);
     }
 
-    async start(): Promise<boolean> {
-        if (this.validateOptions().valid) {
+    /**
+     * start a bfast::database server
+     * @param options {ConfigAdapter}
+     * @return Promise
+     */
+    async start(options: ConfigAdapter): Promise<boolean> {
+        if (this._validateOptions(options).valid) {
             this.faas = new FaaS({
-                port: this.config.port,
+                port: options.port,
                 functionsConfig: {
                     functionsDirPath: __dirname,
                     bfastJsonPath: __dirname + '/bfast.json'
                 }
             });
             await this.faas.start();
-            await DaaSServer.setUpDatabase(this.config);
+            await this._setUpDatabase(this.config);
             return true;
         } else {
-            throw new Error(this.validateOptions().message);
+            throw new Error(this._validateOptions(options).message);
         }
     }
 
-    async stop(): Promise<boolean> {
-        return await this.faas.stop();
+    /**
+     * stop a bfast::database server
+     * @return Promise
+     */
+    async stop(): Promise<any> {
+        if (!this.faas){
+            return true;
+        }
+        return this.faas.stop();
     }
 
-    private validateOptions(): { valid: boolean, message: string } {
-        const options = this.config;
+    private _validateOptions(options: ConfigAdapter): { valid: boolean, message: string } {
         if (!options.port) {
             return {
                 valid: false,
@@ -67,8 +78,8 @@ export class DaaSServer implements DaaSAdapter {
         }
     }
 
-    private static async setUpDatabase(config: ConfigAdapter) {
-        const database: any = new DatabaseController(
+    private  async _setUpDatabase(config: ConfigAdapter) {
+        const database: DatabaseController = new DatabaseController(
             (config && config.adapters && config.adapters.database)
             ? config.adapters.database(config)
             : new Database(),
@@ -77,7 +88,7 @@ export class DaaSServer implements DaaSAdapter {
         return database.init();
     }
 
-    private static registerOptions(options: ConfigAdapter) {
+    private  _registerOptions(options: ConfigAdapter) {
         DaaSConfig.getInstance().addValues(options);
     }
 }

@@ -46,7 +46,7 @@ export class DaaSConfig implements ConfigAdapter {
 
 export interface ConfigAdapter {
     port: string;
-    masterKey: string;
+    masterKey?: string;
     applicationId: string;
     mountPath: string;
     mongoDbUri?: string;

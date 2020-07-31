@@ -10,8 +10,12 @@ export interface BasicAttributesModel {
     _updated_at?: Date;
     createdBy?: string;
     _created_by?: string;
+    _rperm?: any;
+    _wperm?: any;
+    _acl?: any;
+    _hashed_password?: string;
     return?: string[];
-    $currentDate?: { _updated_at: true };
+    $currentDate: { _updated_at: true };
 
     [key: string]: any;
 }
