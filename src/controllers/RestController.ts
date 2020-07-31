@@ -96,30 +96,30 @@ export class RestController implements RestAdapter {
 
     handleRuleBlocks(request: Request, response: Response, next: NextFunction) {
         const body = request.body;
-        const rules = new RulesController(DaaSConfig.getInstance());
-        rules.rulesBlock = body;
-        rules.handleAuthenticationRule().then(_ => {
-            return rules.handleAuthorizationRule();
+        const rulesController = new RulesController(DaaSConfig.getInstance());
+        rulesController.rulesBlock = body;
+        rulesController.handleAuthenticationRule().then(_ => {
+            return rulesController.handleAuthorizationRule();
         }).then(_ => {
-            return rules.handleCreateRules();
+            return rulesController.handleCreateRules();
         }).then(_ => {
-            return rules.handleUpdateRules();
+            return rulesController.handleUpdateRules();
         }).then(_ => {
-            return rules.handleDeleteRules();
+            return rulesController.handleDeleteRules();
         }).then(_ => {
-            return rules.handleQueryRules();
+            return rulesController.handleQueryRules();
         }).then(_ => {
-            return rules.handleTransactionRule();
+            return rulesController.handleTransactionRule();
         }).then(_ => {
-            return rules.handleAggregationRules();
+            return rulesController.handleAggregationRules();
         }).then(_=>{
-            return rules.handleStorageRule();
+            return rulesController.handleStorageRule();
         }).then(_ => {
-            const results = rules.results;
+            const results = rulesController.results;
             if (!(results.errors && Array.isArray(results.errors) && results.errors.length > 0)) {
                 delete results.errors;
             }
-            response.status(httpStatus.OK).json(rules.results);
+            response.status(httpStatus.OK).json(rulesController.results);
         }).catch(reason => {
             response.status(httpStatus.EXPECTATION_FAILED).json({message: reason.message ? reason.message : reason.toString()})
         });

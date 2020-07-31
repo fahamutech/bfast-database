@@ -8,53 +8,51 @@ import {FilesAdapter} from "../adapter/FilesAdapter";
 import {S3Storage} from "../factory/S3Storage";
 import {GridFsStorage} from "../factory/GridFsStorage";
 
-const config: ConfigAdapter = DaaSConfig.getInstance();
-
-const database: DatabaseController = new DatabaseController(
-    (config && config.adapters && config.adapters.database)
-        ? config.adapters.database(config)
+const _configController: ConfigAdapter = DaaSConfig.getInstance();
+const _databaseController: DatabaseController = new DatabaseController(
+    (_configController && _configController.adapters && _configController.adapters.database)
+        ? _configController.adapters.database(_configController)
         : new Database(),
     new SecurityController()
 );
+const _filesController: FilesAdapter = (_configController && _configController.adapters && _configController.adapters.s3Storage)
+    ? new S3Storage(new SecurityController(), _configController)
+    : new GridFsStorage(new SecurityController(), _configController.mongoDbUri);
+const _restController = new RestController(new SecurityController(), _filesController);
 
-const filesAdapter: FilesAdapter = (config && config.adapters && config.adapters.s3Storage)
-    ? new S3Storage(new SecurityController(), config)
-    : new GridFsStorage(new SecurityController(), config.mongoDbUri);
-
-const rest = new RestController(new SecurityController(), filesAdapter);
-
+/** handle database resources requests **/
 export const daas = BFast.functions().onPostHttpRequest(DaaSConfig.getInstance().mountPath, [
-    rest.verifyMethod,
-    rest.verifyBodyData,
-    rest.verifyApplicationId,
-    rest.verifyToken,
-    rest.handleRuleBlocks
+    _restController.verifyMethod,
+    _restController.verifyBodyData,
+    _restController.verifyApplicationId,
+    _restController.verifyToken,
+    _restController.handleRuleBlocks
 ]);
 
-// support backward parse-server files compatibility
+/** handle files requests **/
 export const getFile = BFast.functions().onGetHttpRequest('/files/:applicationId/:filename', [
     (request, _, next) => {
         request.body.applicationId = request.params.applicationId;
         next();
     },
-    rest.verifyApplicationId,
-    rest.verifyToken,
-    rest.handleGetFile
+    _restController.verifyApplicationId,
+    _restController.verifyToken,
+    _restController.handleGetFile
 ]);
 
-export const realtimeEvents = BFast.functions().onEvent('realtimeDb', data => {
-    const {payload, socket, auth} = data;
-    if (!(payload && payload.domain && payload.pipeline && Array.isArray(payload.pipeline))) {
-        socket.emit('realtimeDb', {errors: {message: 'bad payload format'}});
+/** handle socket/realtime requests **/
+export const realtimeEvents = BFast.functions().onEvent('/realtimeDb', (request, response) => {
+    if (!(request.body && request.body.domain && request.body.pipeline && Array.isArray(request.body.pipeline))) {
+        response.emit({errors: {message: 'bad payload format'}});
         return;
     }
-    const domain = payload.domain;
-    const pipeline = payload.pipeline;
-    database.changes(domain, pipeline, doc => {
-        socket.emit('realtimeDb', {data: doc});
+    const domain = request.body.domain;
+    const pipeline = request.body.pipeline;
+    _databaseController.changes(domain, pipeline, doc => {
+        response.emit({data: doc});
     }).then(_ => {
-        socket.emit('realtimeDb', {info: {message: 'start listening for database changes'}});
+        response.emit({info: {message: 'start listening for database changes'}});
     }).catch(reason => {
-        socket.emit('realtimeDb', {errors: {message: reason}});
+        response.emit({errors: {message: reason}});
     });
 });
