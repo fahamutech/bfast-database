@@ -29,7 +29,6 @@ describe('Update document anonymous', function () {
             ]
         }
         await axios.post(serverUrl, createTest);
-       // console.log(createResponse.data);
         const updateTest = {
             applicationId: 'daas',
             UpdateTest: {

@@ -29,16 +29,25 @@ const mongoMemoryReplSet = () => {
 }
 
 /**
- *
- * @param uri {string}
- * @param port
  * @return {Promise<DaaSServer>}
  */
-const daas = async (uri, port = 3111) => {
-    return new DaaSServer({
-        mongoDbUri: uri,
+const daas = async () => {
+    return new DaaSServer();
+}
+
+/**
+ * @param mongoMemoryServer
+ * @param daaSServer
+ * @return {Promise<void>}
+ */
+exports.initiateServer = async (mongoMemoryServer, daaSServer) => {
+    mongoMemoryServer = mongoServer();
+    await mongoMemoryServer.start();
+    daaSServer = await daas();
+    await daaSServer.start({
+        mongoDbUri: await mongoMemoryServer.getUri(),
         applicationId: 'daas',
-        port: port,
+        port: 3111,
         adapters: {
             // s3Storage: {
             //     bucket: 'daas',
@@ -51,13 +60,6 @@ const daas = async (uri, port = 3111) => {
         mountPath: '/daas',
         masterKey: 'daas'
     });
-}
-
-exports.initiateServer = async (mongoMemoryServer, daaSServer) => {
-    mongoMemoryServer = mongoServer();
-    await mongoMemoryServer.start();
-    daaSServer = await daas(await mongoMemoryServer.getUri());
-    await daaSServer.start();
 }
 exports.serverUrl = 'http://localhost:3111/daas';
 exports.mongoServer = mongoServer;

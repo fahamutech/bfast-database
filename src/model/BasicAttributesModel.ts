@@ -15,7 +15,7 @@ export interface BasicAttributesModel {
     _acl?: any;
     _hashed_password?: string;
     return?: string[];
-    $currentDate: { _updated_at: true };
+    $currentDate?: { _updated_at: true };
 
     [key: string]: any;
 }

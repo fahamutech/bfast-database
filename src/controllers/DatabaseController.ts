@@ -62,7 +62,7 @@ export class DatabaseController {
      * @param options {DatabaseWriteOptions} database write operation options
      */
     async writeOne<T extends BasicAttributesModel>(domain: string, data: T, context: ContextBlock,
-                                                      options: DatabaseWriteOptions = {bypassDomainVerification: false}): Promise<T> {
+                                                   options: DatabaseWriteOptions = {bypassDomainVerification: false}): Promise<T> {
         if (options && options.bypassDomainVerification === false) {
             await this.handleDomainValidation(domain);
         }
@@ -74,66 +74,95 @@ export class DatabaseController {
     }
 
     /**
-     *
-     * @param domain
-     * @param updateModel
-     * @param context
-     * @param options
+     * update a record depend on update model you provide
+     * @param domain {string} a domain/table/collection to work with
+     * @param updateModel {UpdateModel} a map company query model and update doc
+     * @param context {ContextBlock} current operation context
+     * @param options {DatabaseUpdateOptions} bfast::database update options
      */
-    async update(domain: string, updateModel: UpdateModel<any>,
-                 context: ContextBlock, options?: DatabaseUpdateOptions): Promise<any> {
-        if (!options?.bypassDomainVerification) {
+    async update(domain: string, updateModel: UpdateModel<any>, context: ContextBlock,
+                 options: DatabaseUpdateOptions = {bypassDomainVerification: false}): Promise<any> {
+        if (options && options.bypassDomainVerification === false) {
             await this.handleDomainValidation(domain);
         }
-        const returnFields = updateModel.return;
-        updateModel.update = this.sanitize4Db(updateModel.update as any);
-        updateModel.filter = this.sanitize4Db(updateModel.filter as any);
-        updateModel.update = this.addUpdateMetadata(updateModel.update as any, context);
+        const returnFields = this.getReturnFields(updateModel as any);
+        updateModel.update = this.sanitizeWithOperator4Db(updateModel?.update as any);
+        updateModel.filter = this.sanitizeWithOperator4Db(updateModel?.filter as any);
+        updateModel.update = this.addUpdateMetadata(updateModel?.update as any, context);
         const updatedDoc = await _database.update<any, any>(domain, updateModel, context, options)
         return this.sanitize4User(updatedDoc, returnFields);
     }
 
-    async delete(domain: string, deleteModel: DeleteModel<any>,
-                 context: ContextBlock, options?: DatabaseBasicOptions): Promise<any> {
-        if (!options?.bypassDomainVerification) {
+    /**
+     * delete a record from bfast::database
+     * @param domain
+     * @param deleteModel
+     * @param context
+     * @param options
+     */
+    async delete(domain: string, deleteModel: DeleteModel<any>, context: ContextBlock,
+                 options: DatabaseBasicOptions = {bypassDomainVerification: false}): Promise<any> {
+        if (options && options.bypassDomainVerification === false) {
             await this.handleDomainValidation(domain);
         }
         // const returnFields = deleteModel.return;
-        deleteModel.filter = this.sanitize4Db(deleteModel.filter as any);
+        deleteModel.filter = this.sanitizeWithOperator4Db(deleteModel?.filter as any);
         const result = await _database.deleteOne<any, any>(domain, deleteModel, context, options);
         return this.sanitize4User(result, ["id"]);
     }
 
+    /**
+     * perform a transaction to bfast::database
+     * @param operations
+     */
     async transaction<V>(operations: (session: any) => Promise<any>): Promise<any> {
         return _database.transaction(operations);
     }
 
-    async aggregate(domain: string, pipelines: Object[], context: ContextBlock, options?: DatabaseWriteOptions): Promise<any> {
-        if (!options?.bypassDomainVerification) {
+    /**
+     * perform aggregation operation to bfast::database
+     * @param domain
+     * @param pipelines {Array<Object>} for now work with mongodb database only
+     * @param context {ContextBlock} current operation context
+     * @param options {DatabaseWriteOptions} database write operation
+     */
+    async aggregate(domain: string, pipelines: Object[], context: ContextBlock,
+                    options: DatabaseWriteOptions = {bypassDomainVerification: false}): Promise<any> {
+        if (options && options.bypassDomainVerification === false) {
             await this.handleDomainValidation(domain);
         }
         return _database.aggregate(domain, pipelines, context, options);
     }
 
-    async changes(domain: string, pipeline: any[], listener: (doc: any) => void): Promise<any> {
-        await this.handleDomainValidation(domain);
+    /**
+     * realtime event changes for the bfast::database
+     * @param domain {string} a domain/collection/table to work with
+     * @param pipeline {Array<Object>} pipeline to narrow down event listening
+     * @param listener {(doc: any)=>void} a callback to be executed to respond the pipeline supplied
+     * @param options {DatabaseWriteOptions}
+     */
+    async changes(domain: string, pipeline: any[], listener: (doc: any) => void,
+                  options: DatabaseWriteOptions = {bypassDomainVerification: false}): Promise<any> {
+        if (options && options.bypassDomainVerification === false) {
+            await this.handleDomainValidation(domain);
+        }
         return _database.changes(domain, pipeline, listener);
     }
 
-    async query(domain: string, queryModel: QueryModel<any>, context: ContextBlock, options?: DatabaseWriteOptions): Promise<any> {
-        const returnFields = queryModel.return;
-        if (!options?.bypassDomainVerification) {
+    async query(domain: string, queryModel: QueryModel<any>, context: ContextBlock,
+                options: DatabaseWriteOptions = {bypassDomainVerification: false}): Promise<any> {
+        const returnFields = this.getReturnFields(queryModel as any);
+        if (options && options.bypassDomainVerification === false) {
             await this.handleDomainValidation(domain);
         }
-        if (queryModel.id) {
-            queryModel = this.sanitize4Db(queryModel as any);
-            queryModel.filter = this.sanitize4Db(queryModel.filter as any);
-
+        if (queryModel && typeof queryModel !== 'boolean' && queryModel.id && typeof queryModel.id !== 'boolean') {
+            queryModel = this.sanitizeWithOperator4Db(queryModel as any);
+            queryModel.filter = this.sanitizeWithOperator4Db(queryModel?.filter as any);
             const result = await _database.findOne(domain, queryModel, context, options);
             return this.sanitize4User(result, returnFields);
         } else {
-            queryModel = this.sanitize4Db(queryModel as any);
-            queryModel.filter = this.sanitize4Db(queryModel.filter as any);
+            queryModel = this.sanitizeWithOperator4Db(queryModel as any);
+            queryModel.filter = this.sanitizeWithOperator4Db(queryModel?.filter as any);
             const result = await _database.query(domain, queryModel, context, options);
             if (result && Array.isArray(result)) {
                 return result.map(value => this.sanitize4User(value, returnFields));
@@ -142,13 +171,14 @@ export class DatabaseController {
         }
     }
 
-    async writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock, options?: DatabaseWriteOptions): Promise<V> {
-        if (!options?.bypassDomainVerification) {
+    async writeMany<T extends BasicAttributesModel>(domain: string, data: T[], context: ContextBlock,
+                                                       options: DatabaseWriteOptions= {bypassDomainVerification: false}): Promise<any[]> {
+        if (options && options.bypassDomainVerification === false) {
             await this.handleDomainValidation(domain);
         }
         let returnFieldsMap = {};
         data.forEach((value, index) => {
-            returnFieldsMap[index] = value.return;
+            returnFieldsMap[index] = value?.return;
         });
         const sanitizedData = data.map(value => this.sanitize4Db(value));
         const freshData = sanitizedData.map(value => this.addCreateMetadata(value, context));
@@ -166,7 +196,10 @@ export class DatabaseController {
      * @param context
      */
     addUpdateMetadata<T extends BasicAttributesModel>(data: T, context?: ContextBlock): T {
-        data['$currentDate'] = {_updated_at: true}
+        if (data && typeof data !== "boolean") {
+            data['$currentDate'] = {_updated_at: true}
+            return data;
+        }
         return data;
     }
 
@@ -219,6 +252,24 @@ export class DatabaseController {
         } else {
             return undefined;
         }
+    }
+
+    /**
+     * sanitize data before consumed by a bfast::database
+     * @param data
+     */
+    sanitizeWithOperator4Db<T extends BasicAttributesModel>(data: T): T {
+        data = this.sanitize4Db(data);
+        if (!data && typeof data !== "boolean") {
+            return null;
+        }
+        Object.keys(data).forEach(key => {
+            if (key.startsWith('$')) {
+                // @ts-ignore
+                data[key] = this.sanitize4Db(data[key]);
+            }
+        });
+        return data;
     }
 
     /**

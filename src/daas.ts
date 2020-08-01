@@ -10,7 +10,6 @@ export class DaaSServer implements DaaSAdapter {
     private faas: FaaS;
 
     constructor() {
-        DaaSServer._registerOptions(config);
     }
 
     /**
@@ -20,6 +19,7 @@ export class DaaSServer implements DaaSAdapter {
      */
     async start(options: ConfigAdapter): Promise<boolean> {
         if (this._validateOptions(options).valid) {
+            this._registerOptions(options);
             this.faas = new FaaS({
                 port: options.port,
                 functionsConfig: {
@@ -28,7 +28,7 @@ export class DaaSServer implements DaaSAdapter {
                 }
             });
             await this.faas.start();
-            await this._setUpDatabase(this.config);
+            await this._setUpDatabase(options);
             return true;
         } else {
             throw new Error(this._validateOptions(options).message);
@@ -40,7 +40,7 @@ export class DaaSServer implements DaaSAdapter {
      * @return Promise
      */
     async stop(): Promise<any> {
-        if (!this.faas){
+        if (!this.faas) {
             return true;
         }
         return this.faas.stop();
@@ -78,17 +78,17 @@ export class DaaSServer implements DaaSAdapter {
         }
     }
 
-    private  async _setUpDatabase(config: ConfigAdapter) {
+    private async _setUpDatabase(config: ConfigAdapter) {
         const database: DatabaseController = new DatabaseController(
             (config && config.adapters && config.adapters.database)
-            ? config.adapters.database(config)
-            : new Database(),
+                ? config.adapters.database(config)
+                : new Database(),
             new SecurityController()
         )
         return database.init();
     }
 
-    private  _registerOptions(options: ConfigAdapter) {
+    private _registerOptions(options: ConfigAdapter) {
         DaaSConfig.getInstance().addValues(options);
     }
 }

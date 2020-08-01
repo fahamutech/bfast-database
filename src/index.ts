@@ -43,7 +43,7 @@ if (checker.length === 0) {
     })
 }
 
-new DaaSServer({
+new DaaSServer().start({
     applicationId: process.env.PARSE_SERVER_APPLICATION_ID,
     masterKey: process.env.PARSE_SERVER_MASTER_KEY,
     mongoDbUri: process.env.PARSE_SERVER_DATABASE_URI,
@@ -59,4 +59,4 @@ new DaaSServer({
                 direct: false,
             } : undefined,
     }
-}).start().catch(console.log);
+}).catch(console.log);

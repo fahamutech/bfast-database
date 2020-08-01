@@ -45,8 +45,14 @@ function devStart(cb) {
     async function run() {
         mongoMemoryServer = mongoServer();
         await mongoMemoryServer.start();
-        daaSServer = await daas('mongodb://localhost/smartstock', 3003);
-        await daaSServer.start();
+        daaSServer = await daas();
+        await daaSServer.start({
+            mongoDbUri: 'mongodb://localhost/smartstock',
+            applicationId: 'daas',
+            port: 3003,
+            mountPath: '/daas',
+            masterKey: 'daas'
+        });
     }
 
     run().catch(reason => {
