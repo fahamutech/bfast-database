@@ -1,4 +1,4 @@
-const {getRulesController, mongoRepSet} = require('../mock.config');
+const {getRulesController, mongoRepSet} = require('../../mock.config');
 const {before, after} = require('mocha');
 const assert = require('assert');
 
@@ -34,7 +34,7 @@ describe('RulesController::Utilities Unit Test', function () {
     });
 
     it('should return a domain from rule', function () {
-        const domain = _rulesController.extractDomain('CreateTest', "Create");
+        const domain = _rulesController.extractDomain('createTest', "create");
         assert(domain === 'Test');
     });
 

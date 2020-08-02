@@ -7,7 +7,7 @@
     "build": "gulp build",
     "build:docker": "gulp buildDocker",
     "test:rest": "yarn run build && mocha specs/rest/all.specs.js",
-    "test:controller": "yarn run build && npx mocha specs/controller",
+    "test:controller": "yarn run build && npx mocha specs/controller/*",
     "test:no-build": "mocha specs/rest/all.specs.js",
     "prestart": "yarn run build",
     "prepublishOnly": "npm run build",

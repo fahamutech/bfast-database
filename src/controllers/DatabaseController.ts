@@ -205,7 +205,7 @@ export class DatabaseController {
 
     /**
      * check if supplied custom domain/table/collection name is valid.
-     * _User, _Token and _Policy is the domain name that keep for internal use only
+     * _User, _Token and _Policy is the domain name that reserved for internal use only
      * @param domain
      */
     validDomain(domain: string): boolean {

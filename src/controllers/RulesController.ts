@@ -121,13 +121,32 @@ export class RulesController {
             for (const action of Object.keys(policy)) {
                 const data = policy[action];
                 try {
-                    if (action === 'rules' && typeof data === 'object') {
+                    if (action === 'add' && typeof data === 'object') {
                         const authorizationResults = {};
                         for (const rule of Object.keys(data)) {
                             authorizationResults[rule] = await _authController.addAuthorizationRule(rule, data[rule], rulesBlockModel.context);
                         }
                         ruleResultModel["policy"] = {};
                         ruleResultModel["policy"][action] = authorizationResults;
+                    } else if (action === 'list' && typeof data === "object") {
+                        ruleResultModel["policy"] = {};
+                        ruleResultModel["policy"][action] = await _databaseController.query('_Policy', {
+                            filter: {},
+                            return: []
+                        }, rulesBlockModel.context, {
+                            bypassDomainVerification: true
+                        });
+                    } else if (action === 'remove' && typeof data === 'object') {
+                        ruleResultModel["policy"] = {};
+                        ruleResultModel["policy"][action] = await _databaseController.delete('_Policy', {
+                            filter: {
+                                ruleId: data['ruleId']
+                            },
+                            return: [],
+                            id: null
+                        }, rulesBlockModel.context, {
+                            bypassDomainVerification: true
+                        });
                     }
                 } catch (e) {
                     ruleResultModel['errors'][`policy.${action}`] = {
@@ -150,19 +169,19 @@ export class RulesController {
 
     async handleCreateRules(rulesBlockModel: RulesBlockModel, ruleResultModel: RuleResultModel, transaction?: any): Promise<Object> {
         try {
-            const createRules = this.getRulesKey(rulesBlockModel).filter(rule => rule.startsWith('Create'));
+            const createRules = this.getRulesKey(rulesBlockModel).filter(rule => rule.startsWith('create'));
             if (createRules.length === 0) {
                 return ruleResultModel;
             }
             for (const createRule of createRules) {
-                const domain = this.extractDomain(createRule, 'Create');
+                const domain = this.extractDomain(createRule, 'create');
                 const data = rulesBlockModel[createRule];
                 // checkPermission
                 const allowed = await _authController.hasPermission(`create.${domain}`, rulesBlockModel.context);
                 if (allowed !== true) {
-                    ruleResultModel['errors'][`${transaction ? 'Transaction.' : ''}Create.${domain}`] = {
+                    ruleResultModel['errors'][`${transaction ? 'Transaction.' : ''}create.${domain}`] = {
                         message: 'You have insufficient permission to this resource',
-                        path: `${transaction ? 'Transaction.' : ''}Create.${domain}`,
+                        path: `${transaction ? 'Transaction.' : ''}create.${domain}`,
                         data: data
                     };
                     return ruleResultModel;
@@ -172,20 +191,20 @@ export class RulesController {
                     let result;
                     if (data && Array.isArray(data)) {
                         result = await _databaseController.writeMany(domain, data, rulesBlockModel.context, {
-                            bypassDomainVerification: rulesBlockModel.context.useMasterKey === true,
+                            bypassDomainVerification: rulesBlockModel?.context?.useMasterKey === true,
                             transaction: transaction
                         });
                     } else {
                         result = await _databaseController.writeOne(domain, data, rulesBlockModel.context, {
-                            bypassDomainVerification: rulesBlockModel.context.useMasterKey === true,
+                            bypassDomainVerification: rulesBlockModel?.context?.useMasterKey === true,
                             transaction: transaction
                         });
                     }
-                    ruleResultModel[`ResultOf${createRule}`] = result
+                    ruleResultModel[createRule] = result
                 } catch (e) {
-                    ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}Create.${domain}`] = {
+                    ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}create.${domain}`] = {
                         message: e.message ? e.message : e.toString(),
-                        path: `${transaction ? 'Transaction.' : ''}Create.${domain}`,
+                        path: `${transaction ? 'Transaction.' : ''}create.${domain}`,
                         data: data
                     };
                     if (transaction) {
@@ -195,9 +214,9 @@ export class RulesController {
             }
             return ruleResultModel;
         } catch (e) {
-            ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}Create`] = {
+            ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}create`] = {
                 message: e.message ? e.message : e.toString(),
-                path: `${transaction ? 'Transaction.' : ''}Create`,
+                path: `${transaction ? 'Transaction.' : ''}create`,
                 data: null
             };
             if (transaction) {
@@ -573,8 +592,8 @@ export class RulesController {
      * @param rule {string} rule with domain
      * @param remove {string} rule action to remove
      */
-    extractDomain(rule: string, remove: 'Create' | 'Query' | 'Update' | 'delete' | 'Aggregate'): string {
-        if ((remove === "Create" || remove === "Query" || remove === "Update" || remove === "delete" || remove === "Aggregate") && rule.startsWith(remove)) {
+    extractDomain(rule: string, remove: 'create' | 'Query' | 'Update' | 'delete' | 'Aggregate'): string {
+        if ((remove === "create" || remove === "Query" || remove === "Update" || remove === "delete" || remove === "Aggregate") && rule.startsWith(remove)) {
             return rule.trim().replace(remove, '')
         } else {
             return null;

@@ -1,4 +1,4 @@
-const {getRulesController, mongoRepSet} = require('../mock.config');
+const {getRulesController, mongoRepSet} = require('../../mock.config');
 const {before, after} = require('mocha');
 const assert = require('assert');
 
@@ -180,5 +180,29 @@ describe('RulesController::Auth Unit Test', function () {
             assert(results.errors['auth.signIn'].message === 'Username required');
             assert(typeof results.errors['auth.signIn'].data === 'object');
         });
-    })
+        it('should return error message when password not supplied', async function () {
+            const results = await _rulesController.handleAuthenticationRule({
+                auth: {
+                    signIn: {
+                        username: 'doe'
+                    }
+                }
+            }, {errors: {}});
+            assert(results.auth.signIn === undefined);
+            assert(results.errors['auth.signIn'] !== undefined);
+            assert(results.errors['auth.signIn'].message === 'Password required');
+            assert(typeof results.errors['auth.signIn'].data === 'object');
+        });
+        it('should return error message when signIn is empty', async function () {
+            const results = await _rulesController.handleAuthenticationRule({
+                auth: {
+                    signIn: {}
+                }
+            }, {errors: {}});
+            assert(results.auth.signIn === undefined);
+            assert(results.errors['auth.signIn'] !== undefined);
+            assert(results.errors['auth.signIn'].message === 'Empty user is not supported');
+            assert(typeof results.errors['auth.signIn'].data === 'object');
+        });
+    });
 });
