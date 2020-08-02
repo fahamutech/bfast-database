@@ -53,7 +53,7 @@ export class Auth implements AuthAdapter {
             bypassDomainVerification: true
         });
         delete user.password;
-        user.token = await this._security.generateToken({uid: user.id});
+        user.token = await this._security.generateToken({uid: user?.id});
         return user;
     }
 

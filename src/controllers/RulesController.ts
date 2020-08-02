@@ -1,5 +1,4 @@
-import {RulesAdapter} from "../adapter/RulesAdapter";
-import {RulesBlockModel} from "../model/RulesBlockModel";
+import {RuleResultModel, RulesBlockModel} from "../model/RulesBlockModel";
 import {UpdateModel} from "../model/UpdateModel";
 import {DeleteModel} from "../model/DeleteModel";
 import {DatabaseController} from "./DatabaseController";
@@ -24,14 +23,12 @@ let _defaultEmail: EmailAdapter;
 let _defaultAuth: AuthAdapter;
 let _fileAdapter: FilesAdapter;
 
-export class RulesController implements RulesAdapter {
-    rulesBlock: RulesBlockModel;
-    results: RulesBlockModel = {errors: []};
+export class RulesController {
 
     constructor(private readonly config: ConfigAdapter) {
         _databaseController = new DatabaseController(
             (config.adapters && config.adapters.database) ?
-                this.config.adapters.database(config) : new Database(),
+                this.config.adapters.database(config) : new Database(config),
             new SecurityController()
         );
 
@@ -54,183 +51,180 @@ export class RulesController implements RulesAdapter {
     }
 
 
-    private getRulesKey(rulesBlockModel?: RulesBlockModel): string[] {
+    /**
+     * get all rules from rule block
+     * @param rulesBlockModel {RulesBlockModel}
+     */
+    getRulesKey(rulesBlockModel: RulesBlockModel): string[] {
         if (rulesBlockModel) {
             return Object.keys(rulesBlockModel);
-        }
-        if (this.rulesBlock) {
-            return Object.keys(this.rulesBlock);
         }
         return Object.keys({});
     }
 
-    async handleAuthenticationRule(): Promise<void> {
+    async handleAuthenticationRule(rulesBlockModel: RulesBlockModel, ruleResultModel: RuleResultModel): Promise<Object> {
         try {
-            const authenticationRules = this.getRulesKey().filter(rule => rule.startsWith('Authentication'));
+            const authenticationRules = this.getRulesKey(rulesBlockModel).filter(rule => rule.startsWith('auth'));
             if (authenticationRules.length === 0) {
-                return;
+                return ruleResultModel;
             }
             const authenticationRule = authenticationRules[0];
-            const authentication = this.rulesBlock[authenticationRule];
-            for (const action of Object.keys(authentication)) {
-                const data = authentication[action];
+            const auth = rulesBlockModel[authenticationRule];
+            for (const action of Object.keys(auth)) {
+                const data = auth[action];
                 try {
                     if (action === 'signUp') {
-                        this.results["ResultOfAuthentication"] = {};
-                        this.results["ResultOfAuthentication"].signUp = await _authController.signUp(data, this.rulesBlock.context);
+                        ruleResultModel["auth"] = {};
+                        ruleResultModel["auth"].signUp = await _authController.signUp(data, rulesBlockModel.context);
                     } else if (action === 'signIn') {
-                        this.results["ResultOfAuthentication"] = {};
-                        this.results["ResultOfAuthentication"].signIn = await _authController.signIn(data, this.rulesBlock.context);
-                    } else if (action === 'resetPassword') {
-                        this.results["ResultOfAuthentication"] = {};
-                        this.results["ResultOfAuthentication"].resetPassword = await _authController.resetPassword(data.email ? data.email : data);
+                        ruleResultModel["auth"] = {};
+                        ruleResultModel["auth"].signIn = await _authController.signIn(data, rulesBlockModel.context);
+                    } else if (action === 'reset') {
+                        ruleResultModel["auth"] = {};
+                        ruleResultModel["auth"].resetPassword = await _authController.resetPassword(data.email ? data.email : data);
                     }
                 } catch (e) {
-                    this.results.errors.push({
+                    ruleResultModel['errors'][`auth.${action}`] = {
                         message: e.message ? e.message : e.toString(),
-                        path: `Authentication.${action}`,
+                        path: `auth.${action}`,
                         data: data
-                    });
+                    };
                 }
             }
-            return;
+            return ruleResultModel;
         } catch (e) {
-            this.results.errors.push({
+            ruleResultModel['errors']['auth'] = {
                 message: e.message ? e.message : e.toString(),
-                path: 'Authentication',
+                path: 'auth',
                 data: null
-            });
-            return;
+            };
+            return ruleResultModel;
         }
     }
 
-    async handleAuthorizationRule(): Promise<void> {
+    async handleAuthorizationRule(rulesBlockModel: RulesBlockModel, ruleResultModel: RuleResultModel): Promise<Object> {
         try {
-            const authorizationRules = this.getRulesKey().filter(rule => rule.startsWith('Authorization'));
-            if (authorizationRules.length === 0) {
-                return;
+            const policyRules = this.getRulesKey(rulesBlockModel).filter(rule => rule.startsWith('policy'));
+            if (policyRules.length === 0) {
+                return ruleResultModel;
             }
-            if (!(this.rulesBlock.context && this.rulesBlock.context.useMasterKey === true)) {
-                this.results.errors.push({
-                    message: 'Authorization rule require masterKey',
-                    path: 'Authorization',
+            if (!(rulesBlockModel.context && rulesBlockModel.context.useMasterKey === true)) {
+                ruleResultModel['errors']['policy'] = {
+                    message: 'policy rule require masterKey',
+                    path: 'policy',
                     data: null
-                });
-                return;
+                };
+                return ruleResultModel;
             }
-            const authorizationRule = authorizationRules[0];
-            const authorization = this.rulesBlock[authorizationRule];
-            for (const action of Object.keys(authorization)) {
-                const data = authorization[action];
+            const authorizationRule = policyRules[0];
+            const policy = rulesBlockModel[authorizationRule];
+            for (const action of Object.keys(policy)) {
+                const data = policy[action];
                 try {
                     if (action === 'rules' && typeof data === 'object') {
                         const authorizationResults = {};
                         for (const rule of Object.keys(data)) {
-                            authorizationResults[rule] = await _authController.addAuthorizationRule(rule, data[rule], this.rulesBlock.context);
+                            authorizationResults[rule] = await _authController.addAuthorizationRule(rule, data[rule], rulesBlockModel.context);
                         }
-                        this.results["ResultOfAuthorization"] = {};
-                        this.results["ResultOfAuthorization"][action] = authorizationResults;
+                        ruleResultModel["policy"] = {};
+                        ruleResultModel["policy"][action] = authorizationResults;
                     }
                 } catch (e) {
-                    this.results.errors.push({
+                    ruleResultModel['errors'][`policy.${action}`] = {
                         message: e.message ? e.message : e.toString(),
-                        path: `Authorization.${action}`,
+                        path: `policy.${action}`,
                         data: data
-                    });
+                    };
                 }
             }
-            return;
+            return ruleResultModel;
         } catch (e) {
-            this.results.errors.push({
+            ruleResultModel['errors']['policy'] = {
                 message: e.message ? e.message : e.toString(),
-                path: 'Authorization',
+                path: 'policy',
                 data: null
-            });
-            return;
+            };
+            return ruleResultModel;
         }
     }
 
-    async handleCreateRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void> {
+    async handleCreateRules(rulesBlockModel: RulesBlockModel, ruleResultModel: RuleResultModel, transaction?: any): Promise<Object> {
         try {
             const createRules = this.getRulesKey(rulesBlockModel).filter(rule => rule.startsWith('Create'));
             if (createRules.length === 0) {
-                return;
+                return ruleResultModel;
             }
             for (const createRule of createRules) {
                 const domain = this.extractDomain(createRule, 'Create');
-                const data = rulesBlockModel ? rulesBlockModel[createRule] : this.rulesBlock[createRule];
+                const data = rulesBlockModel[createRule];
                 // checkPermission
-                const allowed = await _authController.hasPermission(`create.${domain}`, this.rulesBlock.context);
+                const allowed = await _authController.hasPermission(`create.${domain}`, rulesBlockModel.context);
                 if (allowed !== true) {
-                    this.results.errors.push({
+                    ruleResultModel['errors'][`${transaction ? 'Transaction.' : ''}Create.${domain}`] = {
                         message: 'You have insufficient permission to this resource',
                         path: `${transaction ? 'Transaction.' : ''}Create.${domain}`,
                         data: data
-                    });
-                    return;
+                    };
+                    return ruleResultModel;
                 }
 
                 try {
                     let result;
                     if (data && Array.isArray(data)) {
-                        result = await _databaseController.writeMany(domain, data, this.rulesBlock.context, {
-                            bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
+                        result = await _databaseController.writeMany(domain, data, rulesBlockModel.context, {
+                            bypassDomainVerification: rulesBlockModel.context.useMasterKey === true,
                             transaction: transaction
                         });
                     } else {
-                        result = await _databaseController.writeOne(domain, data, this.rulesBlock.context, {
-                            bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
+                        result = await _databaseController.writeOne(domain, data, rulesBlockModel.context, {
+                            bypassDomainVerification: rulesBlockModel.context.useMasterKey === true,
                             transaction: transaction
                         });
                     }
-                    if (resultsObj) {
-                        resultsObj[`ResultOf${createRule}`] = result;
-                    } else {
-                        this.results[`ResultOf${createRule}`] = result
-                    }
+                    ruleResultModel[`ResultOf${createRule}`] = result
                 } catch (e) {
-                    this.results.errors.push({
+                    ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}Create.${domain}`] = {
                         message: e.message ? e.message : e.toString(),
                         path: `${transaction ? 'Transaction.' : ''}Create.${domain}`,
                         data: data
-                    });
+                    };
                     if (transaction) {
                         throw e;
                     }
                 }
             }
-            return;
+            return ruleResultModel;
         } catch (e) {
-            this.results.errors.push({
+            ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}Create`] = {
                 message: e.message ? e.message : e.toString(),
                 path: `${transaction ? 'Transaction.' : ''}Create`,
                 data: null
-            });
+            };
             if (transaction) {
                 throw e;
             }
-            return;
+            return ruleResultModel;
         }
     }
 
-    async handleDeleteRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void> {
+    async handleDeleteRules(rulesBlockModel: RulesBlockModel, ruleResultModel: RuleResultModel, transaction?: any): Promise<Object> {
         try {
-            const deleteRules = this.getRulesKey(rulesBlockModel).filter(rule => rule.startsWith('Delete'));
+            const deleteRules = this.getRulesKey(rulesBlockModel).filter(rule => rule.startsWith('delete'));
             if (deleteRules.length === 0) {
-                return;
+                return ruleResultModel;
             }
             for (const deleteRule of deleteRules) {
-                const domain = this.extractDomain(deleteRule, 'Delete');
-                const data: DeleteModel<any> = rulesBlockModel ? rulesBlockModel[deleteRule] : this.rulesBlock[deleteRule];
+                const domain = this.extractDomain(deleteRule, 'delete');
+                const data: DeleteModel<any> = rulesBlockModel[deleteRule];
                 // checkPermission
-                const allowed = await _authController.hasPermission(`delete.${domain}`, this.rulesBlock.context);
+                const allowed = await _authController.hasPermission(`delete.${domain}`, rulesBlockModel.context);
                 if (allowed !== true) {
-                    this.results.errors.push({
+                    ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}delete.${domain}`] = {
                         message: 'You have insufficient permission to this resource',
-                        path: `${transaction ? 'Transaction.' : ''}Delete.${domain}`,
+                        path: `${transaction ? 'Transaction.' : ''}delete.${domain}`,
                         data: data
-                    });
-                    return;
+                    };
+                    return ruleResultModel;
                 }
                 try {
                     if (data.id) {
@@ -238,17 +232,11 @@ export class RulesController implements RulesAdapter {
                         delete data.filter;
                         filter['_id'] = data.id;
                         data.filter = filter;
-
-                        const result = await _databaseController.delete(domain, data, this.rulesBlock.context, {
-                            bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
+                        ruleResultModel[deleteRule]
+                            = await _databaseController.delete(domain, data, rulesBlockModel.context, {
+                            bypassDomainVerification: rulesBlockModel.context.useMasterKey === true,
                             transaction: transaction
                         });
-                        if (resultsObj) {
-                            resultsObj[`ResultOf${deleteRule}`] = result;
-                        } else {
-                            this.results[`ResultOf${deleteRule}`] = result;
-                        }
-
                     } else {
                         if (!data.filter) {
                             throw "filter field is required if you dont supply id field";
@@ -256,8 +244,8 @@ export class RulesController implements RulesAdapter {
                         if (data.filter && Object.keys(data).length === 0) {
                             throw "Empty filter map is not supported in delete rule";
                         }
-                        const query: any[] = await _databaseController.query(domain, data, this.rulesBlock.context, {
-                            bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
+                        const query: any[] = await _databaseController.query(domain, data, rulesBlockModel.context, {
+                            bypassDomainVerification: rulesBlockModel.context.useMasterKey === true,
                             transaction: transaction
                         });
                         const deleteResults = [];
@@ -266,151 +254,143 @@ export class RulesController implements RulesAdapter {
                                 data.filter = {
                                     _id: value.id
                                 };
-                                const result = await _databaseController.delete(domain, data, this.rulesBlock.context, {
-                                    bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
+                                const result = await _databaseController.delete(domain, data, rulesBlockModel.context, {
+                                    bypassDomainVerification: rulesBlockModel.context.useMasterKey === true,
                                     transaction: transaction
                                 });
                                 deleteResults.push(result);
                             }
                         }
-                        if (resultsObj) {
-                            resultsObj[`ResultOf${deleteRule}`] = deleteResults;
-                        } else {
-                            this.results[`ResultOf${deleteRule}`] = deleteResults;
-                        }
+                        ruleResultModel[deleteRule] = deleteResults;
                     }
                 } catch (e) {
-                    this.results.errors.push({
+                    ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}delete.${domain}`] = {
                         message: e.message ? e.message : e.toString(),
-                        path: `${transaction ? 'Transaction.' : ''}Delete.${domain}`,
+                        path: `${transaction ? 'Transaction.' : ''}delete.${domain}`,
                         data: data
-                    });
+                    };
                     if (transaction) {
                         throw e;
                     }
                 }
             }
-            return;
+            return ruleResultModel;
         } catch (e) {
-            this.results.errors.push({
+            ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}delete`] = {
                 message: e.message ? e.message : e.toString(),
-                path: `${transaction ? 'Transaction.' : ''}Delete`,
+                path: `${transaction ? 'Transaction.' : ''}delete`,
                 data: null
-            });
+            };
             if (transaction) {
                 throw e;
             }
-            return;
+            return ruleResultModel;
         }
     }
 
-    async handleQueryRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void> {
+    async handleQueryRules(rulesBlockModel: RulesBlockModel, ruleResultModel: RuleResultModel, transaction?: any): Promise<Object> {
         try {
             const queryRules = this.getRulesKey(rulesBlockModel).filter(rule => rule.startsWith('Query'));
             if (queryRules.length === 0) {
-                return;
+                return ruleResultModel;
             }
             for (const queryRule of queryRules) {
                 const domain = this.extractDomain(queryRule, 'Query');
-                const data = rulesBlockModel ? rulesBlockModel[queryRule] : this.rulesBlock[queryRule];
+                const data = rulesBlockModel[queryRule];
                 // checkPermission
-                const allowed = await _authController.hasPermission(`query.${domain}`, this.rulesBlock.context);
+                const allowed = await _authController.hasPermission(`query.${domain}`, rulesBlockModel.context);
                 if (allowed !== true) {
-                    this.results.errors.push({
+                    ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}Query.${domain}`] = {
                         message: 'You have insufficient permission to this resource',
                         path: `${transaction ? 'Transaction.' : ''}Query.${domain}`,
                         data: data
-                    });
-                    return;
+                    };
+                    return ruleResultModel;
                 }
                 try {
                     if (data && Array.isArray(data)) {
-                        this.results.errors.push({
+                        ruleResultModel.errors[queryRule] = {
                             message: 'Query data must be a map',
                             path: queryRule,
                             data: data,
-                        });
+                        };
                     } else {
-                        const result = await _databaseController.query(domain, data, this.rulesBlock.context, {
-                            bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
+                        ruleResultModel[`ResultOf${queryRule}`]
+                            = await _databaseController.query(domain, data, rulesBlockModel.context, {
+                            bypassDomainVerification: rulesBlockModel.context.useMasterKey === true,
                             transaction: transaction
                         });
-                        if (resultsObj) {
-                            resultsObj[`ResultOf${queryRule}`] = result;
-                        } else {
-                            this.results[`ResultOf${queryRule}`] = result;
-                        }
                     }
                 } catch (e) {
-                    this.results.errors.push({
+                    ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}Query.${domain}`] = {
                         message: e.message ? e.message : e.toString(),
                         path: `${transaction ? 'Transaction.' : ''}Query.${domain}`,
                         data: data
-                    });
+                    };
                     if (transaction) {
                         throw e;
                     }
                 }
             }
-            return;
+            return ruleResultModel;
         } catch (e) {
-            this.results.errors.push({
+            ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}Query`] = {
                 message: e.message ? e.message : e.toString(),
                 path: `${transaction ? 'Transaction.' : ''}Query`,
                 data: null
-            });
+            };
             if (transaction) {
                 throw e;
             }
-            return;
+            return ruleResultModel;
         }
     }
 
-    async handleTransactionRule(): Promise<void> {
+    async handleTransactionRule(rulesBlockModel: RulesBlockModel, ruleResultModel: RuleResultModel): Promise<Object> {
         try {
-            const transactionRules = this.getRulesKey().filter(rule => rule.startsWith('Transaction'));
+            const transactionRules = this.getRulesKey(rulesBlockModel).filter(rule => rule.startsWith('Transaction'));
             if (transactionRules.length === 0) {
-                return;
+                return ruleResultModel;
             }
             const transactionRule = transactionRules[0];
-            const transaction = this.rulesBlock[transactionRule];
+            const transaction = rulesBlockModel[transactionRule];
             const transactionOperationRules = transaction.commit;
-            const resultObject = {};
+            const resultObject: any = {};
             await _databaseController.transaction(async session => {
                 await this.handleCreateRules(transactionOperationRules, resultObject, session);
                 await this.handleUpdateRules(transactionOperationRules, resultObject, session);
                 await this.handleDeleteRules(transactionOperationRules, resultObject, session);
                 await this.handleQueryRules(transactionOperationRules, resultObject, session);
             });
-            this.results[`ResultOfTransaction`] = resultObject;
+            ruleResultModel[`ResultOfTransaction`] = resultObject;
         } catch (e) {
-            this.results.errors.push({
+            ruleResultModel.errors['Transaction'] = {
                 message: e.message ? e.message : e.toString(),
                 path: 'Transaction',
                 data: null
-            });
-            return;
+            };
+            return ruleResultModel;
         }
     }
 
-    async handleUpdateRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void> {
+    async handleUpdateRules(rulesBlockModel: RulesBlockModel, ruleResultModel: RuleResultModel, transaction?: any): Promise<RuleResultModel> {
         try {
             const updateRules = this.getRulesKey(rulesBlockModel).filter(rule => rule.startsWith('Update'));
             if (updateRules.length === 0) {
-                return;
+                return ruleResultModel;
             }
             for (const updateRule of updateRules) {
                 const domain = this.extractDomain(updateRule, 'Update');
-                const data: UpdateModel<any> = rulesBlockModel ? rulesBlockModel[updateRule] : this.rulesBlock[updateRule];
+                const data: UpdateModel<any> = rulesBlockModel[updateRule];
                 // checkPermission
-                const allowed = await _authController.hasPermission(`update.${domain}`, this.rulesBlock.context);
+                const allowed = await _authController.hasPermission(`update.${domain}`, rulesBlockModel.context);
                 if (allowed !== true) {
-                    this.results.errors.push({
+                    ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}Update.${domain}`] = {
                         message: 'You have insufficient permission to this resource',
                         path: `${transaction ? 'Transaction.' : ''}Update.${domain}`,
                         data: data
-                    });
-                    return;
+                    };
+                    return ruleResultModel;
                 }
                 try {
                     if (Object.keys(data).length === 0) {
@@ -419,23 +399,19 @@ export class RulesController implements RulesAdapter {
                     if (!data.update) {
                         throw "Please update field is required, which contains properties to update a document"
                     }
-                    if (data.id) {
+                    if (data?.id) {
                         const filter: any = {};
                         delete data.filter;
                         filter['_id'] = data.id;
                         data.filter = filter;
-                        const result = await _databaseController.update(domain, data, this.rulesBlock.context, {
-                            bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
+                        ruleResultModel[`ResultOf${updateRule}`]
+                            = await _databaseController.update(domain, data, rulesBlockModel.context, {
+                            bypassDomainVerification: rulesBlockModel.context.useMasterKey === true,
                             transaction: transaction
-                        });
-                        if (resultsObj) {
-                            resultsObj[`ResultOf${updateRule}`] = result;
-                        } else {
-                            this.results[`ResultOf${updateRule}`] = result
-                        }
-                    } else if (data.filter) {
-                        const query: any[] = await _databaseController.query(domain, data, this.rulesBlock.context, {
-                            bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
+                        })
+                    } else if (data?.filter) {
+                        const query: any[] = await _databaseController.query(domain, data, rulesBlockModel.context, {
+                            bypassDomainVerification: rulesBlockModel.context.useMasterKey === true,
                             transaction: transaction
                         });
                         const updateResults = [];
@@ -444,166 +420,165 @@ export class RulesController implements RulesAdapter {
                                 data.filter = {
                                     _id: value.id
                                 };
-                                const result = await _databaseController.update(domain, data, this.rulesBlock.context, {
-                                    bypassDomainVerification: this.rulesBlock.context.useMasterKey === true,
+                                const result = await _databaseController.update(domain, data, rulesBlockModel.context, {
+                                    bypassDomainVerification: rulesBlockModel.context.useMasterKey === true,
                                     transaction: transaction
                                 });
                                 updateResults.push(result);
                             }
                         }
-                        if (resultsObj) {
-                            resultsObj[`ResultOf${updateRule}`] = updateResults;
-                        } else {
-                            this.results[`ResultOf${updateRule}`] = updateResults;
-                        }
+                        ruleResultModel[`ResultOf${updateRule}`] = updateResults;
                     } else {
                         throw "Bad data format in update rule, no filter nor id";
                     }
                 } catch (e) {
-                    // console.log(e);
-                    this.results.errors.push({
+                    ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}Update.${domain}`] = {
                         message: e.message ? e.message : e.toString(),
                         path: `${transaction ? 'Transaction.' : ''}Update.${domain}`,
                         data: data
-                    });
+                    };
                     if (transaction) {
                         throw e;
                     }
                 }
             }
-            return;
+            return ruleResultModel;
         } catch (e) {
-            // console.log(e);
-            this.results.errors.push({
+            ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}Update`] = {
                 message: e.message ? e.message : e.toString(),
                 path: `${transaction ? 'Transaction.' : ''}Update`,
                 data: null
-            });
+            };
             if (transaction) {
                 throw e;
             }
-            return;
+            return ruleResultModel;
         }
     }
 
-    async handleAggregationRules(rulesBlockModel?: RulesBlockModel, resultsObj?: object, transaction?: any): Promise<void> {
+    async handleAggregationRules(rulesBlockModel: RulesBlockModel, ruleResultModel: RuleResultModel, transaction?: any): Promise<RuleResultModel> {
         try {
             const aggregateRules = this.getRulesKey(rulesBlockModel).filter(rule => rule.startsWith('Aggregate'));
             if (aggregateRules.length === 0) {
-                return;
+                return ruleResultModel;
             }
-            if (!(this.rulesBlock.context && this.rulesBlock.context.useMasterKey === true)) {
-                this.results.errors.push({
+            if (!(rulesBlockModel.context && rulesBlockModel.context.useMasterKey === true)) {
+                ruleResultModel.errors['Aggregate'] = {
                     message: 'Aggregate rule require masterKey',
                     path: 'Aggregate',
                     data: null
-                });
-                return;
+                };
+                return ruleResultModel;
             }
             for (const aggregateRule of aggregateRules) {
                 const domain = this.extractDomain(aggregateRule, 'Aggregate');
-                const data = rulesBlockModel ? rulesBlockModel[aggregateRule] : this.rulesBlock[aggregateRule];
+                const data = rulesBlockModel[aggregateRule];
                 try {
                     if (!(data && Array.isArray(data))) {
                         throw {message: "A pipeline must be an array"};
                     }
-                    const result = await _databaseController.aggregate(domain, data, this.rulesBlock.context, {
+                    ruleResultModel[`ResultOf${aggregateRule}`]
+                        = await _databaseController.aggregate(domain, data, rulesBlockModel.context, {
                         bypassDomainVerification: true,
                         transaction: transaction
                     });
-                    if (resultsObj) {
-                        resultsObj[`ResultOf${aggregateRule}`] = result;
-                    } else {
-                        this.results[`ResultOf${aggregateRule}`] = result;
-                    }
 
                 } catch (e) {
-                    this.results.errors.push({
+                    ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}Aggregate.${domain}`] = {
                         message: e.message ? e.message : e.toString(),
                         path: `${transaction ? 'Transaction.' : ''}Aggregate.${domain}`,
                         data: data
-                    });
+                    };
                     if (transaction) {
                         throw e;
                     }
                 }
             }
-            return;
+            return ruleResultModel;
         } catch (e) {
-            this.results.errors.push({
+            ruleResultModel.errors[`${transaction ? 'Transaction.' : ''}Aggregate`] = {
                 message: e.message ? e.message : e.toString(),
                 path: `${transaction ? 'Transaction.' : ''}Aggregate`,
                 data: null
-            });
+            };
             if (transaction) {
                 throw e;
             }
-            return;
+            return ruleResultModel;
         }
     }
 
-    async handleStorageRule(): Promise<void> {
+    async handleStorageRule(rulesBlockModel: RulesBlockModel, ruleResultModel: RuleResultModel): Promise<RuleResultModel> {
         try {
-            const fileRules = this.getRulesKey().filter(rule => rule.startsWith('Files'));
+            const fileRules = this.getRulesKey(rulesBlockModel).filter(rule => rule.startsWith('Files'));
             if (fileRules.length === 0) {
-                return;
+                return ruleResultModel;
             }
             const fileRule = fileRules[0];
-            const file = this.rulesBlock[fileRule];
+            const file = rulesBlockModel[fileRule];
             for (const action of Object.keys(file)) {
                 const data = file[action];
                 try {
                     if (action === 'save') {
                         // checkPermission
-                        const allowed = await _authController.hasPermission(`files.save`, this.rulesBlock.context);
+                        const allowed = await _authController.hasPermission(`files.save`, rulesBlockModel.context);
                         if (allowed !== true) {
-                            this.results.errors.push({
+                            ruleResultModel.errors[`Files.save`] = {
                                 message: 'You have insufficient permission save file',
                                 path: `Files.save`,
                                 data: data
-                            });
+                            };
                         } else {
-                            this.results["ResultOfFiles"] = {};
-                            this.results["ResultOfFiles"].save = await _storageController.save(data, this.rulesBlock.context);
+                            ruleResultModel["ResultOfFiles"] = {};
+                            ruleResultModel["ResultOfFiles"].save = await _storageController.save(data, rulesBlockModel.context);
                         }
                     } else if (action === 'delete') {
-                        const allowed = await _authController.hasPermission(`files.delete`, this.rulesBlock.context);
+                        const allowed = await _authController.hasPermission(`files.delete`, rulesBlockModel.context);
                         if (allowed !== true) {
-                            this.results.errors.push({
+                            ruleResultModel.errors[`Files.delete`] = {
                                 message: 'You have insufficient permission delete file',
                                 path: `Files.delete`,
                                 data: data
-                            });
+                            };
                         } else {
-                            this.results["ResultOfFiles"] = {};
-                            this.results["ResultOfFiles"].delete = await _storageController.delete(data, this.rulesBlock.context);
+                            ruleResultModel["ResultOfFiles"] = {};
+                            ruleResultModel["ResultOfFiles"].delete = await _storageController.delete(data, rulesBlockModel.context);
                         }
                     }
                     // if (action === 'list') {
-                    //     this.results["ResultOfAuthentication"] = {};
-                    //     this.results["ResultOfAuthentication"].resetPassword = await _authController.resetPassword(data.email ? data.email : data);
+                    //     this.results["auth"] = {};
+                    //     this.results["auth"].resetPassword = await _authController.resetPassword(data.email ? data.email : data);
                     // }
                 } catch (e) {
-                    this.results.errors.push({
+                    ruleResultModel.errors[`Files.${action}`] = {
                         message: e.message ? e.message : e.toString(),
                         path: `Files.${action}`,
                         data: data
-                    });
+                    };
                 }
             }
-            return;
+            return ruleResultModel;
         } catch (e) {
-            this.results.errors.push({
+            ruleResultModel.errors['Files'] = {
                 message: e.message ? e.message : e.toString(),
                 path: 'Files',
                 data: null
-            });
-            return;
+            };
+            return ruleResultModel;
         }
     }
 
-    extractDomain(rule: string, remove: 'Create' | 'Query' | 'Update' | 'Delete' | 'Aggregate'): string {
-        return rule.replace(remove, '');
+    /**
+     * extract a domain/table/collection from the rule
+     * @param rule {string} rule with domain
+     * @param remove {string} rule action to remove
+     */
+    extractDomain(rule: string, remove: 'Create' | 'Query' | 'Update' | 'delete' | 'Aggregate'): string {
+        if ((remove === "Create" || remove === "Query" || remove === "Update" || remove === "delete" || remove === "Aggregate") && rule.startsWith(remove)) {
+            return rule.trim().replace(remove, '')
+        } else {
+            return null;
+        }
     }
 
 }

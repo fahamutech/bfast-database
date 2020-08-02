@@ -314,32 +314,33 @@ export class DatabaseController {
         if (!data && typeof data !== "boolean") {
             return null;
         }
-        if (data && data._id && typeof data._id !== "boolean") {
+        if (data && typeof data._id !== "boolean") {
             data.id = data._id.toString();
+            data.objectId = data._id.toString();
             delete data._id;
         }
-        if (data && data._created_at && typeof data._created_at !== "boolean") {
+        if (data && typeof data._created_at !== "boolean") {
             data.createdAt = data._created_at;
             delete data._created_at;
         }
-        if (data && data._updated_at && typeof data._updated_at !== "boolean") {
+        if (data && typeof data._updated_at !== "boolean") {
             data.updatedAt = data._updated_at;
             delete data._updated_at;
         }
-        if (data && data._created_by && typeof data._created_by !== "boolean") {
-            data.createdBy = data._created_by;
+        if (data && typeof data._created_by !== "boolean") {
+            data.createdBy = data?._created_by;
             delete data._created_by;
         }
-        if (data && data._hashed_password && typeof data._hashed_password !== "boolean") {
+        if (data && typeof data._hashed_password !== "boolean") {
             delete data._hashed_password;
         }
-        if (data && data._rperm && typeof data._rperm !== "boolean") {
+        if (data && typeof data._rperm !== "boolean") {
             delete data._rperm;
         }
-        if (data && data._wperm && typeof data._wperm !== "boolean") {
+        if (data && typeof data._wperm !== "boolean") {
             delete data._wperm;
         }
-        if (data && data._acl && typeof data._acl !== "boolean") {
+        if (data && typeof data._acl !== "boolean") {
             delete data._acl;
         }
         let returnedData: any = {};

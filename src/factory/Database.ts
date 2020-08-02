@@ -1,14 +1,22 @@
-import {DatabaseAdapter, DatabaseBasicOptions, DatabaseUpdateOptions, DatabaseWriteOptions} from "../adapter/DatabaseAdapter";
+import {
+    DatabaseAdapter,
+    DatabaseBasicOptions,
+    DatabaseUpdateOptions,
+    DatabaseWriteOptions
+} from "../adapter/DatabaseAdapter";
 import {MongoClient} from "mongodb";
 import {BasicAttributesModel} from "../model/BasicAttributesModel";
 import {ContextBlock} from "../model/RulesBlockModel";
 import {QueryModel} from "../model/QueryModel";
 import {UpdateModel} from "../model/UpdateModel";
 import {DeleteModel} from "../model/DeleteModel";
-import {DaaSConfig} from "../config";
+import {ConfigAdapter} from "../config";
 
 export class Database implements DatabaseAdapter {
     private _mongoClient: MongoClient;
+
+    constructor(private readonly config: ConfigAdapter) {
+    }
 
     async writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock, options?: DatabaseWriteOptions): Promise<V> {
         const conn = await this.connection();
@@ -18,7 +26,7 @@ export class Database implements DatabaseAdapter {
         return response.insertedIds as any;
     }
 
-    async writeOne<T extends BasicAttributesModel>(domain: string, data: T,context: ContextBlock, options?: DatabaseWriteOptions): Promise<any> {
+    async writeOne<T extends BasicAttributesModel>(domain: string, data: T, context: ContextBlock, options?: DatabaseWriteOptions): Promise<any> {
         const conn = await this.connection();
         const response = await conn.db().collection(domain).insertOne(data, {
             w: "majority",
@@ -31,7 +39,7 @@ export class Database implements DatabaseAdapter {
         if (this._mongoClient && this._mongoClient.isConnected()) {
             return this._mongoClient;
         } else {
-            const mongoUri = DaaSConfig.getInstance().mongoDbUri;
+            const mongoUri = this.config.mongoDbUri;
             return new MongoClient(mongoUri, {
                 useNewUrlParser: true,
                 useUnifiedTopology: true
@@ -43,7 +51,7 @@ export class Database implements DatabaseAdapter {
         try {
             await this.dropIndexes('_User');
         } catch (e) {
-           // console.warn(e);
+            // console.warn(e);
         }
         await this.createIndexes('_User', [
             {

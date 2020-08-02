@@ -4,7 +4,7 @@ export interface RulesBlockModel {
     token?: string;
     context?: ContextBlock;
     Transaction?: TransactionBlock;
-    Authentication?: {
+    auth?: {
         signUp?: {
             username: string,
             password: string,
@@ -14,18 +14,31 @@ export interface RulesBlockModel {
             username: string,
             password: string,
         },
-        resetPassword?: string
+        reset?: string
     };
-    Authorization?: {
+    policy?: {
         rules?: { [key: string]: string }
     },
     errors?: {
-        message: string,
-        path: string,
-        data: any
-    }[]
+        [key: string]: {
+            message: string,
+            path: string,
+            data: any
+        }
+    }
 }
 
+export interface RuleResultModel {
+    errors: {
+        [key: string]: {
+            message: string,
+            path: string,
+            data: any
+        }
+    };
+
+    [key: string]: any;
+}
 
 export interface ContextBlock {
     return?: string[]; // field to return to user

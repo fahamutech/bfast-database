@@ -1,15 +1,10 @@
 const axios = require('axios');
-const {serverUrl} = require('../shared');
+const {serverUrl, } = require('../mock.config');
 const assert = require('assert');
 
-describe('Update document anonymous', function () {
+describe('Update Document Anonymous', function () {
     before(async function () {
-    });
-    after(async function () {
-    });
-
-    it('should update a document with an id supplied and without login and any authorization permission set', async function () {
-        const createTest = {
+        await axios.post(serverUrl, {
             applicationId: 'daas',
             CreateTest: [
                 {
@@ -27,22 +22,25 @@ describe('Update document anonymous', function () {
                     return: []
                 }
             ]
-        }
-        await axios.post(serverUrl, createTest);
-        const updateTest = {
+        });
+    });
+    after(async function () {
+    });
+
+    it('should fails to update a document with an id supplied', async function () {
+        const updateResponse = await axios.post(serverUrl, {
             applicationId: 'daas',
             UpdateTest: {
-               // id: 'ethan',
-                filter: {
-                    age: 20
-                },
+                id: 'ethan',
+                // filter: {
+                //     age: 20
+                // },
                 update: {
                     $set: {age: 30},
                 },
                 return: ['updatedAt']
             }
-        }
-        const updateResponse = await axios.post(serverUrl, updateTest);
+        });
         console.log(updateResponse.data);
     });
 });

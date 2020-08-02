@@ -82,7 +82,7 @@ export class DaaSServer implements DaaSAdapter {
         const database: DatabaseController = new DatabaseController(
             (config && config.adapters && config.adapters.database)
                 ? config.adapters.database(config)
-                : new Database(),
+                : new Database(config),
             new SecurityController()
         )
         return database.init();

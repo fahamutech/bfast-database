@@ -1,4 +1,4 @@
-const {mongoRepSet, daas} = require('../shared');
+const {mongoRepSet, daas} = require('../mock.config');
 let mongoMemoryServer;
 let daaSServer;
 const glob = require('glob');
@@ -32,8 +32,8 @@ describe('All Test', function () {
         }
     });
     after(async function () {
-        await daaSServer.stop();
         await mongoMemoryServer.stop();
+        await daaSServer.stop();
     });
 
     const testPath = __dirname

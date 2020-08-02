@@ -2,6 +2,7 @@ import {ObjectId} from "mongodb";
 
 export interface BasicAttributesModel {
     id?: string;
+    objectId?: string;
     _id?: string | ObjectId;
     _oid?: string | ObjectId;
     createdAt?: Date;

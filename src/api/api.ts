@@ -13,7 +13,7 @@ const config: ConfigAdapter = DaaSConfig.getInstance();
 const database: DatabaseController = new DatabaseController(
     (config && config.adapters && config.adapters.database)
         ? config.adapters.database(config)
-        : new Database(),
+        : new Database(config),
     new SecurityController()
 );
 

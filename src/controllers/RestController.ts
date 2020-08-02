@@ -6,14 +6,14 @@ import {RulesController} from "./RulesController";
 import {DaaSConfig} from "../config";
 import {FilesAdapter} from "../adapter/FilesAdapter";
 import mime from "mime";
+import {RuleResultModel} from "../model/RulesBlockModel";
 
 let _security: SecurityController;
 let _storage: FilesAdapter;
 
 export class RestController implements RestAdapter {
 
-    constructor(security: SecurityController,
-                filesAdapter: FilesAdapter) {
+    constructor(security: SecurityController, filesAdapter: FilesAdapter) {
         _security = security;
         _storage = filesAdapter;
     }
@@ -96,30 +96,29 @@ export class RestController implements RestAdapter {
 
     handleRuleBlocks(request: Request, response: Response, next: NextFunction) {
         const body = request.body;
-        const rules = new RulesController(DaaSConfig.getInstance());
-        rules.rulesBlock = body;
-        rules.handleAuthenticationRule().then(_ => {
-            return rules.handleAuthorizationRule();
+        const results: RuleResultModel = {errors: {}};
+        const rulesController = new RulesController(DaaSConfig.getInstance());
+        rulesController.handleAuthenticationRule(body, results).then(_ => {
+            return rulesController.handleAuthorizationRule(body, results);
         }).then(_ => {
-            return rules.handleCreateRules();
+            return rulesController.handleCreateRules(body, results);
         }).then(_ => {
-            return rules.handleUpdateRules();
+            return rulesController.handleUpdateRules(body, results);
         }).then(_ => {
-            return rules.handleDeleteRules();
+            return rulesController.handleDeleteRules(body, results);
         }).then(_ => {
-            return rules.handleQueryRules();
+            return rulesController.handleQueryRules(body, results);
         }).then(_ => {
-            return rules.handleTransactionRule();
+            return rulesController.handleTransactionRule(body, results);
         }).then(_ => {
-            return rules.handleAggregationRules();
-        }).then(_=>{
-            return rules.handleStorageRule();
+            return rulesController.handleAggregationRules(body, results);
         }).then(_ => {
-            const results = rules.results;
-            if (!(results.errors && Array.isArray(results.errors) && results.errors.length > 0)) {
+            return rulesController.handleStorageRule(body, results);
+        }).then(_ => {
+            if (!(results.errors && Object.keys(results.errors).length > 0)) {
                 delete results.errors;
             }
-            response.status(httpStatus.OK).json(rules.results);
+            response.status(httpStatus.OK).json(results);
         }).catch(reason => {
             response.status(httpStatus.EXPECTATION_FAILED).json({message: reason.message ? reason.message : reason.toString()})
         });

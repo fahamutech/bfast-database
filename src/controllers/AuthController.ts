@@ -51,8 +51,15 @@ export class AuthController {
         }
     }
 
+    /**
+     * execute saved policy to determine if someone has access to that resource. If no policy found return true (
+     *  as assumption that its under dev mode, but you you required to set policies to secure your resources
+     * )
+     * @param ruleId {string}
+     * @param context {ContextBlock}
+     */
     async hasPermission(ruleId: string, context: ContextBlock): Promise<boolean> {
-        if (context && context.useMasterKey === true) {
+        if (context && context?.useMasterKey === true) {
             return true;
         }
         const filter = {
@@ -74,7 +81,7 @@ export class AuthController {
             bypassDomainVerification: true
         });
         if (query.length === 0) {
-            return false;
+            return true;
         }
         const originalRuleResult = query.filter(value => value.ruleId === originalRule);
         if (originalRuleResult && originalRuleResult.length === 1 && originalRuleResult[0].ruleBody) {
@@ -122,8 +129,12 @@ export class AuthController {
     }
 
     private static validateData<T extends BasicUserAttributes>(data: T, skipEmail = false) {
-        if (!data.username) {
-            throw new Error('username required');
+        if (!data) {
+            throw new Error("Invalid user data");
+        } else if (Object.keys(data).length === 0) {
+            throw new Error("Empty user is not supported");
+        } else if (!data.username) {
+            throw new Error('Username required');
         } else if (!data.password) {
             throw new Error('Password required');
         } else if (!data.email && !skipEmail) {

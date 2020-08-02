@@ -4,8 +4,8 @@ const {
     it,
     describe
 } = require('mocha');
-const {serverUrl} = require('../shared');
-const {createMany} = require('../controller/createController');
+const {serverUrl} = require('../mock.config');
+const {createMany} = require('../controller/database.controller.specs');
 const assert = require('assert');
 
 describe('CreateRule with Many Document & Default Database', function () {

@@ -38,7 +38,7 @@ function pushToDocker(cb) {
 }
 
 function devStart(cb) {
-    const {mongoServer, daas} = require('./specs/shared');
+    const {mongoServer, daas} = require('./specs/mock.config');
     let mongoMemoryServer;
     let daaSServer;
 
@@ -81,7 +81,7 @@ function deleteBuild(cb) {
 }
 
 function test(cb) {
-    const testPath = __dirname + '/specs/tests';
+    const testPath = __dirname + '/specs/rest';
     glob('**/*.js', {absolute: true, cwd: testPath}, (err, files) => {
         if (err) {
             console.error(err);
