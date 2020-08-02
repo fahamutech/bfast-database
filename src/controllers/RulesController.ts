@@ -245,7 +245,7 @@ export class RulesController {
                             throw "Empty filter map is not supported in delete rule";
                         }
                         const query: any[] = await _databaseController.query(domain, data, rulesBlockModel.context, {
-                            bypassDomainVerification: rulesBlockModel.context.useMasterKey === true,
+                            bypassDomainVerification: rulesBlockModel?.context?.useMasterKey === true,
                             transaction: transaction
                         });
                         const deleteResults = [];

@@ -139,15 +139,17 @@ describe('RulesController::Auth Unit Test', function () {
             }, {errors: {}})
         });
         after(async function () {
-            const response = await _rulesController.handleDeleteRules({
+            await _rulesController.handleDeleteRules({
+                context: {
+                    useMasterKey: true,
+                },
                 delete_User: {
                     filter: {
                         username: 'doe2'
                     }
                 }
             }, {errors: {}});
-            console.log(response);
-        })
+        });
         it('should return signed user data', async function () {
             const results = await _rulesController.handleAuthenticationRule({
                 auth: {
@@ -164,6 +166,19 @@ describe('RulesController::Auth Unit Test', function () {
             assert(typeof results.auth.signIn.token === 'string');
             assert(typeof results.auth.signIn.objectId === 'string');
             assert(typeof results.auth.signIn.id === 'string');
+        });
+        it('should return error message when username not supplied', async function () {
+            const results = await _rulesController.handleAuthenticationRule({
+                auth: {
+                    signIn: {
+                        password: 'doe'
+                    }
+                }
+            }, {errors: {}});
+            assert(results.auth.signIn === undefined);
+            assert(results.errors['auth.signIn'] !== undefined);
+            assert(results.errors['auth.signIn'].message === 'Username required');
+            assert(typeof results.errors['auth.signIn'].data === 'object');
         });
     })
 });
