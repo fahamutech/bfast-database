@@ -1,5 +1,5 @@
 import {FilesAdapter} from "../adapter/FilesAdapter";
-import {ConfigAdapter, DaaSConfig} from "../config";
+import {BFastDatabaseConfigAdapter, BFastDatabaseConfig} from "../bfastDatabaseConfig";
 import * as s3 from 'bfast-s3like';
 import {SecurityController} from "../controllers/SecurityController";
 
@@ -8,7 +8,7 @@ let _security: SecurityController;
 
 export class S3Storage implements FilesAdapter {
 
-    constructor(security: SecurityController, config: ConfigAdapter) {
+    constructor(security: SecurityController, config: BFastDatabaseConfigAdapter) {
         _s3 = new s3.default({
             accessKey: config.adapters.s3Storage.accessKey,
             bucket: config.adapters.s3Storage.bucket,
@@ -34,7 +34,7 @@ export class S3Storage implements FilesAdapter {
     }
 
     getFileLocation(filename: string): string {
-        return '/files/' + DaaSConfig.getInstance().applicationId + '/' + encodeURIComponent(filename);
+        return '/files/' + BFastDatabaseConfig.getInstance().applicationId + '/' + encodeURIComponent(filename);
     }
 
     async validateFilename(filename: string): Promise<any> {

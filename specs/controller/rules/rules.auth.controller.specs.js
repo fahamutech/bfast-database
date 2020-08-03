@@ -11,6 +11,7 @@ describe('RulesController::Auth Unit Test', function () {
         _rulesController = await getRulesController(mongoMemoryReplSet);
     });
     after(async function () {
+        this.timeout(1000000);
         await mongoMemoryReplSet.stop();
     });
 
@@ -32,7 +33,6 @@ describe('RulesController::Auth Unit Test', function () {
             assert(results.auth['signUp'].email === 'doe@doe.com');
             assert(results.auth['signUp'].id !== null);
             assert(results.auth['signUp'].objectId !== null);
-            assert(typeof results.auth['signUp'].objectId === "string");
             assert(typeof results.auth['signUp'].id === "string");
             assert(typeof results.auth['signUp'].token === "string");
         });
@@ -164,7 +164,6 @@ describe('RulesController::Auth Unit Test', function () {
             assert(results.auth.signIn.username === 'doe2');
             assert(results.auth.signIn.email === 'doedoe@gmail.com');
             assert(typeof results.auth.signIn.token === 'string');
-            assert(typeof results.auth.signIn.objectId === 'string');
             assert(typeof results.auth.signIn.id === 'string');
         });
         it('should return error message when username not supplied', async function () {

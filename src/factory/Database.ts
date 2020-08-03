@@ -10,12 +10,12 @@ import {ContextBlock} from "../model/RulesBlockModel";
 import {QueryModel} from "../model/QueryModel";
 import {UpdateModel} from "../model/UpdateModel";
 import {DeleteModel} from "../model/DeleteModel";
-import {ConfigAdapter} from "../config";
+import {BFastDatabaseConfigAdapter} from "../bfastDatabaseConfig";
 
 export class Database implements DatabaseAdapter {
     private _mongoClient: MongoClient;
 
-    constructor(private readonly config: ConfigAdapter) {
+    constructor(private readonly config: BFastDatabaseConfigAdapter) {
     }
 
     async writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock, options?: DatabaseWriteOptions): Promise<V> {
@@ -23,6 +23,7 @@ export class Database implements DatabaseAdapter {
         const response = await conn.db().collection(domain).insertMany(data, {
             session: options && options.transaction ? options.transaction : undefined
         });
+        conn.close().catch(console.warn);
         return response.insertedIds as any;
     }
 
@@ -51,7 +52,7 @@ export class Database implements DatabaseAdapter {
         try {
             await this.dropIndexes('_User');
         } catch (e) {
-            // console.warn(e);
+            console.warn(e);
         }
         await this.createIndexes('_User', [
             {
@@ -74,7 +75,7 @@ export class Database implements DatabaseAdapter {
         return Promise.resolve();
     }
 
-    async createIndexes(domain: string, indexes: any[]) {
+    async createIndexes(domain: string, indexes: any[]): Promise<any> {
         if (indexes && Array.isArray(indexes)) {
             const conn = await this.connection();
             for (const value of indexes) {
@@ -83,24 +84,42 @@ export class Database implements DatabaseAdapter {
                 delete indexOptions.field;
                 await conn.db().collection(domain).createIndex({[value.field]: 1}, indexOptions);
             }
-            return;
+            await conn.close(true); // .catch(console.warn);
+            return 'Indexes added';
         } else {
-            return;
+            throw new Error("Must supply array of indexes to be added");
         }
     }
 
-    async dropIndexes(domain: string) {
+    async dropIndexes(domain: string): Promise<boolean> {
         const conn = await this.connection();
-        await conn.db().collection(domain).dropIndexes();
-        return;
+        const result = await conn.db().collection(domain).dropIndexes();
+        await conn.close(true);
+        return result;
+    }
+
+    async listIndexes(domain: string): Promise<any[]> {
+        const conn = await this.connection();
+        const indexes = await conn.db().collection(domain).listIndexes().toArray();
+        await conn.close(true);
+        return indexes;
     }
 
     async findOne<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>,
                                                   context: ContextBlock, options?: DatabaseWriteOptions): Promise<any> {
         const conn = await this.connection();
-        return await conn.db().collection(domain).findOne<T>({_id: queryModel._id}, {
-            session: options && options.transaction ? options.transaction : undefined
+        const fieldsToReturn = {};
+        if (queryModel?.return && Array.isArray(queryModel?.return) && queryModel.return.length > 0) {
+            queryModel.return.forEach(x => {
+                fieldsToReturn[x] = 1
+            });
+        }
+        const result = await conn.db().collection(domain).findOne<T>({_id: queryModel._id}, {
+            session: options && options.transaction ? options.transaction : undefined,
+            projection: fieldsToReturn
         });
+        await conn.close(true);
+        return result;
     }
 
     async query<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>,
@@ -109,29 +128,40 @@ export class Database implements DatabaseAdapter {
         const query = conn.db().collection(domain).find(queryModel.filter, {
             session: options && options.transaction ? options.transaction : undefined
         });
-        if (queryModel.skip) {
+        if (queryModel?.skip) {
             query.skip(queryModel.skip);
         } else {
             query.skip(0)
         }
-        if (queryModel.size) {
+        if (queryModel?.size) {
             if (queryModel.size !== -1) {
                 query.limit(queryModel.size);
             }
         } else {
-            if (queryModel.count === false) {
+            if (queryModel?.count === false) {
                 query.limit(20);
             }
         }
-        if (queryModel.orderBy && Array.isArray(queryModel.orderBy) && queryModel.orderBy.length > 0) {
+        if (queryModel?.orderBy && Array.isArray(queryModel?.orderBy) && queryModel?.orderBy?.length > 0) {
             queryModel.orderBy.forEach(value => {
                 query.sort(value);
             });
         }
-        if (queryModel.count === true) {
-            return await query.count();
+        if (queryModel?.return && Array.isArray(queryModel?.return) && queryModel.return.length > 0) {
+            const fieldsToReturn = {};
+            queryModel.return.forEach(x => {
+                fieldsToReturn[x] = 1
+            });
+            query.project(fieldsToReturn);
         }
-        return await query.toArray();
+        let result;
+        if (queryModel?.count === true) {
+            result = await query.count();
+        } else {
+            result = await query.toArray();
+        }
+        await conn.close(true);
+        return result;
     }
 
     async update<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateModel<T>,
@@ -142,6 +172,7 @@ export class Database implements DatabaseAdapter {
             returnOriginal: false,
             session: options && options.transaction ? options.transaction : undefined
         });
+        await conn.close(true);
         return response.value;
     }
 
@@ -153,6 +184,7 @@ export class Database implements DatabaseAdapter {
             .findOneAndDelete(deleteModel.filter, {
                 session: options && options.transaction ? options.transaction : undefined
             });
+        await conn.close(true);
         return response.value as any;
     }
 
@@ -174,11 +206,14 @@ export class Database implements DatabaseAdapter {
         } finally {
             await session.endSession();
         }
+        await conn.close(true);
     }
 
     async aggregate(domain: string, pipelines: Object[], context: ContextBlock, options?: DatabaseWriteOptions): Promise<any> {
         const conn = await this.connection();
-        return conn.db().collection(domain).aggregate(pipelines).toArray();
+        const result = await conn.db().collection(domain).aggregate(pipelines).toArray();
+        await conn.close(true);
+        return result;
     }
 
     async changes(domain: string, pipeline: any[], listener: (doc: any) => void): Promise<any> {
@@ -186,6 +221,7 @@ export class Database implements DatabaseAdapter {
         conn.db().collection(domain).watch(pipeline).on("change", doc => {
             listener(doc);
         });
+        await conn.close(true);
         return;
     }
 }

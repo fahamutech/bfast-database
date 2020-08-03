@@ -1,8 +1,7 @@
-const {DaaSServer} = require("../dist/daas");
+const {BFastDatabase} = require("../dist/bfastDatabase");
 const {MongoMemoryServer} = require('mongodb-memory-server');
 const {MongoMemoryReplSet} = require('mongodb-memory-server');
 const {RulesController} = require('../dist/controllers/RulesController');
-
 
 /**
  *
@@ -30,10 +29,10 @@ const mongoMemoryReplSet = () => {
 }
 
 /**
- * @return {Promise<DaaSServer>}
+ * @return {Promise<BFastDatabase>}
  */
 const daas = async () => {
-    return new DaaSServer();
+    return new BFastDatabase();
 }
 
 exports.serverUrl = 'http://localhost:3111/daas';

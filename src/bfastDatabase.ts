@@ -1,12 +1,11 @@
-import {DaaSAdapter} from "./adapter/DaaSAdapter";
 import {FaaS} from 'bfast-faas';
 import {Database} from "./factory/Database";
 import {DatabaseController} from "./controllers/DatabaseController";
 import {SecurityController} from "./controllers/SecurityController";
-import {ConfigAdapter, DaaSConfig} from "./config";
+import {BFastDatabaseConfig, BFastDatabaseConfigAdapter} from "./bfastDatabaseConfig";
 
 
-export class DaaSServer implements DaaSAdapter {
+export class BFastDatabase {
     private faas: FaaS;
 
     constructor() {
@@ -17,7 +16,7 @@ export class DaaSServer implements DaaSAdapter {
      * @param options {ConfigAdapter}
      * @return Promise
      */
-    async start(options: ConfigAdapter): Promise<boolean> {
+    async start(options: BFastDatabaseConfigAdapter): Promise<boolean> {
         if (this._validateOptions(options).valid) {
             this._registerOptions(options);
             this.faas = new FaaS({
@@ -46,7 +45,7 @@ export class DaaSServer implements DaaSAdapter {
         return this.faas.stop();
     }
 
-    private _validateOptions(options: ConfigAdapter): { valid: boolean, message: string } {
+    private _validateOptions(options: BFastDatabaseConfigAdapter): { valid: boolean, message: string } {
         if (!options.port) {
             return {
                 valid: false,
@@ -78,7 +77,7 @@ export class DaaSServer implements DaaSAdapter {
         }
     }
 
-    private async _setUpDatabase(config: ConfigAdapter) {
+    private async _setUpDatabase(config: BFastDatabaseConfigAdapter) {
         const database: DatabaseController = new DatabaseController(
             (config && config.adapters && config.adapters.database)
                 ? config.adapters.database(config)
@@ -88,7 +87,7 @@ export class DaaSServer implements DaaSAdapter {
         return database.init();
     }
 
-    private _registerOptions(options: ConfigAdapter) {
-        DaaSConfig.getInstance().addValues(options);
+    private _registerOptions(options: BFastDatabaseConfigAdapter) {
+        BFastDatabaseConfig.getInstance().addValues(options);
     }
 }

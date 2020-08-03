@@ -1,4 +1,4 @@
-import {DaaSServer} from "./daas";
+import {BFastDatabase} from "./bfastDatabase";
 
 /*
 - PARSE_SERVER_APPLICATION_ID=${appId}
@@ -43,7 +43,7 @@ if (checker.length === 0) {
     })
 }
 
-new DaaSServer().start({
+new BFastDatabase().start({
     applicationId: process.env.PARSE_SERVER_APPLICATION_ID,
     masterKey: process.env.PARSE_SERVER_MASTER_KEY,
     mongoDbUri: process.env.PARSE_SERVER_DATABASE_URI,

@@ -3,7 +3,7 @@ export interface RulesBlockModel {
     masterKey?: string;
     token?: string;
     context?: ContextBlock;
-    Transaction?: TransactionBlock;
+    transaction?: TransactionBlock;
     auth?: {
         signUp?: {
             username: string,
@@ -17,7 +17,17 @@ export interface RulesBlockModel {
         reset?: string
     };
     policy?: {
-        rules?: { [key: string]: string }
+        add?: {
+            'create.*'?: string;
+            'query.*'?: string;
+            'update.*'?: string;
+            'delete.*'?: string;
+            [key: string]: string
+        };
+        list?: {};
+        remove?: {
+            ruleId: string;
+        }
     },
     errors?: {
         [key: string]: {

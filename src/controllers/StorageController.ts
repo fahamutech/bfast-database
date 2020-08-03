@@ -16,7 +16,7 @@ export class StorageController {
             throw 'Filename required';
         }
         if (!base64) {
-            throw 'File data to save is required';
+            throw 'File base64 data to save is required';
         }
         if (!type) {
             type = mime.getType(filename);
@@ -24,11 +24,11 @@ export class StorageController {
         const _source = StorageController.getSource(base64, type);
         const dataToSave: {
             type?: any,
-            base64: string,
+            data: any,
             filename: string,
             fileData: Object,
         } = {
-            base64: _source.base64,
+            data: _source.base64,
             filename: filename,
             fileData: {
                 metadata: {},
@@ -38,11 +38,13 @@ export class StorageController {
         if (_source.type) {
             dataToSave.type = _source.type;
         }
-        const isBase64 = Buffer.from(dataToSave.base64, 'base64').toString('base64') === dataToSave.base64;
+        const isBase64 = Buffer.from(dataToSave.data, 'base64').toString('base64') === dataToSave.data;
         const file = await _fileAdapter.createFile(
-            dataToSave.filename, isBase64
-                ? Buffer.from(dataToSave.base64, 'base64')
-                : dataToSave.base64, dataToSave?.type,
+            dataToSave.filename,
+            isBase64 === true ?
+                Buffer.from(dataToSave.data, 'base64')
+                : dataToSave.data,
+            dataToSave?.type,
             {}
         );
         return _fileAdapter.getFileLocation(file);

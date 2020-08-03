@@ -58,9 +58,11 @@ export interface DatabaseAdapter {
 
     createIndexes(domain: string, indexes: any[]): Promise<any>;
 
-    dropIndexes(domain: string): Promise<any>;
+    dropIndexes(domain: string): Promise<boolean>;
 
-    aggregate(domain: string, pipelines: Object[], context: ContextBlock, options?: DatabaseWriteOptions): Promise<any>;
+    listIndexes(domain: string): Promise<any>;
+
+    aggregate(domain: string, pipelines: Object[], context: ContextBlock, options?: DatabaseWriteOptions): Promise<any[]>;
 }
 
 export interface DatabaseWriteOptions extends DatabaseBasicOptions {

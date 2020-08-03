@@ -11,6 +11,7 @@ describe('RulesController::Policy Unit Test', function () {
         _rulesController = await getRulesController(mongoMemoryReplSet);
     });
     after(async function () {
+        this.timeout(10000000);
         await mongoMemoryReplSet.stop();
     });
 
@@ -22,18 +23,17 @@ describe('RulesController::Policy Unit Test', function () {
                 },
                 policy: {
                     add: {
-                        'read.*': 'return false;'
+                        'query.*': 'return false;'
                     }
                 }
             }, {errors: {}});
             assert(results.policy !== undefined);
-            assert(results.policy['add']['read.*'] !== undefined);
-            assert(typeof results.policy['add']['read.*'] === 'object');
-            assert(typeof results.policy['add']['read.*']['ruleId'] === 'string');
-            assert(typeof results.policy['add']['read.*']['objectId'] === 'string');
-            assert(typeof results.policy['add']['read.*']['id'] === 'string');
-            assert(results.policy['add']['read.*']['ruleId'] === 'read.*');
-            assert(results.policy['add']['read.*']['ruleBody'] === 'return false;');
+            assert(results.policy['add']['query.*'] !== undefined);
+            assert(typeof results.policy['add']['query.*'] === 'object');
+            assert(typeof results.policy['add']['query.*']['ruleId'] === 'string');
+            assert(typeof results.policy['add']['query.*']['id'] === 'string');
+            assert(results.policy['add']['query.*']['ruleId'] === 'query.*');
+            assert(results.policy['add']['query.*']['ruleBody'] === 'return false;');
         });
         it('should return error message when masterKey is invalid', async function () {
             const results = await _rulesController.handleAuthorizationRule({
@@ -42,7 +42,7 @@ describe('RulesController::Policy Unit Test', function () {
                 },
                 policy: {
                     rules: {
-                        'read.*': 'return false;'
+                        'query.*': 'return false;'
                     }
                 }
             }, {errors: {}});
@@ -59,7 +59,7 @@ describe('RulesController::Policy Unit Test', function () {
                 },
                 policy: {
                     add: {
-                        'read.*': 'return false;'
+                        'query.*': 'return false;'
                     }
                 }
             }, {errors: {}});
@@ -71,7 +71,7 @@ describe('RulesController::Policy Unit Test', function () {
                 },
                 delete_Policy: {
                     filter: {
-                        ruleId: 'read.*'
+                        ruleId: 'query.*'
                     }
                 }
             }, {errors: {}});
@@ -89,7 +89,7 @@ describe('RulesController::Policy Unit Test', function () {
             assert(results.policy.list !== undefined);
             assert(Array.isArray(results.policy['list']));
             assert(results.policy['list'].length === 1);
-            assert(results.policy['list'][0]['ruleId'] === 'read.*');
+            assert(results.policy['list'][0]['ruleId'] === 'query.*');
         });
     });
     describe('RulesController::Policy::Remove', function () {

@@ -49,9 +49,38 @@ export class DatabaseController {
             if (mandatory === true) {
                 throw e;
             }
-            console.warn(e);
+            // console.warn(e);
             return;
         }
+    }
+
+    /**
+     * create a user defined indexes for specified domain
+     * @param domain {string}
+     * @param indexes {Array}
+     */
+    async addIndexes(domain: string, indexes: any[]): Promise<any> {
+        if (indexes && Array.isArray(indexes)) {
+            return _database.createIndexes(domain, indexes);
+        } else {
+            throw new Error("Must supply array of indexes to be added");
+        }
+    }
+
+    /**
+     * remove all user defined indexes of the domain
+     * @param domain {string}
+     */
+    async removeIndexes(domain: string): Promise<boolean> {
+        return _database.dropIndexes(domain);
+    }
+
+    /**
+     * list all indexes of a domain
+     * @param domain {string}
+     */
+    async listIndexes(domain: string): Promise<any[]> {
+        return _database.listIndexes(domain);
     }
 
     /**
@@ -69,7 +98,7 @@ export class DatabaseController {
         const returnFields = this.getReturnFields<T>(data);
         const sanitizedData = this.sanitize4Db(data);
         const sanitizedDataWithCreateMetadata = this.addCreateMetadata(sanitizedData, context);
-        sanitizedDataWithCreateMetadata._id = await _database.writeOne<T>(domain, data, context, options);
+        sanitizedDataWithCreateMetadata._id = await _database.writeOne<T>(domain, sanitizedDataWithCreateMetadata, context, options);
         return this.sanitize4User<T>(sanitizedDataWithCreateMetadata, returnFields) as T;
     }
 
@@ -131,7 +160,8 @@ export class DatabaseController {
         if (options && options.bypassDomainVerification === false) {
             await this.handleDomainValidation(domain);
         }
-        return _database.aggregate(domain, pipelines, context, options);
+        const results = await _database.aggregate(domain, pipelines, context, options);
+        return results.map(result => this.sanitize4User(result, []));
     }
 
     /**
@@ -152,17 +182,20 @@ export class DatabaseController {
     async query(domain: string, queryModel: QueryModel<any>, context: ContextBlock,
                 options: DatabaseWriteOptions = {bypassDomainVerification: false}): Promise<any> {
         const returnFields = this.getReturnFields(queryModel as any);
+        const returnFields4Db = this.getReturnFields4Db(queryModel as any);
         if (options && options.bypassDomainVerification === false) {
             await this.handleDomainValidation(domain);
         }
         if (queryModel && typeof queryModel !== 'boolean' && queryModel.id && typeof queryModel.id !== 'boolean') {
             queryModel = this.sanitizeWithOperator4Db(queryModel as any);
             queryModel.filter = this.sanitizeWithOperator4Db(queryModel?.filter as any);
+            queryModel.return = returnFields4Db;
             const result = await _database.findOne(domain, queryModel, context, options);
             return this.sanitize4User(result, returnFields);
         } else {
             queryModel = this.sanitizeWithOperator4Db(queryModel as any);
             queryModel.filter = this.sanitizeWithOperator4Db(queryModel?.filter as any);
+            queryModel.return = returnFields4Db;
             const result = await _database.query(domain, queryModel, context, options);
             if (result && Array.isArray(result)) {
                 return result.map(value => this.sanitize4User(value, returnFields));
@@ -172,7 +205,7 @@ export class DatabaseController {
     }
 
     async writeMany<T extends BasicAttributesModel>(domain: string, data: T[], context: ContextBlock,
-                                                       options: DatabaseWriteOptions= {bypassDomainVerification: false}): Promise<any[]> {
+                                                    options: DatabaseWriteOptions = {bypassDomainVerification: false}): Promise<any[]> {
         if (options && options.bypassDomainVerification === false) {
             await this.handleDomainValidation(domain);
         }
@@ -222,9 +255,7 @@ export class DatabaseController {
         data._created_by = context?.uid;
         data._created_at = new Date();
         data._updated_at = new Date();
-        if (data && data.id && typeof data.id !== "boolean") {
-            data._id = data.id
-        } else {
+        if (data && (data._id === undefined || data._id === null) && typeof data !== "boolean") {
             data._id = _security.generateUUID();
         }
         return data;
@@ -242,6 +273,32 @@ export class DatabaseController {
                     if (typeof value !== "string") {
                         flag = false;
                     }
+                });
+            }
+            if (flag === true) {
+                return data.return;
+            } else {
+                return undefined;
+            }
+        } else {
+            return undefined;
+        }
+    }
+
+    /**
+     * get a return fields from a return attribute of the data
+     * for database query operation
+     * @param data
+     */
+    getReturnFields4Db<T extends BasicAttributesModel>(data: T) {
+        if (data && data.return && Array.isArray(data.return)) {
+            let flag = true;
+            if (data.return.length > 0) {
+                data.return.forEach((value, index) => {
+                    if (typeof value !== "string") {
+                        flag = false;
+                    }
+                    data.return[index] = Object.keys(this.sanitize4Db({[value]: 1}))[0];
                 });
             }
             if (flag === true) {
@@ -316,7 +373,7 @@ export class DatabaseController {
         }
         if (data && typeof data._id !== "boolean") {
             data.id = data._id.toString();
-            data.objectId = data._id.toString();
+            // data.objectId = data._id.toString();
             delete data._id;
         }
         if (data && typeof data._created_at !== "boolean") {
