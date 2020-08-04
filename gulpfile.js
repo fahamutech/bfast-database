@@ -50,6 +50,15 @@ function devStart(cb) {
             mongoDbUri: 'mongodb://localhost/smartstock',
             applicationId: 'daas',
             port: 3003,
+            adapters: {
+                // s3Storage: {
+                //     bucket: 'daas',
+                //     direct: false,
+                //     accessKey: '5IGXSX5CU52C2RFZFALG',
+                //     secretKey: '2q2vteO9lQp6LaxT3lGMLdkUF5THdxZWmyWmb1y9',
+                //     endPoint: 'https://eu-central-1.linodeobjects.com/'
+                // }
+            },
             mountPath: '/daas',
             masterKey: 'daas'
         });

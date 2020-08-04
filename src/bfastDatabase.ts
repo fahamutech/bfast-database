@@ -56,6 +56,11 @@ export class BFastDatabase {
                 valid: false,
                 message: 'Mount Path required'
             }
+        } else if (options?.mountPath === '/storage' || options?.mountPath === '/changes') {
+            return {
+                valid: false,
+                message: 'Mount path name not supported'
+            }
         } else if (!options.masterKey) {
             return {
                 valid: false,

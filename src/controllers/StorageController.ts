@@ -11,17 +11,17 @@ export class StorageController {
     }
 
     async save(fileModel: FileModel, context: ContextBlock): Promise<string> {
-        let {filename, base64, type} = fileModel;
+        let {filename, data, type} = fileModel;
         if (!filename) {
             throw 'Filename required';
         }
-        if (!base64) {
+        if (!data) {
             throw 'File base64 data to save is required';
         }
         if (!type) {
             type = mime.getType(filename);
         }
-        const _source = StorageController.getSource(base64, type);
+        const _source = StorageController.getSource(data, type);
         const dataToSave: {
             type?: any,
             data: any,
@@ -45,6 +45,26 @@ export class StorageController {
                 Buffer.from(dataToSave.data, 'base64')
                 : dataToSave.data,
             dataToSave?.type,
+            {}
+        );
+        return _fileAdapter.getFileLocation(file);
+    }
+
+    async saveFromBuffer(fileModel: { filename: string, data: Buffer, type: string }, context: ContextBlock): Promise<string> {
+        let {filename, data, type} = fileModel;
+        if (!filename) {
+            throw 'Filename required';
+        }
+        if (!data) {
+            throw 'File base64 data to save is required';
+        }
+        if (!type) {
+            type = mime.getType(filename);
+        }
+        const file = await _fileAdapter.createFile(
+            filename,
+            data,
+            type,
             {}
         );
         return _fileAdapter.getFileLocation(file);
