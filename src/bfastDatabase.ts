@@ -1,41 +1,51 @@
-import {DaaSAdapter} from "./adapter/DaaSAdapter";
 import {FaaS} from 'bfast-faas';
 import {Database} from "./factory/Database";
 import {DatabaseController} from "./controllers/DatabaseController";
 import {SecurityController} from "./controllers/SecurityController";
-import {ConfigAdapter, DaaSConfig} from "./config";
+import {BFastDatabaseConfig, BFastDatabaseConfigAdapter} from "./bfastDatabaseConfig";
 
 
-export class DaaSServer implements DaaSAdapter {
+export class BFastDatabase {
     private faas: FaaS;
 
-    constructor(private readonly config: ConfigAdapter) {
-        DaaSServer.registerOptions(config);
+    constructor() {
     }
 
-    async start(): Promise<boolean> {
-        if (this.validateOptions().valid) {
+    /**
+     * start a bfast::database server
+     * @param options {ConfigAdapter}
+     * @return Promise
+     */
+    async start(options: BFastDatabaseConfigAdapter): Promise<boolean> {
+        if (this._validateOptions(options).valid) {
+            this._registerOptions(options);
             this.faas = new FaaS({
-                port: this.config.port,
+                port: options.port,
                 functionsConfig: {
                     functionsDirPath: __dirname,
                     bfastJsonPath: __dirname + '/bfast.json'
                 }
             });
             await this.faas.start();
-            await DaaSServer.setUpDatabase(this.config);
+            await this._setUpDatabase(options);
             return true;
         } else {
-            throw new Error(this.validateOptions().message);
+            throw new Error(this._validateOptions(options).message);
         }
     }
 
-    async stop(): Promise<boolean> {
-        return await this.faas.stop();
+    /**
+     * stop a bfast::database server
+     * @return Promise
+     */
+    async stop(): Promise<any> {
+        if (!this.faas) {
+            return true;
+        }
+        return this.faas.stop();
     }
 
-    private validateOptions(): { valid: boolean, message: string } {
-        const options = this.config;
+    private _validateOptions(options: BFastDatabaseConfigAdapter): { valid: boolean, message: string } {
         if (!options.port) {
             return {
                 valid: false,
@@ -45,6 +55,11 @@ export class DaaSServer implements DaaSAdapter {
             return {
                 valid: false,
                 message: 'Mount Path required'
+            }
+        } else if (options?.mountPath === '/storage' || options?.mountPath === '/changes') {
+            return {
+                valid: false,
+                message: 'Mount path name not supported'
             }
         } else if (!options.masterKey) {
             return {
@@ -67,17 +82,17 @@ export class DaaSServer implements DaaSAdapter {
         }
     }
 
-    private static async setUpDatabase(config: ConfigAdapter) {
-        const database: any = new DatabaseController(
+    private async _setUpDatabase(config: BFastDatabaseConfigAdapter) {
+        const database: DatabaseController = new DatabaseController(
             (config && config.adapters && config.adapters.database)
-            ? config.adapters.database(config)
-            : new Database(),
+                ? config.adapters.database(config)
+                : new Database(config),
             new SecurityController()
         )
         return database.init();
     }
 
-    private static registerOptions(options: ConfigAdapter) {
-        DaaSConfig.getInstance().addValues(options);
+    private _registerOptions(options: BFastDatabaseConfigAdapter) {
+        BFastDatabaseConfig.getInstance().addValues(options);
     }
 }

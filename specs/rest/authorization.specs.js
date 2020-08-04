@@ -1,5 +1,5 @@
 const axios = require('axios');
-const {serverUrl} = require('../shared');
+const {serverUrl} = require('../mock.config');
 const assert = require('assert');
 const {
     before,
@@ -9,10 +9,6 @@ const {
 } = require('mocha');
 
 describe('Authorization', function () {
-    before(async function () {
-    });
-    after(async function () {
-    });
 
     describe('Add Authorization Policy', function () {
         it('should add a permission policy to a resource url', async function () {
@@ -21,12 +17,24 @@ describe('Authorization', function () {
                 masterKey: 'daas',
                 Authorization: {
                     rules: {
-                        "create.Test": `const auth = context.auth;const uid = context.uid;return auth === true;`,
+                        "create.Product": `const uid = context.uid;return auth === true;`,
                     }
                 }
             };
             const response = await axios.post(serverUrl, authorization);
-            console.log(response.data);
+            const data = response.data;
+            console.log(JSON.stringify(data));
+            assert(typeof data !== "undefined");
+            assert(typeof data === "object");
+            assert(typeof data['ResultOfAuthorization'] === "object");
+            assert(data['ResultOfAuthorization'].rules !== undefined);
+            assert(typeof data['ResultOfAuthorization'].rules === "object");
+            assert(typeof data['ResultOfAuthorization'].rules['create.Product'] === "object");
+            assert(data['ResultOfAuthorization'].rules['create.Product'].ruleId === "create.Product");
+            assert(data['ResultOfAuthorization'].rules['create.Product'].ruleBody === "const auth = context.auth;const uid = context.uid;return auth === true;");
+            assert(data['ResultOfAuthorization'].rules['create.Product'].createdAt !== undefined);
+            assert(data['ResultOfAuthorization'].rules['create.Product'].updatedAt !== undefined);
+            assert(data['ResultOfAuthorization'].rules['create.Product'].id !== undefined);
         });
     });
 
@@ -47,16 +55,6 @@ describe('Authorization', function () {
 
     describe('Authorized request', function () {
         it('should allow create a resource for authorized request', async function () {
-            const authorizationRule = {
-                applicationId: 'daas',
-                masterKey: 'daas',
-                Authorization: {
-                    rules: {
-                        "create.Test": `const auth = context.auth;const uid = context.uid;return auth === true;`,
-                    }
-                }
-            };
-            await axios.post(serverUrl, authorizationRule);
             const authentication = {
                 applicationId: 'daas',
                 Authentication: {
@@ -72,14 +70,21 @@ describe('Authorization', function () {
             const authorization = {
                 applicationId: 'daas',
                 token: token,
-                CreateTest: {
+                CreateProduct: {
                     name: 'joshua',
                     age: 20,
                     return: []
                 }
             };
             const response = await axios.post(serverUrl, authorization);
-            console.log(response.data);
+            const data = response.data;
+            console.log(data);
+            assert(typeof data !== "undefined");
+            assert(typeof data === "object");
+            assert(data['ResultOfCreateProduct'] === undefined);
+            assert(data['errors'] !== undefined);
+            assert(Array.isArray(data['errors']));
+            assert(data['errors'][0]['path'] === 'Create.Product');
         });
     });
 

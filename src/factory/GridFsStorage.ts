@@ -6,7 +6,7 @@
 
 import {Db, GridFSBucket, MongoClient} from 'mongodb';
 import {FilesAdapter} from "../adapter/FilesAdapter";
-import {DaaSConfig} from "../config";
+import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
 import {SecurityController} from "../controllers/SecurityController";
 
 let _security: SecurityController;
@@ -18,7 +18,7 @@ export class GridFsStorage implements FilesAdapter {
     _connectionPromise: Promise<Db>;
     _mongoOptions: Object;
 
-    constructor(private readonly security: SecurityController, mongoDatabaseURI = DaaSConfig.getInstance().mongoDbUri, mongoOptions = {}) {
+    constructor(private readonly security: SecurityController, mongoDatabaseURI = BFastDatabaseConfig.getInstance().mongoDbUri, mongoOptions = {}) {
         this._databaseURI = mongoDatabaseURI;
         _security = this.security;
         const defaultMongoOptions = {
@@ -95,7 +95,7 @@ export class GridFsStorage implements FilesAdapter {
     }
 
     getFileLocation(filename: string): string {
-        return '/files/' + DaaSConfig.getInstance().applicationId + '/' + encodeURIComponent(filename);
+        return '/files/' + BFastDatabaseConfig.getInstance().applicationId + '/' + encodeURIComponent(filename);
     }
 
     async getMetadata(filename) {

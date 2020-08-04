@@ -38,15 +38,30 @@ function pushToDocker(cb) {
 }
 
 function devStart(cb) {
-    const {mongoServer, daas} = require('./specs/shared');
+    const {mongoServer, daas} = require('./specs/mock.config');
     let mongoMemoryServer;
     let daaSServer;
 
     async function run() {
         mongoMemoryServer = mongoServer();
         await mongoMemoryServer.start();
-        daaSServer = await daas('mongodb://localhost/smartstock', 3003);
-        await daaSServer.start();
+        daaSServer = await daas();
+        await daaSServer.start({
+            mongoDbUri: 'mongodb://localhost/smartstock',
+            applicationId: 'daas',
+            port: 3003,
+            adapters: {
+                // s3Storage: {
+                //     bucket: 'daas',
+                //     direct: false,
+                //     accessKey: '5IGXSX5CU52C2RFZFALG',
+                //     secretKey: '2q2vteO9lQp6LaxT3lGMLdkUF5THdxZWmyWmb1y9',
+                //     endPoint: 'https://eu-central-1.linodeobjects.com/'
+                // }
+            },
+            mountPath: '/daas',
+            masterKey: 'daas'
+        });
     }
 
     run().catch(reason => {
@@ -75,7 +90,7 @@ function deleteBuild(cb) {
 }
 
 function test(cb) {
-    const testPath = __dirname + '/specs/tests';
+    const testPath = __dirname + '/specs/rest';
     glob('**/*.js', {absolute: true, cwd: testPath}, (err, files) => {
         if (err) {
             console.error(err);

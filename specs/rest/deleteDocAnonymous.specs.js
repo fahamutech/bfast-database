@@ -1,5 +1,5 @@
 const axios = require('axios');
-const {serverUrl} = require('../shared');
+const {serverUrl} = require('../mock.config');
 const assert = require('assert');
 const {
     before,

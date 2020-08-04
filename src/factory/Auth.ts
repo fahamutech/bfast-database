@@ -20,8 +20,8 @@ export class Auth implements AuthAdapter {
         throw new Error('Not implemented');
     }
 
-    async signIn<T extends BasicUserAttributes>(userModel: T, context?: ContextBlock): Promise<T> {
-        const users = await this._database.query<any>(this.domainName, {
+    async signIn<T extends BasicUserAttributes>(userModel: T, context: ContextBlock): Promise<T> {
+        const users = await this._database.query(this.domainName, {
             filter: {
                 username: userModel.username
             },
@@ -47,13 +47,13 @@ export class Auth implements AuthAdapter {
         }
     }
 
-    async signUp<T extends BasicUserAttributes>(userModel: T, context?: ContextBlock): Promise<T> {
-        userModel.password = await this._security.hashPlainText(userModel.password);
-        const user = await this._database.writeOne<BasicUserAttributes, any>(this.domainName, userModel, context, {
+    async signUp<T extends BasicUserAttributes>(userModel: T, context: ContextBlock): Promise<T> {
+        userModel.password = await this._security.hashPlainText(userModel?.password);
+        const user = await this._database.writeOne(this.domainName, userModel, context, {
             bypassDomainVerification: true
         });
         delete user.password;
-        user.token = await this._security.generateToken({uid: user.id});
+        user.token = await this._security.generateToken({uid: user?.id});
         return user;
     }
 

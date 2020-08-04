@@ -1,24 +1,22 @@
-import {RestAdapter} from "../adapter/RestAdapter";
-import {NextFunction, Request, Response} from "express";
 import * as httpStatus from "http-status-codes";
 import {SecurityController} from "./SecurityController";
 import {RulesController} from "./RulesController";
-import {DaaSConfig} from "../config";
+import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
 import {FilesAdapter} from "../adapter/FilesAdapter";
 import mime from "mime";
+import {RuleResultModel} from "../model/RulesBlockModel";
 
 let _security: SecurityController;
 let _storage: FilesAdapter;
 
-export class RestController implements RestAdapter {
+export class RestController {
 
-    constructor(security: SecurityController,
-                filesAdapter: FilesAdapter) {
+    constructor(security: SecurityController, filesAdapter: FilesAdapter) {
         _security = security;
         _storage = filesAdapter;
     }
 
-    handleGetFile(request: Request, res: Response, next: NextFunction) {
+    handleGetFile(request: any, res: any, next: any) {
         const filename = request.params.filename;
         const contentType = mime.getType(filename);
         _storage.getFileData(filename).then((data) => {
@@ -33,9 +31,9 @@ export class RestController implements RestAdapter {
         });
     }
 
-    verifyApplicationId(request: Request, response: Response, next: NextFunction) {
+    verifyApplicationId(request: any, response: any, next: any) {
         const applicationId = request.body.applicationId
-        if (applicationId === DaaSConfig.getInstance().applicationId) {
+        if (applicationId === BFastDatabaseConfig.getInstance().applicationId) {
             request.body.context = {
                 applicationId
             }
@@ -45,11 +43,11 @@ export class RestController implements RestAdapter {
         }
     }
 
-    verifyToken(request: Request, response: Response, next: NextFunction) {
+    verifyToken(request: any, response: any, next: any) {
         const token = request.body.token;
         const masterKey = request.body.masterKey;
 
-        if (masterKey === DaaSConfig.getInstance().masterKey) {
+        if (masterKey === BFastDatabaseConfig.getInstance().masterKey) {
             request.body.context.auth = true;
             request.body.context.uid = `masterKey_${masterKey}`;
             request.body.context.masterKey = masterKey;
@@ -74,7 +72,7 @@ export class RestController implements RestAdapter {
         }
     }
 
-    verifyMethod(request: Request, response: Response, next: NextFunction) {
+    verifyMethod(request: any, response: any, next: any) {
         if (request.method === 'POST') {
             next();
         } else {
@@ -82,7 +80,7 @@ export class RestController implements RestAdapter {
         }
     }
 
-    verifyBodyData(request: Request, response: Response, next: NextFunction) {
+    verifyBodyData(request: any, response: any, next: any) {
         const body = request.body;
         if (!body) {
             response.status(httpStatus.BAD_REQUEST).json({message: 'require non empty rule blocks request'});
@@ -94,32 +92,33 @@ export class RestController implements RestAdapter {
         }
     }
 
-    handleRuleBlocks(request: Request, response: Response, next: NextFunction) {
+    handleRuleBlocks(request: any, response: any, next: any) {
         const body = request.body;
-        const rules = new RulesController(DaaSConfig.getInstance());
-        rules.rulesBlock = body;
-        rules.handleAuthenticationRule().then(_ => {
-            return rules.handleAuthorizationRule();
+        const results: RuleResultModel = {errors: {}};
+        const rulesController = new RulesController(BFastDatabaseConfig.getInstance());
+        rulesController.handleIndexesRule(body, results).then(_ => {
+            return rulesController.handleAuthenticationRule(body, results);
         }).then(_ => {
-            return rules.handleCreateRules();
+            return rulesController.handleAuthorizationRule(body, results);
         }).then(_ => {
-            return rules.handleUpdateRules();
+            return rulesController.handleCreateRules(body, results);
         }).then(_ => {
-            return rules.handleDeleteRules();
+            return rulesController.handleUpdateRules(body, results);
         }).then(_ => {
-            return rules.handleQueryRules();
+            return rulesController.handleDeleteRules(body, results);
         }).then(_ => {
-            return rules.handleTransactionRule();
+            return rulesController.handleQueryRules(body, results);
         }).then(_ => {
-            return rules.handleAggregationRules();
-        }).then(_=>{
-            return rules.handleStorageRule();
+            return rulesController.handleTransactionRule(body, results);
         }).then(_ => {
-            const results = rules.results;
-            if (!(results.errors && Array.isArray(results.errors) && results.errors.length > 0)) {
+            return rulesController.handleAggregationRules(body, results);
+        }).then(_ => {
+            return rulesController.handleStorageRule(body, results);
+        }).then(_ => {
+            if (!(results.errors && Object.keys(results.errors).length > 0)) {
                 delete results.errors;
             }
-            response.status(httpStatus.OK).json(rules.results);
+            response.status(httpStatus.OK).json(results);
         }).catch(reason => {
             response.status(httpStatus.EXPECTATION_FAILED).json({message: reason.message ? reason.message : reason.toString()})
         });

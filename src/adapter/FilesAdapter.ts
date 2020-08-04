@@ -1,5 +1,3 @@
-import {ConfigAdapter} from "../config";
-
 export interface FilesAdapter {
     /** Responsible for storing the file in order to be retrieved later by its filename
      *
@@ -14,7 +12,7 @@ export interface FilesAdapter {
      *
      * @return {Promise} a promise that should fail if the storage didn't succeed
      */
-    createFile(filename: string, data: any, contentType: string, options: Object): Promise<string>
+    createFile(filename: string, data: Buffer, contentType: string, options: Object): Promise<string>
 
     /** Responsible for deleting the specified file
      *
