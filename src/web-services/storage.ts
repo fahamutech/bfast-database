@@ -35,7 +35,7 @@ export const uploadMultiPartFile = BFast.functions().onPostHttpRequest('/storage
     (request, response: any) => {
         const form = formidable({
             multiples: true,
-            uploadDir: __dirname,
+            // uploadDir: __dirname,
             maxFileSize: 10 * 1024 * 1024 * 1024,
             keepExtensions: true
         });
