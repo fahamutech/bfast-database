@@ -59,6 +59,7 @@ export const uploadMultiPartFile = BFast.functions().onPostHttpRequest('/storage
                 }
                 response.status(OK).json({urls});
             } catch (e) {
+                console.log(e);
                 response.status(BAD_REQUEST).end(e.toString());
             }
         });
