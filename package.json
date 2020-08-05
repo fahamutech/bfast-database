@@ -1,6 +1,6 @@
 {
   "name": "bfast-daas",
-  "version": "2.0.0-beta.10",
+  "version": "2.0.1-beta.0",
   "main": "dist/daas.js",
   "license": "MIT",
   "scripts": {
@@ -19,18 +19,20 @@
   "dependencies": {
     "bcrypt": "^5.0.0",
     "bfast-faas": "^1.10.3-beta.2",
-    "bfast-s3like": "^2.1.0",
     "bfastnode": "^3.1.4-beta.1",
     "formidable": "^1.2.2",
     "http-status-codes": "^1.4.0",
     "jsonwebtoken": "^8.5.1",
     "mime": "^2.4.5",
+    "minio": "^7.0.16",
     "mongodb": "^3.6.0",
     "uuid": "^8.3.0"
   },
   "devDependencies": {
+    "@types/minio": "^7.0.6",
     "@types/mongodb": "^3.5.25",
     "@types/node": "^14.0.27",
+    "axios": "^0.19.2",
     "del": "^5.1.0",
     "glob": "^7.1.6",
     "gulp": "^4.0.2",

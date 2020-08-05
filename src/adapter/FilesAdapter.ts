@@ -36,19 +36,28 @@ export interface FilesAdapter {
      *
      * @return {string} Absolute URL
      */
-    getFileLocation(filename: string): string;
+    getFileLocation(filename: string): Promise<string>;
 
     /** Handles Byte-Range Requests for Streaming
      *
      * @param {string} filename
-     * @param {object} req
-     * @param {object} res
+     * @param {object} request
+     * @param {object} response
      * @param {string} contentType
      *
      * @returns {Promise} Data for byte range
      */
 
-    // handleFileStream(filename: string, res: any, req: any, contentType: string): Promise
+    handleFileStream(filename: any, request: any, response: any, contentType: any): any;
+    signedUrl(filename: string): Promise<string>;
+    canHandleFileStream: boolean;
+    isS3: boolean;
+
+    /**
+     * list all files available
+     */
+    listFiles(): Promise<any>;
+
 
     /** Responsible for retrieving metadata and tags
      *

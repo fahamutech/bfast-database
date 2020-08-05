@@ -2,12 +2,10 @@ import {FilesAdapter} from "../adapter/FilesAdapter";
 import {FileModel} from "../model/FileModel";
 import {ContextBlock} from "../model/RulesBlockModel";
 import mime from "mime";
-
-let _fileAdapter: FilesAdapter;
+import {EXPECTATION_FAILED} from "http-status-codes";
 
 export class StorageController {
-    constructor(filesAdapter: FilesAdapter) {
-        _fileAdapter = filesAdapter;
+    constructor(private readonly _filesAdapter: FilesAdapter) {
     }
 
     async save(fileModel: FileModel, context: ContextBlock): Promise<string> {
@@ -39,7 +37,7 @@ export class StorageController {
             dataToSave.type = _source.type;
         }
         const isBase64 = Buffer.from(dataToSave.data, 'base64').toString('base64') === dataToSave.data;
-        const file = await _fileAdapter.createFile(
+        const file = await this._filesAdapter.createFile(
             dataToSave.filename,
             isBase64 === true ?
                 Buffer.from(dataToSave.data, 'base64')
@@ -47,7 +45,47 @@ export class StorageController {
             dataToSave?.type,
             {}
         );
-        return _fileAdapter.getFileLocation(file);
+        return this._filesAdapter.getFileLocation(file);
+    }
+
+    isFileStreamable(req, filesController: FilesAdapter) {
+        return (
+            req.get('Range')
+            && typeof filesController.handleFileStream === 'function'
+            && filesController.canHandleFileStream === true
+        );
+    }
+
+    getFileData(request, response) {
+        const filename = request.params.filename;
+        const contentType = mime.getType(filename);
+        if (this.isFileStreamable(request, this._filesAdapter)) {
+            this._filesAdapter
+                .handleFileStream(filename, request, response, contentType)
+                .catch(() => {
+                    response.status(404);
+                    response.set('Content-Type', 'text/plain');
+                    response.end('File not found.');
+                });
+        } else {
+            this._filesAdapter
+                .getFileData(filename)
+                .then(data => {
+                    response.status(200);
+                    response.set('Content-Type', contentType);
+                    response.set('Content-Length', data.length);
+                    response.end(data);
+                })
+                .catch(() => {
+                    response.status(404);
+                    response.set('Content-Type', 'text/plain');
+                    response.end('File not found.');
+                });
+        }
+    }
+
+    async listFiles(): Promise<any[]> {
+        return this._filesAdapter.listFiles();
     }
 
     async saveFromBuffer(fileModel: { filename: string, data: Buffer, type: string }, context: ContextBlock): Promise<string> {
@@ -61,13 +99,13 @@ export class StorageController {
         if (!type) {
             type = mime.getType(filename);
         }
-        const file = await _fileAdapter.createFile(
+        const file = await this._filesAdapter.createFile(
             filename,
             data,
             type,
             {}
         );
-        return _fileAdapter.getFileLocation(file);
+        return this._filesAdapter.getFileLocation(file);
     }
 
     async delete(data: { filename: string }, context: ContextBlock): Promise<string> {
@@ -75,7 +113,7 @@ export class StorageController {
         if (!filename) {
             throw 'Filename required';
         }
-        await _fileAdapter.deleteFile(filename);
+        await this._filesAdapter.deleteFile(filename);
         return filename;
     }
 
@@ -107,5 +145,19 @@ export class StorageController {
             };
         }
         return _source;
+    }
+
+    isS3(): boolean {
+        return this._filesAdapter.isS3
+    }
+
+    handleGetFileBySignedUrl(request: any, response: any) {
+        const filename = request.params.filename;
+        // const contentType = mime.getType(filename);
+        this._filesAdapter.signedUrl(filename).then(value => {
+            response.redirect(value);
+        }).catch(reason => {
+            response.status(EXPECTATION_FAILED).send({message: reason.toString()});
+        });
     }
 }

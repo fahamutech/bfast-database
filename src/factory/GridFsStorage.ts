@@ -94,8 +94,8 @@ export class GridFsStorage implements FilesAdapter {
         });
     }
 
-    getFileLocation(filename: string): string {
-        return '/files/' + BFastDatabaseConfig.getInstance().applicationId + '/' + encodeURIComponent(filename);
+    async getFileLocation(filename: string): Promise<string> {
+        return '/storage/' + BFastDatabaseConfig.getInstance().applicationId + '/file/' + encodeURIComponent(filename);
     }
 
     async getMetadata(filename) {
@@ -109,39 +109,43 @@ export class GridFsStorage implements FilesAdapter {
     }
 
     async handleFileStream(filename: string, req, res, contentType) {
-        // const bucket = await this._getBucket();
-        // const files = await bucket.find({ filename }).toArray();
-        // if (files.length === 0) {
-        //     throw new Error('FileNotFound');
-        // }
-        // const parts = req
-        //     .get('Range')
-        //     .replace(/bytes=/, '')
-        //     .split('-');
-        // const partialstart = parts[0];
-        // const partialend = parts[1];
-        //
-        // const start = parseInt(partialstart, 10);
-        // const end = partialend ? parseInt(partialend, 10) : files[0].length - 1;
-        //
-        // res.writeHead(206, {
-        //     'Accept-Ranges': 'bytes',
-        //     'Content-Length': end - start + 1,
-        //     'Content-Range': 'bytes ' + start + '-' + end + '/' + files[0].length,
-        //     'Content-Type': contentType,
-        // });
-        // const stream = bucket.openDownloadStreamByName(filename);
-        // stream.start(start);
-        // stream.on('data', (chunk) => {
-        //     res.write(chunk);
-        // });
-        // stream.on('error', () => {
-        //     res.sendStatus(404);
-        // });
-        // stream.on('end', () => {
-        //     res.end();
-        // });
+        const bucket = await this._getBucket();
+        const files = await bucket.find({filename}).toArray();
+        if (files.length === 0) {
+            throw new Error('FileNotFound');
+        }
+        const parts = req
+            .get('Range')
+            .replace(/bytes=/, '')
+            .split('-');
+        const partialstart = parts[0];
+        const partialend = parts[1];
+
+        const start = parseInt(partialstart, 10);
+        const end = partialend ? parseInt(partialend, 10) : files[0].length - 1;
+
+        res.writeHead(206, {
+            'Accept-Ranges': 'bytes',
+            'Content-Length': end - start + 1,
+            'Content-Range': 'bytes ' + start + '-' + end + '/' + files[0].length,
+            'Content-Type': contentType,
+        });
+        const stream = bucket.openDownloadStreamByName(filename);
+        // @ts-ignore
+        stream.start(start);
+        stream.on('data', (chunk) => {
+            res.write(chunk);
+        });
+        stream.on('error', () => {
+            res.sendStatus(404);
+        });
+        stream.on('end', () => {
+            res.end();
+        });
     }
+
+    canHandleFileStream = true;
+    isS3 = false;
 
     // handleShutdown() {
     //     if (!this._client) {
@@ -149,6 +153,11 @@ export class GridFsStorage implements FilesAdapter {
     //     }
     //     return this._client.close(false);
     // }
+
+    async listFiles(): Promise<any[]> {
+        const bucket = await this._getBucket();
+        return bucket.find({}).toArray();
+    }
 
     validateFilename(filename: string): Promise<void> {
         if (filename.length > 128) {
@@ -160,5 +169,9 @@ export class GridFsStorage implements FilesAdapter {
             throw 'Filename contains invalid characters.';
         }
         return null;
+    }
+
+    async signedUrl(filename: string): Promise<string> {
+        return this.getFileLocation(filename);
     }
 }
