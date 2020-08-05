@@ -10,10 +10,13 @@ import {Database} from "../factory/Database";
 
 export const getRestController = function () {
     const config: BFastDatabaseConfigAdapter = BFastDatabaseConfig.getInstance();
-    const filesAdapter: FilesAdapter = (config && config.adapters && config.adapters.s3Storage)
-        ? new S3Storage(new SecurityController(), config)
-        : new GridFsStorage(new SecurityController(), config.mongoDbUri);
-    return new RestController(new SecurityController(), filesAdapter);
+    const securityController = new SecurityController();
+    const filesAdapter = (config && config.adapters && config.adapters.s3Storage)
+        ? new S3Storage(securityController, config)
+        : new GridFsStorage(securityController)
+    const storageController = new StorageController(filesAdapter);
+
+    return new RestController(securityController, storageController);
 }
 
 export const getStorageController = function () {

@@ -26,7 +26,7 @@ export class BFastDatabaseConfig implements BFastDatabaseConfigAdapter {
     mountPath: string;
     mongoDbUri?: string;
     port: string;
-    adapters?: {
+    adapters: {
         database?: (config: BFastDatabaseConfigAdapter) => DatabaseAdapter;
         auth?: (config: BFastDatabaseConfigAdapter) => AuthAdapter;
         email?: (config: BFastDatabaseConfigAdapter) => EmailAdapter;
@@ -35,6 +35,7 @@ export class BFastDatabaseConfig implements BFastDatabaseConfigAdapter {
             bucket: string;
             direct: boolean;
             endPoint: string;
+            port?: null;
             prefix?: string;
             region?: string;
             useSSL?: boolean;
@@ -50,7 +51,7 @@ export interface BFastDatabaseConfigAdapter {
     applicationId: string;
     mountPath: string;
     mongoDbUri?: string;
-    adapters?: {
+    adapters: {
         database?: (config: BFastDatabaseConfigAdapter) => DatabaseAdapter;
         auth?: (config: BFastDatabaseConfigAdapter) => AuthAdapter;
         email?: (config: BFastDatabaseConfigAdapter) => EmailAdapter;
@@ -62,6 +63,7 @@ export interface BFastDatabaseConfigAdapter {
             prefix?: string;
             region?: string;
             useSSL?: boolean;
+            port?: null;
             secretKey: string;
         } | undefined;
     }

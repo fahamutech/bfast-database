@@ -1,34 +1,83 @@
 import * as httpStatus from "http-status-codes";
+import {BAD_REQUEST, EXPECTATION_FAILED, OK} from "http-status-codes";
 import {SecurityController} from "./SecurityController";
 import {RulesController} from "./RulesController";
 import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
-import {FilesAdapter} from "../adapter/FilesAdapter";
-import mime from "mime";
 import {RuleResultModel} from "../model/RulesBlockModel";
+import {StorageController} from "./StorageController";
 
+const formidable = require('formidable');
+const fs = require('fs');
+const util = require('util');
+const readFile = util.promisify(fs.readFile);
+const unLink = util.promisify(fs.unlink);
+
+let _storage: StorageController;
 let _security: SecurityController;
-let _storage: FilesAdapter;
 
 export class RestController {
-
-    constructor(security: SecurityController, filesAdapter: FilesAdapter) {
-        _security = security;
-        _storage = filesAdapter;
+    constructor(private readonly security: SecurityController, private readonly storage: StorageController) {
+        _storage = storage;
+        _security = this.security;
     }
 
-    handleGetFile(request: any, res: any, next: any) {
-        const filename = request.params.filename;
-        const contentType = mime.getType(filename);
-        _storage.getFileData(filename).then((data) => {
-            res.status(200);
-            res.set('Content-Type', contentType);
-            res.set('Content-Length', data.length);
-            res.end(data);
-        }).catch(() => {
-            res.status(404);
-            res.set('Content-Type', 'text/plain');
-            res.end('File not found.');
+    handleGetFile(request: any, response: any, next: any) {
+        if (_storage.isS3() === true) {
+            _storage.handleGetFileBySignedUrl(request, response);
+            return;
+        } else {
+            _storage.getFileData(request, response);
+            return;
+        }
+    }
+
+    handleGetAllFiles(request: any, response: any, next: any) {
+        _storage.listFiles().then(value => {
+            response.json(value);
+        }).catch(reason => {
+            response.status(EXPECTATION_FAILED).send({message: reason.toString()});
         });
+    }
+
+    handleMultipartUpload(request: any, response: any, next: any) {
+        const form = formidable({
+            multiples: true,
+            // uploadDir: __dirname,
+            maxFileSize: 10 * 1024 * 1024 * 1024,
+            keepExtensions: true
+        });
+        form.on('part', (d) => {
+            console.log(d);
+        });
+        form.parse(request, async (err, fields, files) => {
+            try {
+                if (err) {
+                    response.status(BAD_REQUEST).send(err.toString());
+                    return;
+                }
+                const filesKeys = Object.keys(files);
+                const urls = []
+                for (const key of filesKeys) {
+                    const extension = files[key].path.split('.')[1];
+                    const fileBuffer = await readFile(files[key].path);
+                    const result = await _storage.saveFromBuffer({
+                        data: fileBuffer,
+                        type: files[key].type,
+                        filename: `upload.${extension}`
+                    }, request.body.context);
+                    urls.push(result);
+                    try {
+                        await unLink(files[key].path);
+                    } catch (e) {
+                    }
+                }
+                response.status(OK).json({urls});
+            } catch (e) {
+                console.log(e);
+                response.status(BAD_REQUEST).end(e.toString());
+            }
+        });
+        return;
     }
 
     verifyApplicationId(request: any, response: any, next: any) {
