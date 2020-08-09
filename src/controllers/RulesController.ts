@@ -8,7 +8,7 @@ import {AuthController} from "./AuthController";
 import {SecurityController} from "./SecurityController";
 import {Email} from "../factory/Email";
 import {EmailController} from "./EmailController";
-import {BFastDatabaseConfigAdapter} from "../bfastDatabaseConfig";
+import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
 import {EmailAdapter} from "../adapter/EmailAdapter";
 import {AuthAdapter} from "../adapter/AuthAdapter";
 import {StorageController} from "./StorageController";
@@ -25,7 +25,7 @@ let _fileAdapter: FilesAdapter;
 
 export class RulesController {
 
-    constructor(private readonly config: BFastDatabaseConfigAdapter) {
+    constructor(private readonly config: BFastDatabaseConfig) {
         _databaseController = new DatabaseController(
             (config.adapters && config.adapters.database) ?
                 this.config.adapters.database(config) : new Database(config),
@@ -44,9 +44,9 @@ export class RulesController {
 
         _fileAdapter = (config && config.adapters && config.adapters.s3Storage)
             ? new S3Storage(new SecurityController(), config)
-            : new GridFsStorage(new SecurityController(), config.mongoDbUri);
+            : new GridFsStorage(new SecurityController(), config, config.mongoDbUri);
 
-        _storageController = new StorageController(_fileAdapter);
+        _storageController = new StorageController(_fileAdapter, config);
 
     }
 
@@ -587,7 +587,6 @@ export class RulesController {
                 const data = file[action];
                 try {
                     if (action === 'save') {
-                        // checkPermission
                         const allowed = await _authController.hasPermission(`files.save`, rulesBlockModel.context);
                         if (allowed !== true) {
                             ruleResultModel.errors[`files.save`] = {
@@ -611,11 +610,24 @@ export class RulesController {
                             ruleResultModel["files"] = {};
                             ruleResultModel["files"].delete = await _storageController.delete(data, rulesBlockModel.context);
                         }
+                    } else if (action === 'list') {
+                        const allowed = await _authController.hasPermission(`files.list`, rulesBlockModel.context);
+                        if (allowed !== true) {
+                            ruleResultModel.errors[`files.list`] = {
+                                message: 'You have insufficient permission list files',
+                                path: `files.delete`,
+                                data: data
+                            };
+                        } else {
+                            ruleResultModel["files"] = {};
+                            ruleResultModel["files"].list = await _storageController.listFiles({
+                                prefix: data && data.prefix ? data.prefix : '',
+                                size: data && data.size ? data.size : 20,
+                                after: data.after,
+                                skip: data && data.skip ? data.skip : 0
+                            });
+                        }
                     }
-                    // if (action === 'list') {
-                    //     this.results["auth"] = {};
-                    //     this.results["auth"].resetPassword = await _authController.resetPassword(data.email ? data.email : data);
-                    // }
                 } catch (e) {
                     ruleResultModel.errors[`files.${action}`] = {
                         message: e.message ? e.message : e.toString(),

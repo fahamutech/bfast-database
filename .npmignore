@@ -11,3 +11,4 @@ src
 .idea
 index.js
 index.d.ts
+.env

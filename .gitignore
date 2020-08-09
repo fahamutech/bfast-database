@@ -8,3 +8,4 @@ logs
 dist
 docker-compose.yml
 devStart.sh
+.env

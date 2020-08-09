@@ -11,11 +11,13 @@ const storageController = getStorageController();
 export const getFileFromStorage = BFast.functions().onGetHttpRequest('/files/:applicationId/:filename', [
     (request, _, next) => {
         request.body.applicationId = request.params.applicationId;
+        request.body.ruleId = 'files.read'
         next();
     },
-    restController.verifyApplicationId,
+    restController.applicationId,
     restController.verifyToken,
-    restController.handleGetFile
+    restController.filePolicy,
+    restController.getFile
 ]);
 
 /**
@@ -24,34 +26,40 @@ export const getFileFromStorage = BFast.functions().onGetHttpRequest('/files/:ap
 export const getFileFromStorageV2 = BFast.functions().onGetHttpRequest('/storage/:appId/file/:filename', [
     (request, _, next) => {
         request.body.applicationId = request.params.appId;
+        request.body.ruleId = 'files.read'
         next();
     },
-    restController.verifyApplicationId,
+    restController.applicationId,
     restController.verifyToken,
-    restController.handleGetFile
+    restController.filePolicy,
+    restController.getFile
 ]);
 
 /**
- * support backward parse-server files compatibility
+ * list all files in server
  */
 export const getFilesFromStorage = BFast.functions().onGetHttpRequest('/storage/:appId/list', [
     (request, _, next) => {
         request.body.applicationId = request.params.appId;
+        request.body.ruleId = 'files.list'
         next();
     },
-    restController.verifyApplicationId,
+    restController.applicationId,
     restController.verifyToken,
-    restController.handleGetAllFiles
+    restController.filePolicy,
+    restController.getAllFiles
 ]);
 
 export const uploadMultiPartFile = BFast.functions().onPostHttpRequest('/storage/:appId', [
     (request, response, next) => {
         request.body.applicationId = request.params.appId;
+        request.body.ruleId = 'files.save'
         next();
     },
-    restController.verifyApplicationId,
+    restController.applicationId,
     restController.verifyToken,
-    restController.handleMultipartUpload
+    restController.filePolicy,
+    restController.multipartForm
 ]);
 
 export const onUploadMultiPartFile = BFast.functions().onGetHttpRequest('/storage/:appId',

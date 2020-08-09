@@ -35,7 +35,7 @@ const daas = async () => {
     return new BFastDatabase();
 }
 
-exports.serverUrl = 'http://localhost:3111/daas';
+exports.serverUrl = 'http://localhost:3111/';
 exports.mongoServer = mongoServer;
 exports.mongoRepSet = mongoMemoryReplSet;
 exports.daas = daas;
@@ -51,16 +51,8 @@ exports.getRulesController = async function (memoryReplSet) {
             mongoDbUri: await memoryReplSet.getUri(),
             applicationId: 'daas',
             port: 3111,
-            adapters: {
-                // s3Storage: {
-                //     bucket: 'daas',
-                //     direct: false,
-                //     accessKey: '5IGXSX5CU52C2RFZFALG',
-                //     secretKey: '2q2vteO9lQp6LaxT3lGMLdkUF5THdxZWmyWmb1y9',
-                //     endPoint: 'https://eu-central-1.linodeobjects.com/'
-                // }
-            },
-            mountPath: '/daas',
+            adapters: {},
+            mountPath: '/',
             masterKey: 'daas'
         }
         return new RulesController(config);

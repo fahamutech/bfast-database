@@ -1,3 +1,5 @@
+import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
+
 export interface FilesAdapter {
     /** Responsible for storing the file in order to be retrieved later by its filename
      *
@@ -34,9 +36,10 @@ export interface FilesAdapter {
      *
      * @param {string} filename
      *
+     * @param config
      * @return {string} Absolute URL
      */
-    getFileLocation(filename: string): Promise<string>;
+    getFileLocation(filename: string, config: BFastDatabaseConfig): Promise<string>;
 
     /** Handles Byte-Range Requests for Streaming
      *
@@ -49,14 +52,18 @@ export interface FilesAdapter {
      */
 
     handleFileStream(filename: any, request: any, response: any, contentType: any): any;
+
     signedUrl(filename: string): Promise<string>;
+
     canHandleFileStream: boolean;
     isS3: boolean;
 
+
     /**
-     * list all files available
+     *
+     * @param query
      */
-    listFiles(): Promise<any>;
+    listFiles(query: { prefix: string, size: number, skip: number, after: string }): Promise<any>;
 
 
     /** Responsible for retrieving metadata and tags

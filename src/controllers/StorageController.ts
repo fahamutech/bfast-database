@@ -3,23 +3,24 @@ import {FileModel} from "../model/FileModel";
 import {ContextBlock} from "../model/RulesBlockModel";
 import mime from "mime";
 import {EXPECTATION_FAILED} from "http-status-codes";
+import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
 
 export class StorageController {
-    constructor(private readonly _filesAdapter: FilesAdapter) {
+    constructor(private readonly _filesAdapter: FilesAdapter, private readonly config: BFastDatabaseConfig) {
     }
 
     async save(fileModel: FileModel, context: ContextBlock): Promise<string> {
-        let {filename, data, type} = fileModel;
+        let {filename, base64, type} = fileModel;
         if (!filename) {
             throw 'Filename required';
         }
-        if (!data) {
+        if (!base64) {
             throw 'File base64 data to save is required';
         }
         if (!type) {
             type = mime.getType(filename);
         }
-        const _source = StorageController.getSource(data, type);
+        const _source = StorageController.getSource(base64, type);
         const dataToSave: {
             type?: any,
             data: any,
@@ -45,7 +46,7 @@ export class StorageController {
             dataToSave?.type,
             {}
         );
-        return this._filesAdapter.getFileLocation(file);
+        return this._filesAdapter.getFileLocation(file, this.config);
     }
 
     isFileStreamable(req, filesController: FilesAdapter) {
@@ -84,8 +85,8 @@ export class StorageController {
         }
     }
 
-    async listFiles(): Promise<any[]> {
-        return this._filesAdapter.listFiles();
+    async listFiles(data: { prefix: string, size: number, skip: number, after: string }): Promise<any[]> {
+        return this._filesAdapter.listFiles(data);
     }
 
     async saveFromBuffer(fileModel: { filename: string, data: Buffer, type: string }, context: ContextBlock): Promise<string> {
@@ -105,7 +106,7 @@ export class StorageController {
             type,
             {}
         );
-        return this._filesAdapter.getFileLocation(file);
+        return this._filesAdapter.getFileLocation(file, this.config);
     }
 
     async delete(data: { filename: string }, context: ContextBlock): Promise<string> {
@@ -153,7 +154,6 @@ export class StorageController {
 
     handleGetFileBySignedUrl(request: any, response: any) {
         const filename = request.params.filename;
-        // const contentType = mime.getType(filename);
         this._filesAdapter.signedUrl(filename).then(value => {
             response.redirect(value);
         }).catch(reason => {

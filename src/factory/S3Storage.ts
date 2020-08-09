@@ -9,7 +9,8 @@ const url = require('url')
 export class S3Storage implements FilesAdapter {
     _s3: Client;
 
-    constructor(private readonly _security: SecurityController, private readonly config: BFastDatabaseConfigAdapter) {
+    constructor(private readonly _security: SecurityController,
+                private readonly config: BFastDatabaseConfig) {
         this._init(config);
     }
 
@@ -40,8 +41,8 @@ export class S3Storage implements FilesAdapter {
         return this._s3.getObject(bucket, filename);
     }
 
-    async getFileLocation(filename: string): Promise<string> {
-        return '/storage/' + BFastDatabaseConfig.getInstance().applicationId + '/file/' + encodeURIComponent(filename);
+    async getFileLocation(filename: string, config: BFastDatabaseConfig): Promise<string> {
+        return '/storage/' + config.applicationId + '/file/' + encodeURIComponent(filename);
     }
 
     async validateFilename(filename: string): Promise<any> {
@@ -62,23 +63,39 @@ export class S3Storage implements FilesAdapter {
 
     async signedUrl(filename: string): Promise<string> {
         const bucket = this.config.adapters.s3Storage.bucket;
-        return this._s3.presignedGetObject(bucket, filename);
+        return this._s3.presignedGetObject(bucket, filename,);
     }
 
     canHandleFileStream = false;
     isS3 = true;
 
-    listFiles(): Promise<any> {
+    async listFiles(query: { prefix: string, size: number, after: string } = {
+        prefix: '',
+        after: undefined,
+        size: 20
+    }): Promise<any> {
         const bucket = this.config.adapters.s3Storage.bucket;
-        const listStream = this._s3.listObjects(bucket);
+        const listStream = this._s3.listObjectsV2(bucket, '', true, query.after);
         const files = [];
         return new Promise((resolve, _) => {
-            listStream.on("data", item => {
-                files.push(item);
-            });
-            listStream.on("end", () => {
+            try {
+                listStream.on("data", item => {
+                    if (files.length < query.size) {
+                        files.push(item);
+                    } else {
+                        listStream.destroy();
+                        listStream.emit("end");
+                        return;
+                    }
+
+                });
+                listStream.on("end", () => {
+                    resolve(files);
+                });
+            } catch (_) {
+                console.log(_);
                 resolve(files);
-            });
+            }
         });
     }
 

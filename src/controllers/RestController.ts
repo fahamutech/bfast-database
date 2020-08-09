@@ -1,10 +1,11 @@
 import * as httpStatus from "http-status-codes";
-import {BAD_REQUEST, EXPECTATION_FAILED, OK} from "http-status-codes";
+import {BAD_REQUEST, EXPECTATION_FAILED, OK, UNAUTHORIZED} from "http-status-codes";
 import {SecurityController} from "./SecurityController";
 import {RulesController} from "./RulesController";
 import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
 import {RuleResultModel} from "../model/RulesBlockModel";
 import {StorageController} from "./StorageController";
+import {AuthController} from "./AuthController";
 
 const formidable = require('formidable');
 const fs = require('fs');
@@ -14,14 +15,18 @@ const unLink = util.promisify(fs.unlink);
 
 let _storage: StorageController;
 let _security: SecurityController;
+let _authController: AuthController;
 
 export class RestController {
-    constructor(private readonly security: SecurityController, private readonly storage: StorageController) {
-        _storage = storage;
+    constructor(private readonly security: SecurityController,
+                private readonly authController: AuthController,
+                private readonly storage: StorageController) {
+        _storage = this.storage;
+        _authController = this.authController
         _security = this.security;
     }
 
-    handleGetFile(request: any, response: any, next: any) {
+    getFile(request: any, response: any, _: any) {
         if (_storage.isS3() === true) {
             _storage.handleGetFileBySignedUrl(request, response);
             return;
@@ -31,15 +36,20 @@ export class RestController {
         }
     }
 
-    handleGetAllFiles(request: any, response: any, next: any) {
-        _storage.listFiles().then(value => {
+    getAllFiles(request: any, response: any, _: any) {
+        _storage.listFiles({
+            skip: request.query.skip ? <number>request.query.skip : 0,
+            after: request.query.after,
+            size: request.query.size ? <number>request.query.size : 20,
+            prefix: request.query.prefix ? request.query.prefix : '',
+        }).then(value => {
             response.json(value);
         }).catch(reason => {
             response.status(EXPECTATION_FAILED).send({message: reason.toString()});
         });
     }
 
-    handleMultipartUpload(request: any, response: any, next: any) {
+    multipartForm(request: any, response: any, _: any) {
         const form = formidable({
             multiples: true,
             // uploadDir: __dirname,
@@ -80,7 +90,7 @@ export class RestController {
         return;
     }
 
-    verifyApplicationId(request: any, response: any, next: any) {
+    applicationId(request: any, response: any, next: any) {
         const applicationId = request.body.applicationId
         if (applicationId === BFastDatabaseConfig.getInstance().applicationId) {
             request.body.context = {
@@ -90,6 +100,18 @@ export class RestController {
         } else {
             response.status(httpStatus.UNAUTHORIZED).json({message: 'unauthorized'})
         }
+    }
+
+    filePolicy(request: any, response: any, next: any) {
+        _authController.hasPermission(request.body.ruleId, request.body.context).then(value => {
+            if (value === true) {
+                next();
+            } else {
+                throw {message: "You can't access this file"};
+            }
+        }).catch(reason => {
+            response.status(UNAUTHORIZED).send(reason);
+        });
     }
 
     verifyToken(request: any, response: any, next: any) {
