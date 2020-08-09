@@ -10,7 +10,7 @@ const restController = getRestController();
 export const bfastRulesEndpoint = BFast.functions().onPostHttpRequest(BFastDatabaseConfig.getInstance().mountPath, [
     restController.verifyMethod,
     restController.verifyBodyData,
-    restController.verifyApplicationId,
+    restController.applicationId,
     restController.verifyToken,
     restController.handleRuleBlocks
 ]);

@@ -18,7 +18,9 @@ export class GridFsStorage implements FilesAdapter {
     _connectionPromise: Promise<Db>;
     _mongoOptions: Object;
 
-    constructor(private readonly security: SecurityController, mongoDatabaseURI = BFastDatabaseConfig.getInstance().mongoDbUri, mongoOptions = {}) {
+    constructor(private readonly security: SecurityController,
+                private readonly config: BFastDatabaseConfig,
+                mongoDatabaseURI = BFastDatabaseConfig.getInstance().mongoDbUri, mongoOptions = {}) {
         this._databaseURI = mongoDatabaseURI;
         _security = this.security;
         const defaultMongoOptions = {
@@ -94,8 +96,8 @@ export class GridFsStorage implements FilesAdapter {
         });
     }
 
-    async getFileLocation(filename: string): Promise<string> {
-        return '/storage/' + BFastDatabaseConfig.getInstance().applicationId + '/file/' + encodeURIComponent(filename);
+    async getFileLocation(filename: string, config: BFastDatabaseConfig): Promise<string> {
+        return '/storage/' + config.applicationId + '/file/' + encodeURIComponent(filename);
     }
 
     async getMetadata(filename) {
@@ -154,9 +156,20 @@ export class GridFsStorage implements FilesAdapter {
     //     return this._client.close(false);
     // }
 
-    async listFiles(): Promise<any[]> {
+    async listFiles(query: { prefix: string, size: number, skip: number } = {
+        prefix: '',
+        size: 20,
+        skip: 0
+    }): Promise<any[]> {
         const bucket = await this._getBucket();
-        return bucket.find({}).toArray();
+        return bucket.find({
+            filename: {
+                $regex: query.prefix, $options: 'i'
+            }
+        }, {
+            skip: query.skip,
+            limit: query.size
+        }).toArray();
     }
 
     validateFilename(filename: string): Promise<void> {
@@ -172,6 +185,6 @@ export class GridFsStorage implements FilesAdapter {
     }
 
     async signedUrl(filename: string): Promise<string> {
-        return this.getFileLocation(filename);
+        return this.getFileLocation(filename, this.config);
     }
 }

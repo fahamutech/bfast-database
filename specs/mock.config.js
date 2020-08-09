@@ -35,7 +35,7 @@ const daas = async () => {
     return new BFastDatabase();
 }
 
-exports.serverUrl = 'http://localhost:3111/daas';
+exports.serverUrl = 'http://localhost:3111/';
 exports.mongoServer = mongoServer;
 exports.mongoRepSet = mongoMemoryReplSet;
 exports.daas = daas;
@@ -51,9 +51,8 @@ exports.getRulesController = async function (memoryReplSet) {
             mongoDbUri: await memoryReplSet.getUri(),
             applicationId: 'daas',
             port: 3111,
-            adapters: {
-            },
-            mountPath: '/daas',
+            adapters: {},
+            mountPath: '/',
             masterKey: 'daas'
         }
         return new RulesController(config);
