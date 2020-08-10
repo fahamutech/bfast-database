@@ -10,6 +10,7 @@ import {UpdateModel} from "../model/UpdateModel";
 import {DeleteModel} from "../model/DeleteModel";
 import {QueryModel} from "../model/QueryModel";
 import {SecurityController} from "./SecurityController";
+import {ChangeEvent} from "mongodb";
 
 let _database: DatabaseAdapter;
 let _security: SecurityController;
@@ -49,7 +50,6 @@ export class DatabaseController {
             if (mandatory === true) {
                 throw e;
             }
-            // console.warn(e);
             return;
         }
     }
@@ -176,7 +176,33 @@ export class DatabaseController {
         if (options && options.bypassDomainVerification === false) {
             await this.handleDomainValidation(domain);
         }
-        return _database.changes(domain, pipeline, listener);
+        return _database.changes(domain, pipeline, (doc: ChangeEvent) => {
+            if (doc.operationType === 'insert') {
+                listener({
+                    name: 'create',
+                    resumeToken: doc._id,
+                    snapshot: this.sanitize4User(doc.fullDocument, [])
+                });
+            } else if (doc.operationType === 'replace') {
+                listener({
+                    name: 'create',
+                    resumeToken: doc._id,
+                    snapshot: this.sanitize4User(doc.fullDocument, [])
+                });
+            } else if (doc.operationType === 'update') {
+                listener({
+                    name: 'update',
+                    resumeToken: doc._id,
+                    snapshot: this.sanitize4User(doc.fullDocument, [])
+                });
+            } else if (doc.operationType === "delete") {
+                listener({
+                    name: 'delete',
+                    resumeToken: doc._id,
+                    snapshot: this.sanitize4User(doc.documentKey, [])
+                });
+            }
+        });
     }
 
     async query(domain: string, queryModel: QueryModel<any>, context: ContextBlock,

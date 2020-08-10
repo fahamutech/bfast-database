@@ -6,7 +6,7 @@ const databaseController = getDatabaseController();
 export const domainChangesListener = BFast.functions().onEvent('/__changes__',
     (request, response) => {
         if (request.auth.applicationId === BFastDatabaseConfig.getInstance().applicationId) {
-            if (request.body.pipeline && Array.isArray(request.body.pipeline && request.body.domain)) {
+            if (request.body.pipeline && Array.isArray(request.body.pipeline) && request.body.domain) {
                 databaseController.changes(request.body.domain, request.body.pipeline, doc => {
                     response.emit({change: doc});
                 }).then(_ => {

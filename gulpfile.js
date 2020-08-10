@@ -38,20 +38,21 @@ function pushToDocker(cb) {
 }
 
 function devStart(cb) {
-    const {mongoServer, daas} = require('./specs/mock.config');
+    const {mongoServer, mongoRepSet, daas} = require('./specs/mock.config');
     let mongoMemoryServer;
     let daaSServer;
 
     async function run() {
-        mongoMemoryServer = mongoServer();
+        mongoMemoryServer = mongoRepSet();
         await mongoMemoryServer.start();
+        await mongoMemoryServer.waitUntilRunning();
         daaSServer = await daas();
         await daaSServer.start({
-            mongoDbUri: 'mongodb://localhost/smartstock',
+            mongoDbUri: await mongoMemoryServer.getUri(),//'mongodb://localhost/smartstock',
             applicationId: 'daas',
             port: 3003,
             adapters: {},
-            mountPath: '/daas',
+            mountPath: '/',
             masterKey: 'daas'
         });
     }

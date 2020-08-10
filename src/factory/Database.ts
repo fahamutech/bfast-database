@@ -4,7 +4,7 @@ import {
     DatabaseUpdateOptions,
     DatabaseWriteOptions
 } from "../adapter/DatabaseAdapter";
-import {MongoClient} from "mongodb";
+import {ChangeEvent, MongoClient} from "mongodb";
 import {BasicAttributesModel} from "../model/BasicAttributesModel";
 import {ContextBlock} from "../model/RulesBlockModel";
 import {QueryModel} from "../model/QueryModel";
@@ -84,7 +84,7 @@ export class Database implements DatabaseAdapter {
                 delete indexOptions.field;
                 await conn.db().collection(domain).createIndex({[value.field]: 1}, indexOptions);
             }
-            await conn.close(true); // .catch(console.warn);
+            await conn.close(); // .catch(console.warn);
             return 'Indexes added';
         } else {
             throw new Error("Must supply array of indexes to be added");
@@ -94,14 +94,14 @@ export class Database implements DatabaseAdapter {
     async dropIndexes(domain: string): Promise<boolean> {
         const conn = await this.connection();
         const result = await conn.db().collection(domain).dropIndexes();
-        await conn.close(true);
+        await conn.close();
         return result;
     }
 
     async listIndexes(domain: string): Promise<any[]> {
         const conn = await this.connection();
         const indexes = await conn.db().collection(domain).listIndexes().toArray();
-        await conn.close(true);
+        await conn.close();
         return indexes;
     }
 
@@ -118,7 +118,7 @@ export class Database implements DatabaseAdapter {
             session: options && options.transaction ? options.transaction : undefined,
             projection: fieldsToReturn
         });
-        await conn.close(true);
+        await conn.close();
         return result;
     }
 
@@ -160,7 +160,7 @@ export class Database implements DatabaseAdapter {
         } else {
             result = await query.toArray();
         }
-        await conn.close(true);
+        await conn.close();
         return result;
     }
 
@@ -172,7 +172,7 @@ export class Database implements DatabaseAdapter {
             returnOriginal: false,
             session: options && options.transaction ? options.transaction : undefined
         });
-        await conn.close(true);
+        await conn.close();
         return response.value;
     }
 
@@ -184,7 +184,7 @@ export class Database implements DatabaseAdapter {
             .findOneAndDelete(deleteModel.filter, {
                 session: options && options.transaction ? options.transaction : undefined
             });
-        await conn.close(true);
+        await conn.close();
         return response.value as any;
     }
 
@@ -206,22 +206,22 @@ export class Database implements DatabaseAdapter {
         } finally {
             await session.endSession();
         }
-        await conn.close(true);
+        await conn.close();
     }
 
     async aggregate(domain: string, pipelines: Object[], context: ContextBlock, options?: DatabaseWriteOptions): Promise<any> {
         const conn = await this.connection();
         const result = await conn.db().collection(domain).aggregate(pipelines).toArray();
-        await conn.close(true);
+        await conn.close();
         return result;
     }
 
-    async changes(domain: string, pipeline: any[], listener: (doc: any) => void): Promise<any> {
+    async changes(domain: string, pipeline: any[], listener: (doc: ChangeEvent) => void): Promise<any> {
         const conn = await this.connection();
-        conn.db().collection(domain).watch(pipeline).on("change", doc => {
-            listener(doc);
+        conn.db().collection(domain).watch(pipeline,{fullDocument: "updateLookup"}).on("change", doc => {
+           listener(doc)
         });
-        await conn.close(true);
+        // await conn.close();
         return;
     }
 }
