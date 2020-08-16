@@ -1,9 +1,8 @@
 import {BFast} from "bfastnode";
-import {getRestController, getStorageController} from "./webServicesConfig";
+import {getRestController} from "./webServicesConfig";
 
 
 const restController = getRestController();
-const storageController = getStorageController();
 
 /**
  * support backward parse-server files compatibility
@@ -62,16 +61,16 @@ export const uploadMultiPartFile = BFast.functions().onPostHttpRequest('/storage
     restController.multipartForm
 ]);
 
-export const onUploadMultiPartFile = BFast.functions().onGetHttpRequest('/storage/:appId',
-    (request, response: any) => {
-        // show a file upload form
-        response.writeHead(200, {'content-type': 'text/html'});
-        response.end(`
-    <h2>With Node.js <code>"http"</code> module</h2>
-    <form action="/storage/daas" enctype="multipart/form-data" method="post">
-      <div>Text field title: <input type="text" name="title" /></div>
-      <div>File: <input type="file" name="multipleFiles" multiple="multiple" /></div>
-      <input type="submit" value="Upload" />
-    </form>
-  `);
-    });
+// export const onUploadMultiPartFile = BFast.functions().onGetHttpRequest('/storage/:appId',
+//     (request, response: any) => {
+//         // show a file upload form
+//         response.writeHead(200, {'content-type': 'text/html'});
+//         response.end(`
+//     <h2>With Node.js <code>"http"</code> module</h2>
+//     <form action="/storage/daas" enctype="multipart/form-data" method="post">
+//       <div>Text field title: <input type="text" name="title" /></div>
+//       <div>File: <input type="file" name="multipleFiles" multiple="multiple" /></div>
+//       <input type="submit" value="Upload" />
+//     </form>
+//   `);
+//     });

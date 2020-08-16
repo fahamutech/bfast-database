@@ -48,7 +48,7 @@ function devStart(cb) {
         await mongoMemoryServer.waitUntilRunning();
         daaSServer = await daas();
         await daaSServer.start({
-            mongoDbUri: await mongoMemoryServer.getUri(),//'mongodb://localhost/smartstock',
+            mongoDbUri: 'mongodb://localhost/smartstock',
             applicationId: 'daas',
             port: 3003,
             adapters: {},

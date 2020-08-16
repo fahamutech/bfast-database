@@ -1,6 +1,6 @@
 {
   "name": "bfast-daas",
-  "version": "2.0.0-beta.11",
+  "version": "2.0.0-beta.12",
   "main": "dist/daas.js",
   "license": "MIT",
   "scripts": {
@@ -18,8 +18,8 @@
   },
   "dependencies": {
     "bcrypt": "^5.0.0",
-    "bfast-faas": "^1.10.3-beta.2",
-    "bfastnode": "^3.1.4-beta.1",
+    "bfast-faas": "^1.10.4-beta.1",
+    "bfastnode": "^4.0.0-beta.4",
     "formidable": "^1.2.2",
     "http-status-codes": "^1.4.0",
     "jsonwebtoken": "^8.5.1",
