@@ -1,14 +1,6 @@
-# BFast::Database Engine 2.x
+# BfastDatabase Engine
 
 Database as a service application to work with mongoDb as a primary and with any other database engine in future
-
-## Abstract
-
-This document raises some best ways to write a general purpose application and query language using JSON to allow clients to access data and manipulate data to database from the client side ( web, mobile or desktop ), from a single point HTTP endpoint
-
-Joshua Mshana
-
-![](RackMultipart20200810-4-vrkhbg_html_6a913d7dd8dad8cd.png)
 
 ## 1.0 Introduction
 
@@ -16,12 +8,13 @@ Backend application written to act upon a database to respond to user actions on
 
 Also we write an application on top of a database inorder to sanitize or validate data. We try to save and apply some validation to data to check if they pass some certain criteria and if a user is authorized to perform that activity.
 
-The tool must account for those issues:
+This tool account for those issues with improvements:
 
 1. Single point to access data and if possible a single endpoint
 2. Permissions and Authorization issues to check if agent permitted to perform that action
 3. Power to embedded multiple CRUD operation in single request
 4. Performing transactions
+5. Work with unstructured data like files(e.g images)
 
 Since it uses a single point for entry point we need an expressive rule to explain CRUD operation. Expressive rule will be transferred as JSON from client to server and server will respond with the respective JSON
 
@@ -30,79 +23,70 @@ Since it uses a single point for entry point we need an expressive rule to expla
 
 ## 1.1 Configurations
 
-**BFast::Database** must be initialized with some configuration to make it flexible to change it according to environment or requirements. The **BFast::Database** Adapter must look like this.
+**BfastDatabase** must be initialized with some configuration to make it flexible to change it according to environment or requirements. The **BfastDatabase** Adapter must look like this.
 
-exportinterfaceBFastDatabaseAdapter {
+```typescript
 
-start(config: DaaSConfig): Promise\&lt;boolean\&gt;;
+import {BFastDatabaseConfig} from "./src/bfastDatabaseConfig"; import {DatabaseAdapter} from "./DatabaseAdapter"; import {AuthAdapter} from "./AuthAdapter"; import {BfastDatabase} from "bfastnode/dist/bfast.database";
 
-stop(): Promise\&lt;boolean\&gt;;
-
-}
-
-exportinterfaceDaaSConfig {
-
-port: number;
-
-masterKey: string;
-
-applicationId: string;
-
-mountPath: string;
-
-adapters: {
-
-database: (config: DaaSConfig)=\&gt;DatabaseAdapter,
-
-auth: (config: DaaSConfig)=\&gt;AuthAdapter,
+export interface BFastDatabaseAdapter {
+    
+    start(config: BFastDatabaseConfig): Promise<boolean>;
+    
+    stop(): Promise<boolean>;
 
 }
 
+export interface DaaSConfig {
+    port: number;
+    masterKey: string;
+    applicationId: string;
+    mountPath: string;
+    adapters: {
+        database: (config: DaaSConfig)=>DatabaseAdapter,
+        auth: (config: DaaSConfig)=>AuthAdapter,
+    }
 }
 
-And to Start it should be like this.
+// And to Start it should be like this.
 
-newBFastDatabase().start({
-
-port:3000
-
-}).then(\_=\&gt;console.log(&#39;server started at port 3000&#39;));
+new BfastDatabase().start({
+    port:3000
+}).then(_=>console.log("server started at port 3000"));
+```
 
 ## 1.2 HTTP Endpoint
 
-Server must listen to one endpoint by default is **/daas** , All Requests will be handled by **POST** http method. Each request must contain the following header. JSON is used for send and receive messages.
+Server must listen to one endpoint by default is **/** , All Requests will be handled by **POST**
+http method. Each request must contain the following header. JSON is used for send and receive messages.
 
+```json
 {
-
-&quot;content-type&quot;:&quot;application/json&quot;
-
+  "content-type": "application/json"
 }
+```
 
 ## 1.3 Errors
 
-During checking and establishing a connection to start executing rules errors will return as normal HTTP response bodies. When any of the rules result in error that rule value will be null and its error as object will be included in the **errors** block of the returned data. For example when we create **User** and **Post** on the same request and **Post** fails this is the error.
+During checking and establishing a connection to start executing rules errors will return as normal
+HTTP response bodies. When any of the rules result in error that rule value will be null and 
+its error as object will be included in the **errors** block of the returned data. For example when 
+we create **User** and **Post** on the same request and **Post** fails this is the error.
+
+```json
 
 {
-
-&quot;createUser&quot;: {
-
-&quot;id&quot;:&quot;89695uiu8&quot;,
-
-&quot;createdAt&quot;: &quot;2020-02-01 67:89:12 GMT3+&quot;
-
-},
-
-&quot;errors&quot;: {
-
-&quot;create.Post&quot;:{
-
-&quot;message&quot;:&quot;Post not created because of duplication&quot;
-
+    "createUser": {
+        "id":"89695uiu8",
+        "createdAt": "2020-02-01 67:89:12 GMT3+"
+    },
+    "errors": {
+        "create.Post":{
+             "message":"Post not created because of duplication"
+         }
+    }
 }
-
-}
-
-}
+```
 
 ##
 
@@ -111,40 +95,36 @@ During checking and establishing a connection to start executing rules errors wi
 
 Crud operation must be mapped to specific rules for the endpoint to understand and react to specific actions based on a rule.
 
-## ,2.1 Common rules
+## 2.1 Common rules
 
   - Each table/domain/collection must have common attributes which are
-    - **\_id: string** -\&gt; This must be mapped to **id.**
-    - **\_created\_by: string** -\&gt; this mapped to **createdBy.** Which is the id of the user who created that entry to a Domain/Table/Collection.
-    - **\_created\_at: Date** -\&gt; this must be mapped to **createdAt.**
-    - **\_updated\_at: Date** -\&gt; this must be mapped to **updatedAt.**
-
-user must see right hand fields while database must see left hand fields
+    - **\_id: string** -> This must be mapped to **id.**
+    - **\_created\_by: string** -> this mapped to **createdBy.** Which is the id of the user who created that entry to a Domain/Table/Collection.
+    - **\_created\_at: Date** -> this must be mapped to **createdAt.**
+    - **\_updated\_at: Date** -> this must be mapped to **updatedAt.**
 
   - JSON sent to the server from the client its root must be **{ }** and on top level fields can include the following.
-    - **Token: string** -\&gt; which will be used for authorization operation to determine user permission if resource is protected
+    - **Token: string** -> which will be used for authorization operation to determine user permission if resource is protected
+
+  ```json
+    {
+        
+        "token": "6547fjhfiyr8r"
+    
+    }
+```
+
+    - **applicationId: string** -> this is a mandatory field for every request
 
 {
 
-...
-
-&quot;token&quot;: &quot;6547fjhfiyr8r&quot;
+..."applicationId":<your-application-id-used-to-start-a-server>
 
 ...
 
 }
 
-    - **applicationId: string** -\&gt; this is a mandatory field for every request
-
-{
-
-...&quot;applicationId&quot;:\&lt;your-application-id-used-to-start-a-server\&gt;
-
-...
-
-}
-
-    - **masterKey: string** -\&gt; this is optional field
+    - **masterKey: string** -> this is optional field
 
 You can use this to override any rule and perform admin level activities
 
@@ -152,7 +132,7 @@ You can use this to override any rule and perform admin level activities
 
 ...
 
-&quot;masterKey&quot;: &quot;654778757bjbo987t876fjhfiyr8r&quot;
+"masterKey": "654778757bjbo987t876fjhfiyr8r"
 
 ...
 
@@ -168,13 +148,13 @@ To specify a create/save operation a JSON field must start with a word **create*
 
 {
 
-&quot;token&quot;: &quot;6547fjhfiyr8r&quot;,
+"token": "6547fjhfiyr8r",
 
-&quot;createUser&quot;: {
+"createUser": {
 
-&quot;name&quot;: &quot;John&quot;,
+"name": "John",
 
-&quot;age&quot;: 30
+"age": 30
 
 }
 
@@ -184,9 +164,9 @@ To specify a create/save operation a JSON field must start with a word **create*
 
 {
 
-&quot;createUser&quot;:{
+"createUser":{
 
-&quot;id&quot;: &quot;6657jg878&quot;,
+"id": "6657jg878",
 
 }
 
@@ -196,25 +176,25 @@ To add many products we just send arrays
 
 {
 
-&quot;token&quot;: &quot;6547fjhfiyr8r&quot;,
+"token": "6547fjhfiyr8r",
 
-&quot;createUser&quot;: [
+"createUser": [
 
 {
 
-&quot;name&quot;: &quot;John&quot;,
+"name": "John",
 
-&quot;age&quot;: 30
+"age": 30
 
 },
 
 {
 
-&quot;name&quot;: &quot;Doe&quot;,
+"name": "Doe",
 
-&quot;age&quot;: 12,
+"age": 12,
 
-&quot;h&quot;: 100
+"h": 100
 
 }
 
@@ -226,17 +206,17 @@ Response should be like.
 
 {
 
-&quot;createUser&quot;:[
+"createUser":[
 
 {
 
-&quot;id&quot;: &quot;6657jg878&quot;,
+"id": "6657jg878",
 
 },
 
 {
 
-&quot;id&quot;: &quot;op65AWjg8&quot;,
+"id": "op65AWjg8",
 
 }
 
@@ -248,15 +228,15 @@ In the **create** rule it returns **id** if you want more than one field to retu
 
 {
 
-&quot;token&quot;: &quot;6547fjhfiyr8r&quot;,
+"token": "6547fjhfiyr8r",
 
-&quot;createUser&quot;: {
+"createUser": {
 
-&quot;name&quot;: &quot;John&quot;,
+"name": "John",
 
-&quot;age&quot;: 30,
+"age": 30,
 
-&quot;return&quot;: [&quot;age&quot;,&quot;name&quot;]
+"return": ["age","name"]
 
 }
 
@@ -266,13 +246,13 @@ Now the server will respond with the extra field you specify.
 
 {
 
-&quot;createUser&quot;:{
+"createUser":{
 
-&quot;id&quot;: &quot;6657jg878&quot;,
+"id": "6657jg878",
 
-&quot;name&quot;: &quot;John&quot;,
+"name": "John",
 
-&quot;age&quot;: 30,
+"age": 30,
 
 }
 
@@ -286,17 +266,17 @@ To get or query domain/table/collection a JSON field for that must start with a 
 
 **query${domain}** rule block has a default field which you can use to shape your query. Those fields are as follows.
 
-- **skip: number** -\&gt; specify data to skip, default is **0.**
-- **size: number** -\&gt; specify number of data to return, default is **20.** If value is negative means you need all the documents to be returned
-- **count: boolean** -\&gt; you can count the results of a query to return a number of documents if set to true default value is false.
-- **orderBy: Array\&lt;{[field]:orderNumber}\&gt;** -\&gt; specify array of fields to order by. orderNumber can be 1 for ascending or -1 for descending. Field is the column we orderBy.
-- **last: number** -\&gt; this will return the number of data you specify from last of results.
-- **first: number** -\&gt; this will return the number of data you specify from the beginning of results.
-- **filter: FilterModel** -\&gt; this is your query filter you send to server default is **{}** if not specified
-- **return: Array\&lt;string\&gt;** -\&gt; if not specified default is **[]** and will return only **id.** Either you specify or not **id** return id data match your query found.
-- **id: string** -\&gt; if this field present will ignore all other values except **return** and will return that specific data or **null** if not found
+- **skip: number** -> specify data to skip, default is **0.**
+- **size: number** -> specify number of data to return, default is **20.** If value is negative means you need all the documents to be returned
+- **count: boolean** -> you can count the results of a query to return a number of documents if set to true default value is false.
+- **orderBy: Array<{[field]:orderNumber}>** -> specify array of fields to order by. orderNumber can be 1 for ascending or -1 for descending. Field is the column we orderBy.
+- **last: number** -> this will return the number of data you specify from last of results.
+- **first: number** -> this will return the number of data you specify from the beginning of results.
+- **filter: FilterModel** -> this is your query filter you send to server default is **{}** if not specified
+- **return: Array<string>** -> if not specified default is **[]** and will return only **id.** Either you specify or not **id** return id data match your query found.
+- **id: string** -> if this field present will ignore all other values except **return** and will return that specific data or **null** if not found
 
-**\*NOTE\*** -\&gt; **FilterModel** needs more discussion to find a format of a query to be sent to the server.
+**\*NOTE\*** -> **FilterModel** needs more discussion to find a format of a query to be sent to the server.
 
 Examples of query operation will be as follows.
 
@@ -306,9 +286,9 @@ Following example will return all users if exist or **[]** if no data exist, def
 
 {
 
-&quot;token&quot;: &quot;6547fjhfiyr8r&quot;,
+"token": "6547fjhfiyr8r",
 
-&quot;queryUser&quot;: {}
+"queryUser": {}
 
 }
 
@@ -316,17 +296,17 @@ Response from server will be like this:
 
 {
 
-&quot;queryUser&quot;: [
+"queryUser": [
 
 {
 
-&quot;id&quot;:&quot;op65AWjg8&quot;
+"id":"op65AWjg8"
 
 },
 
 {
 
-&quot;id&quot;:&quot;12sdAWj&quot;
+"id":"12sdAWj"
 
 }
 
@@ -338,13 +318,13 @@ Response from server will be like this:
 
 {
 
-&quot;token&quot;: &quot;6547fjhfiyr8r&quot;,
+"token": "6547fjhfiyr8r",
 
-&quot;queryUser&quot;: {
+"queryUser": {
 
-&quot;id&quot;:&quot;op65AWjg8&quot;,
+"id":"op65AWjg8",
 
-&quot;return&quot;:[&quot;name&quot;,&quot;age&quot;]
+"return":["name","age"]
 
 }
 
@@ -354,13 +334,13 @@ Response from the server will be as follows.
 
 {
 
-&quot;queryUser&quot;: {
+"queryUser": {
 
-&quot;id&quot;:&quot;op65AWjg8&quot;,
+"id":"op65AWjg8",
 
-&quot;name&quot;: &quot;John&quot;,
+"name": "John",
 
-&quot;age&quot;: 30
+"age": 30
 
 }
 
@@ -370,15 +350,15 @@ Response from the server will be as follows.
 
 {
 
-&quot;queryUser&quot;: {
+"queryUser": {
 
-&quot;filter&quot;:{
+"filter":{
 
-&quot;name&quot;:&quot;John&quot;
+"name":"John"
 
 },
 
-&quot;return&quot;:[&quot;age&quot;]
+"return":["age"]
 
 }
 
@@ -388,13 +368,13 @@ Response from the server will be as follows.
 
 {
 
-&quot;queryUser&quot;: [
+"queryUser": [
 
 {
 
-&quot;id&quot;:&quot;op65AWjg8&quot;,
+"id":"op65AWjg8",
 
-&quot;age&quot;:30
+"age":30
 
 }
 
@@ -408,15 +388,15 @@ You can count the result of a query filter and return the total number of matche
 
 {
 
-&quot;queryUser&quot;: {
+"queryUser": {
 
-&quot;filter&quot;:{
+"filter":{
 
-&quot;name&quot;:&quot;John&quot;
+"name":"John"
 
 },
 
-&quot;count&quot;: true
+"count": true
 
 }
 
@@ -426,7 +406,7 @@ Response from server will be like the following
 
 {
 
-&quot;queryUser&quot;: 1
+"queryUser": 1
 
 }
 
@@ -435,19 +415,19 @@ Response from server will be like the following
 
 ### 2.3.4 OrderBy
 
-You can order your query result by using the **orderBy** field inside the queryrule which is an array of maps containing your fields you want to orderBy. The sort map looks like this **{ \&lt;field\&gt; : number },** number can be 1 for ascending and -1 for descending. See example below.
+You can order your query result by using the **orderBy** field inside the queryrule which is an array of maps containing your fields you want to orderBy. The sort map looks like this **{ <field> : number },** number can be 1 for ascending and -1 for descending. See example below.
 
 {
 
-&quot;applicationId&quot;: &quot;daas&quot;,
+"applicationId": "daas",
 
-&quot;queryProduct&quot;: {
+"queryProduct": {
 
-&quot;filter&quot;: {},
+"filter": {},
 
-&quot;orderBy&quot;: [{&quot;name&quot;: 1}],
+"orderBy": [{"name": 1}],
 
-&quot;return&quot;: [&quot;name&quot;]
+"return": ["name"]
 
 }
 
@@ -457,9 +437,9 @@ Response will be an array of the product array by names in ascending order.
 
 {
 
-&quot;queryProduct&quot;: [
+"queryProduct": [
 
-{&quot;name&quot;: &quot;apple&quot;, &quot;id&quot;: &quot;y756yh-iuisyu-er56fg&quot;}
+{"name": "apple", "id": "y756yh-iuisyu-er56fg"}
 
 ]
 
@@ -471,13 +451,13 @@ To specify a update/patch operation a JSON field must start with a word **update
 
 **update${domain}** rule block has a default field which you can use to shape your update. Those fields are as follows.
 
-- **filter: FilterModel** -\&gt; update data that match the specified filter object
-- **size: number** -\&gt; limit of number of data to search
-- **skip: number** -\&gt; number of data to skip when search the match using filter
-- **id: string** -\&gt; specify id of the data you want to update if this present **filter** field will be ignored
-- **upsert: boolean** -\&gt; specify if data should be created if not present as a result of a filter, default is **false**
-- **update: UpdateModel** -\&gt; add data you want to update, if not specified default is **{ }.** UpdateModel can contain operator to modify data like insert into a list of array or update a relation
-- **return: Array\&lt;string\&gt;** -\&gt; specify additional fields to return default is **[]**. The operation will return **id** and **updatedAt** and with or without those fields you specify in the **return** field.
+- **filter: FilterModel** -> update data that match the specified filter object
+- **size: number** -> limit of number of data to search
+- **skip: number** -> number of data to skip when search the match using filter
+- **id: string** -> specify id of the data you want to update if this present **filter** field will be ignored
+- **upsert: boolean** -> specify if data should be created if not present as a result of a filter, default is **false**
+- **update: UpdateModel** -> add data you want to update, if not specified default is **{ }.** UpdateModel can contain operator to modify data like insert into a list of array or update a relation
+- **return: Array<string>** -> specify additional fields to return default is **[]**. The operation will return **id** and **updatedAt** and with or without those fields you specify in the **return** field.
 
 ###
 
@@ -488,21 +468,21 @@ This operation will update all the documents that match the given filter and wil
 
 {
 
-&quot;updateUser&quot;: {
+"updateUser": {
 
-&quot;filter&quot;:{
+"filter":{
 
-&quot;name&quot;:&quot;John&quot;
-
-},
-
-&quot;update&quot;: {
-
-$set: {&quot;name&quot;: &quot;Josh&quot;}
+"name":"John"
 
 },
 
-&quot;return&quot;:[&quot;name&quot;]
+"update": {
+
+$set: {"name": "Josh"}
+
+},
+
+"return":["name"]
 
 }
 
@@ -512,15 +492,15 @@ Response from the server will be like the following.
 
 {
 
-&quot;updateUser&quot;:[
+"updateUser":[
 
 {
 
-&quot;id&quot;: &quot;98675tgu&quot;,
+"id": "98675tgu",
 
-&quot;updatedAt&quot;: &quot;2020-01-97 12:78:00 MT3+&quot;,
+"updatedAt": "2020-01-97 12:78:00 MT3+",
 
-&quot;name&quot;: &quot;Josh&quot;
+"name": "Josh"
 
 }
 
@@ -537,17 +517,17 @@ If you use **id** to update a document **filter** and **upsert** field if presen
 
 {
 
-&quot;updateUser&quot;: {
+"updateUser": {
 
-&quot;id&quot;:&quot;98675tgu&quot;,
+"id":"98675tgu",
 
-&quot;update&quot;: {
+"update": {
 
-$set: {&quot;name&quot;: &quot;Dzeko&quot;}
+$set: {"name": "Dzeko"}
 
 },
 
-&quot;return&quot;:[]
+"return":[]
 
 }
 
@@ -557,15 +537,15 @@ Response from server will be as follows
 
 {
 
-&quot;ResultOfUpdateUser&quot;:{
+"ResultOfUpdateUser":{
 
-&quot;id&quot;: &quot;98675tgu&quot;,
+"id": "98675tgu",
 
-&quot;updatedAt&quot;: &quot;2020-01-97 12:78:00 MT3+&quot;,
+"updatedAt": "2020-01-97 12:78:00 MT3+",
 
-&quot;name&quot;: &quot;Dzeko&quot;,
+"name": "Dzeko",
 
-&quot;age&quot;: 30
+"age": 30
 
 }
 
@@ -580,8 +560,8 @@ To specify a delete operation a JSON field must start with a word **delete** the
 
 **delete${domain}** rule block has a default field which you can use to shape your delete operation. Those fields are as follows.
 
-- **filter: FilterModel** -\&gt; delete data that match the specified filter object.
-- **id: string** -\&gt; specify **id** of the data you want to delete, if this present **filter** field will be ignored.
+- **filter: FilterModel** -> delete data that match the specified filter object.
+- **id: string** -> specify **id** of the data you want to delete, if this present **filter** field will be ignored.
 
 Delete operation will return only the id of the deleted item ( s ). If delete operation fails will return with error code and message if you delete multiple documents and if a document is not deleted its id field will return null. Example of delete operation is as follows.
 
@@ -589,9 +569,9 @@ Delete operation will return only the id of the deleted item ( s ). If delete op
 
 {
 
-&quot;deleteUser&quot;:{
+"deleteUser":{
 
-&quot;id&quot;: &quot;98675tgu&quot;
+"id": "98675tgu"
 
 }
 
@@ -601,9 +581,9 @@ When user is deleted the results will be the id of the delete user
 
 {
 
-&quot;deleteUser&quot;:{
+"deleteUser":{
 
-&quot;id&quot;: &quot;98675tgu&quot;
+"id": "98675tgu"
 
 }
 
@@ -615,13 +595,13 @@ You can delete multiple data as follows.
 
 {
 
-&quot;applicationId&quot;:&quot;6878567gjh&quot;,
+"applicationId":"6878567gjh",
 
-&quot;deleteUser&quot;:{
+"deleteUser":{
 
 filter: {
 
-&quot;age&quot;: 20
+"age": 20
 
 },
 
@@ -633,11 +613,11 @@ The response will be the array of ids of deleted documents or null if the docume
 
 {
 
-&quot;deleteUser&quot;:[
+"deleteUser":[
 
 {
 
-&quot;id&quot;: &quot;98675tgu&quot;
+"id": "98675tgu"
 
 }
 
@@ -653,7 +633,7 @@ You specify the transaction block by **transaction** keyword and the body can co
 
 Transaction block has the following field which you put all operation you want to perform
 
-- **commit** -\&gt; This contains all the operations needed for that transaction.
+- **commit** -> This contains all the operations needed for that transaction.
 
 The result of the transaction will be a combination of individual CRUD operations.
 
@@ -661,21 +641,21 @@ Example of transaction operation is as follows.
 
 {
 
-&quot;applicationId&quot;:&quot;6878567gjh&quot;,
+"applicationId":"6878567gjh",
 
-&quot;transaction&quot;:{
+"transaction":{
 
-&quot;commit&quot;:{
+"commit":{
 
-&quot;createUser&quot;:{
+"createUser":{
 
-&quot;name&quot;: &quot;Jody&quot;
+"name": "Jody"
 
 },
 
-&quot;createPayment&quot;:{
+"createPayment":{
 
-&quot;txid&quot;: 232353535
+"txid": 232353535
 
 }
 
@@ -693,9 +673,9 @@ Tool must provide a general authentication mechanism for grant access to users a
 
 You use the **auth** rule block to add new users or get access to the system. **auth** rule block fields are as follows.
 
-- **signUp: SignUpModel** -\&gt; use this field to register new users to the system.
-- **signIn: SignInModel** -\&gt; use this field for already registered users to get a temporary token to access subsequences requests.
-- **reset: string** -\&gt; use this to reset a user password using a user email.
+- **signUp: SignUpModel** -> use this field to register new users to the system.
+- **signIn: SignInModel** -> use this field for already registered users to get a temporary token to access subsequences requests.
+- **reset: string** -> use this to reset a user password using a user email.
 
 ### 4.1.1 Create New User
 
@@ -703,19 +683,19 @@ To create a new user to auth records records you must send the following JSON to
 
 {
 
-&quot;applicationId&quot;:&quot;6878567gjh&quot;,
+"applicationId":"6878567gjh",
 
-&quot;auth&quot;:{
+"auth":{
 
-&quot;signUp&quot;:{
+"signUp":{
 
-&quot;email&quot;:&quot;eitah12@email.co&quot;,
+"email":"eitah12@email.co",
 
-&quot;username&quot;:&quot;eith12&quot;,
+"username":"eith12",
 
-&quot;password&quot;:&quot;8697tgygyt78tuy&quot;,
+"password":"8697tgygyt78tuy",
 
-&quot;fullName&quot;:&quot;8an 9o0&quot;
+"fullName":"8an 9o0"
 
 }
 
@@ -727,21 +707,21 @@ Response from the server will be as follows.
 
 {
 
-&quot;auth&quot;:{
+"auth":{
 
-&quot;signUp&quot;:{
+"signUp":{
 
-&quot;email&quot;:&quot;eitah12@email.co&quot;,
+"email":"eitah12@email.co",
 
-&quot;id&quot;:&quot;eitah12968u&quot;,
+"id":"eitah12968u",
 
-&quot;username&quot;:&quot;eith12&quot;,
+"username":"eith12",
 
-&quot;token&quot;:&quot;8697tgygyt78tuy.y78967ugkgiyu.099oyu&quot;,
+"token":"8697tgygyt78tuy.y78967ugkgiyu.099oyu",
 
-&quot;createdAt&quot;:&quot;2020-20-20 &amp;8:09:89 GMT3+&quot;,
+"createdAt":"2020-20-20 &amp;8:09:89 GMT3+",
 
-&quot;fullName&quot;:&quot;8an 9o0&quot;
+"fullName":"8an 9o0"
 
 }
 
@@ -758,13 +738,13 @@ After you get registered next time you need to authenticate yourself, you will s
 
 {
 
-&quot;auth&quot;:{
+"auth":{
 
-&quot;signIn&quot;:{
+"signIn":{
 
-&quot;username&quot;:&quot;eith12&quot;,
+"username":"eith12",
 
-&quot;password&quot;:&quot;8697tgygyt78tuy&quot;
+"password":"8697tgygyt78tuy"
 
 }
 
@@ -776,21 +756,21 @@ If user successful signIn will return the following response.
 
 {
 
-&quot;auth&quot;:{
+"auth":{
 
-&quot;signIn&quot;:{
+"signIn":{
 
-&quot;email&quot;:&quot;eitah12@email.co&quot;,
+"email":"eitah12@email.co",
 
-&quot;Username&quot;:&quot;eith12&quot;,
+"Username":"eith12",
 
-&quot;id&quot;:&quot;78967gkugt&quot;,
+"id":"78967gkugt",
 
-&quot;token&quot;:&quot;8697tgygyt78tuy.y78967ugkgiyu.099oyu&quot;,
+"token":"8697tgygyt78tuy.y78967ugkgiyu.099oyu",
 
-&quot;createdAt&quot;:&quot;2020-20-20 &amp;8:09:89 GMT3+&quot;,
+"createdAt":"2020-20-20 &amp;8:09:89 GMT3+",
 
-&quot;fullName&quot;:&quot;8an 9o0&quot;
+"fullName":"8an 9o0"
 
 }
 
@@ -806,11 +786,11 @@ You can reset a password of an already registered user by sending the following 
 
 {
 
-&quot;auth&quot;:{
+"auth":{
 
-&quot;reset&quot;:{
+"reset":{
 
-&quot;email&quot;:&quot;eitah12@email.co&quot;
+"email":"eitah12@email.co"
 
 }
 
@@ -822,9 +802,9 @@ Password reset instructions will be sent to the email if it exists in database r
 
 {
 
-&quot;auth&quot;:{
+"auth":{
 
-&quot;reset&quot;: &quot;Password recovery process sent to your email.&quot;
+"reset": "Password recovery process sent to your email."
 
 }
 
@@ -838,21 +818,21 @@ Data access policy controlled by rules. You use the **policy** JSON rule block t
 
 The **policy** block has the following fields, **add, remove** &amp; **list .** Rules field is an object which has the following format.
 
-&quot;add&quot;: {
+"add": {
 
-&quot;\&lt;resource-operation\&gt;&quot;: &quot;\&lt;condition\&gt;&quot;
+"<resource-operation>": "<condition>"
 
 },
 
-&quot;list&quot;: {},
+"list": {},
 
-&quot;remove&quot;: {
+"remove": {
 
-&quot;ruleId&quot;: &quot;\&lt;rule-id\&gt;&quot;
+"ruleId": "<rule-id>"
 
 }
 
-**\&lt;resource-operation\&gt;** is the operation to act upon a resource, the common operation is
+**<resource-operation>** is the operation to act upon a resource, the common operation is
 
 - **update.${Domain/Table/Collection}**
 - **create.${Domain/Table/Collection}**
@@ -863,21 +843,21 @@ The **policy** block has the following fields, **add, remove** &amp; **list .** 
 - **files.list**
 - **files.read**
 
-**\&lt;condition\&gt;** is the expression which evaluates to boolean either **true** or **false**. In your expression **context** is an object which will be injected, some of its properties are.
+**<condition>** is the expression which evaluates to boolean either **true** or **false**. In your expression **context** is an object which will be injected, some of its properties are.
 
 {
 
-&quot;auth&quot;: boolean,
+"auth": boolean,
 
-&quot;uid&quot;: string,
+"uid": string,
 
-&quot;domain&quot;: string
+"domain": string
 
 }
 
-- **auth** -\&gt; this field will be true if the user is authenticated otherwise is false.
-- **uid** -\&gt; the user id execute the request or undefined.
-- **domain** -\&gt; the resource current accessed.
+- **auth** -> this field will be true if the user is authenticated otherwise is false.
+- **uid** -> the user id execute the request or undefined.
+- **domain** -> the resource current accessed.
 
 ### 4.2.2 Define Rules
 
@@ -885,17 +865,17 @@ When rules saved will replace any existing rules that match the new rule update.
 
 {
 
-&quot;masterKey&quot;:&quot;687tgjhgi78978567gjh&quot;,
+"masterKey":"687tgjhgi78978567gjh",
 
-&quot;applicationId&quot;:&quot;6878567gjh&quot;,
+"applicationId":"6878567gjh",
 
-&quot;policy&quot;:{
+"policy":{
 
-&quot;add&quot;: {
+"add": {
 
-&quot;query.\*&quot;: &quot;return true&quot;,
+"query.\*": "return true",
 
-&quot;create.Product&quot;: &quot;return false&quot;
+"create.Product": "return false"
 
 }
 
@@ -909,15 +889,15 @@ Example of defining a javascript function is as follows.
 
 {
 
-&quot;masterKey&quot;:&quot;687tgjhgi78978567gjh&quot;,
+"masterKey":"687tgjhgi78978567gjh",
 
-&quot;applicationId&quot;:&quot;6878567gjh&quot;,
+"applicationId":"6878567gjh",
 
-&quot;policy&quot;:{
+"policy":{
 
-&quot;add&quot;: {
+"add": {
 
-&quot;query.\*&quot;: `
+"query.\*": `
 
 constauth===context.auth;
 
@@ -939,13 +919,13 @@ You can list all available rules in your project as follows.
 
 {
 
-&quot;masterKey&quot;:&quot;687tgjhgi78978567gjh&quot;,
+"masterKey":"687tgjhgi78978567gjh",
 
-&quot;applicationId&quot;:&quot;6878567gjh&quot;,
+"applicationId":"6878567gjh",
 
-&quot;policy&quot;:{
+"policy":{
 
-&quot;list&quot;: {}
+"list": {}
 
 }
 
@@ -955,11 +935,11 @@ The response from server will be as follows;
 
 {
 
-&quot;policy&quot;:{
+"policy":{
 
-&quot;list&quot;: {
+"list": {
 
-&quot;ruleId&quot;: &quot;read.\*&quot;
+"ruleId": "read.\*"
 
 }
 
@@ -973,13 +953,13 @@ You can remove saved policy by using **remove** rule block inside policy you wil
 
 {
 
-&quot;masterKey&quot;:&quot;687tgjhgi78978567gjh&quot;,
+"masterKey":"687tgjhgi78978567gjh",
 
-&quot;applicationId&quot;:&quot;6878567gjh&quot;,
+"applicationId":"6878567gjh",
 
-&quot;policy&quot;:{
+"policy":{
 
-&quot;remove&quot;: {&quot;ruleId&quot;:&quot;query.\*&quot;}
+"remove": {"ruleId":"query.\*"}
 
 }
 
@@ -991,17 +971,17 @@ At some moment we want to perform aggregation of the data instead of just queryi
 
 {
 
-&quot;applicationId&quot;:&quot;7867tgyujk&quot;,
+"applicationId":"7867tgyujk",
 
-&quot;masterKey&quot;: &quot;785ghjgjfh&quot;,
+"masterKey": "785ghjgjfh",
 
-&quot;aggregateTest&quot;: [
+"aggregateTest": [
 
 {
 
-&quot;$match&quot;: {
+"$match": {
 
-&quot;name&quot;: &quot;qwerty&quot;
+"name": "qwerty"
 
 }
 
@@ -1027,30 +1007,30 @@ Server must be able to save a simple file around **5~10 MB** and large files wit
 
 For simple files we use rule blocks with base64 encoded. To control files you use **files** rule block, the structure of the rule is as follows.
 
-- **save.filename -\&gt;** this field is any string may contain a file extension for auto content type detect, server will generate a random prefix id and append to the filename you provide so you can use the same file name multiple times and server will return a unique file name for each.
-- **save.base64 -\&gt;** the content of file to save base64 encoded or plain text
-- **save.type -\&gt;** the content-type mime of the file you save if not supplied mime will be determined from filename extension.
-- **delete.filename -\&gt;** filename returned by server not the one you supplied.
+- **save.filename ->** this field is any string may contain a file extension for auto content type detect, server will generate a random prefix id and append to the filename you provide so you can use the same file name multiple times and server will return a unique file name for each.
+- **save.base64 ->** the content of file to save base64 encoded or plain text
+- **save.type ->** the content-type mime of the file you save if not supplied mime will be determined from filename extension.
+- **delete.filename ->** filename returned by server not the one you supplied.
 
 {
 
-&quot;applicationId&quot;: string,
+"applicationId": string,
 
-&quot;files&quot;: {
+"files": {
 
-&quot;save&quot;: {
+"save": {
 
-&quot;filename&quot;: string,
+"filename": string,
 
-&quot;base64&quot;: string,
+"base64": string,
 
-&quot;type&quot;: string
+"type": string
 
 },
 
-&quot;delete&quot;: {
+"delete": {
 
-&quot;filename&quot;: string
+"filename": string
 
 }
 
@@ -1067,15 +1047,15 @@ To save you send the following JSON to the server.
 
 {
 
-&quot;applicationId&quot;: &quot;d75ujgdkj&quot;,
+"applicationId": "d75ujgdkj",
 
-&quot;files&quot;: {
+"files": {
 
-&quot;save&quot;: {
+"save": {
 
-&quot;filename&quot;: &quot;hello.txt&quot;,
+"filename": "hello.txt",
 
-&quot;base64&quot;: &quot;Helo, world!&quot;
+"base64": "Helo, world!"
 
 }
 
@@ -1087,9 +1067,9 @@ If successfully saved, the server will return the path of the file location.
 
 {
 
-&quot;files&quot;:{
+"files":{
 
-&quot;save&quot;: &quot;/storage/778guyg/file/d75ujgdkj/9f8875fb-4064-4d71-584a733-hello.txt&quot;
+"save": "/storage/778guyg/file/d75ujgdkj/9f8875fb-4064-4d71-584a733-hello.txt"
 
 }
 
@@ -1106,13 +1086,13 @@ To delete a file you send the following JSON to the server.
 
 {
 
-&quot;applicationId&quot;: &quot;d75ujgdkj&quot;,
+"applicationId": "d75ujgdkj",
 
-&quot;files&quot;: {
+"files": {
 
-&quot;delete&quot;: {
+"delete": {
 
-&quot;filename&quot;: &quot;oioyui-hjgiuguy-jkfjyfh-785ygjkh-hello.txt&quot;
+"filename": "oioyui-hjgiuguy-jkfjyfh-785ygjkh-hello.txt"
 
 }
 
@@ -1124,9 +1104,9 @@ If the file is successfully deleted, the server will return the filename which i
 
 {
 
-&quot;files&quot;: {
+"files": {
 
-&quot;delete&quot; : &quot;oioyui-hjgiuguy-jkfjyfh-785ygjkh-hello.txt&quot;
+"delete" : "oioyui-hjgiuguy-jkfjyfh-785ygjkh-hello.txt"
 
 }
 
@@ -1138,13 +1118,13 @@ To list your files you send the following JSON to the server.
 
 {
 
-&quot;applicationId&quot;: &quot;d75ujgdkj&quot;,
+"applicationId": "d75ujgdkj",
 
-&quot;files&quot;: {
+"files": {
 
-&quot;list&quot;: {
+"list": {
 
-&quot;prefix&quot;: &quot;&quot;
+"prefix": ""
 
 }
 
@@ -1156,9 +1136,9 @@ Server will return array of file objects
 
 {
 
-&quot;files&quot;: {
+"files": {
 
-&quot;list&quot; : [{filename: &quot;oioyui-hjgiuguy-jkfjyfh-785ygjkh-hello.txt&quot;}]
+"list" : [{filename: "oioyui-hjgiuguy-jkfjyfh-785ygjkh-hello.txt"}]
 
 }
 
@@ -1176,7 +1156,7 @@ The response will be a json of the following format;
 
 {
 
-&quot;urls&quot;: [&quot;/storage/889/file/077-hello.txt&quot;]
+"urls": ["/storage/889/file/077-hello.txt"]
 
 }
 
@@ -1193,11 +1173,11 @@ You can modify the indexes of your database domain/collection/table for performa
 
 The **index${domain}** block has the following fields, **add, remove** &amp; **list .** index field is an object which has the following format.
 
-&quot;add&quot;: [{&quot;field&quot;: &quot;name&quot;}],
+"add": [{"field": "name"}],
 
-&quot;list&quot;: { },
+"list": { },
 
-&quot;remove&quot;: { }
+"remove": { }
 
 ## 7.2 Add Indexes
 
@@ -1205,15 +1185,15 @@ To add a new index to a domain/table/collection use **add** which accepts an arr
 
 {
 
-&quot;applicationId&quot;: &quot;daas&quot;,
+"applicationId": "daas",
 
-&quot;masterKey&quot;: &quot;daas-master&quot;,
+"masterKey": "daas-master",
 
-&quot;indexProduct&quot;: {
+"indexProduct": {
 
-&quot;add&quot;: [
+"add": [
 
-{&quot;field&quot;: &quot;name&quot;}
+{"field": "name"}
 
 ]
 
@@ -1225,7 +1205,7 @@ The response from the server will be as follows
 
 {
 
-&quot;indexProduct&quot;: { &quot;add&quot;: &quot;Indexes added&quot; }
+"indexProduct": { "add": "Indexes added" }
 
 }
 
@@ -1235,13 +1215,13 @@ To list all available indexes for a domain use **list** sub command for **index$
 
 {
 
-&quot;applicationId&quot;: &quot;daas&quot;,
+"applicationId": "daas",
 
-&quot;masterKey&quot;: &quot;daas-master&quot;,
+"masterKey": "daas-master",
 
-&quot;indexProduct&quot;: {
+"indexProduct": {
 
-&quot;list&quot;: {}
+"list": {}
 
 }
 
@@ -1251,19 +1231,19 @@ The response will be the list of the indexes available both user defined and def
 
 {
 
-&quot;indexProduct&quot;: {
+"indexProduct": {
 
-&quot;list&quot;: [
+"list": [
 
 {
 
-&quot;v&quot;: 2,
+"v": 2,
 
-&quot;key&quot;: {&quot;name&quot;: 1},
+"key": {"name": 1},
 
-&quot;name&quot;: &quot;name\_1&quot;,
+"name": "name\_1",
 
-&quot;ns&quot;: &quot;051475c8-60f6-4809-a33a-db9db0d4416a.Product&quot;
+"ns": "051475c8-60f6-4809-a33a-db9db0d4416a.Product"
 
 }
 
@@ -1279,13 +1259,13 @@ You can delete/remove a user defined index only by using the **remove** rule in 
 
 {
 
-&quot;applicationId&quot;: &quot;daas&quot;,
+"applicationId": "daas",
 
-&quot;masterKey&quot;: &quot;daas-master&quot;,
+"masterKey": "daas-master",
 
-&quot;indexProduct&quot;: {
+"indexProduct": {
 
-&quot;remove&quot;: {}
+"remove": {}
 
 }
 
@@ -1295,9 +1275,9 @@ The response from the server will be as follows.
 
 {
 
-&quot;indexProduct&quot;: {
+"indexProduct": {
 
-&quot;remove&quot;: true
+"remove": true
 
 }
 
@@ -1309,4 +1289,4 @@ This is an interface for you to play with your rules when developing your applic
 
 ~$ bfast database playground
 
-You must install &quot; **bfast-tools**&quot; a cli tool from npm like this **&quot;~$ npm install -g bfast-tools&quot;**
+You must install " **bfast-tools**" a cli tool from npm like this **"~$ npm install -g bfast-tools"**
