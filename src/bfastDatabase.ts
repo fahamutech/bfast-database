@@ -1,4 +1,4 @@
-import {FaaS} from 'bfast-faas';
+import {BfastFunctions} from 'bfast-faas';
 import {Database} from "./factory/Database";
 import {DatabaseController} from "./controllers/DatabaseController";
 import {SecurityController} from "./controllers/SecurityController";
@@ -6,31 +6,31 @@ import {BFastDatabaseConfig, BFastDatabaseConfigAdapter} from "./bfastDatabaseCo
 
 
 export class BFastDatabase {
-    private faas: FaaS;
+    private bfastFunctions: BfastFunctions;
 
     constructor() {
     }
 
     /**
      * start a bfast::database server
-     * @param options {ConfigAdapter}
+     * @param options {BFastDatabaseConfig}
      * @return Promise
      */
     async start(options: BFastDatabaseConfigAdapter): Promise<boolean> {
-        if (this._validateOptions(options).valid) {
-            this._registerOptions(options);
-            this.faas = new FaaS({
+        if (BFastDatabase._validateOptions(options).valid) {
+            BFastDatabase._registerOptions(options);
+            this.bfastFunctions = new BfastFunctions({
                 port: options.port,
                 functionsConfig: {
                     functionsDirPath: __dirname,
                     bfastJsonPath: __dirname + '/bfast.json'
                 }
             });
-            await this.faas.start();
-            await this._setUpDatabase(options);
+            await this.bfastFunctions.start();
+            await BFastDatabase._setUpDatabase(options);
             return true;
         } else {
-            throw new Error(this._validateOptions(options).message);
+            throw new Error(BFastDatabase._validateOptions(options).message);
         }
     }
 
@@ -39,13 +39,13 @@ export class BFastDatabase {
      * @return Promise
      */
     async stop(): Promise<any> {
-        if (!this.faas) {
+        if (!this.bfastFunctions) {
             return true;
         }
-        return this.faas.stop();
+        return this.bfastFunctions.stop();
     }
 
-    private _validateOptions(options: BFastDatabaseConfigAdapter): { valid: boolean, message: string } {
+    private static _validateOptions(options: BFastDatabaseConfigAdapter): { valid: boolean, message: string } {
         if (!options.port) {
             return {
                 valid: false,
@@ -82,7 +82,7 @@ export class BFastDatabase {
         }
     }
 
-    private async _setUpDatabase(config: BFastDatabaseConfigAdapter) {
+    private static async _setUpDatabase(config: BFastDatabaseConfigAdapter) {
         const database: DatabaseController = new DatabaseController(
             (config && config.adapters && config.adapters.database)
                 ? config.adapters.database(config)
@@ -92,7 +92,7 @@ export class BFastDatabase {
         return database.init();
     }
 
-    private _registerOptions(options: BFastDatabaseConfigAdapter) {
+    private static _registerOptions(options: BFastDatabaseConfigAdapter) {
         BFastDatabaseConfig.getInstance().addValues(options);
     }
 }
