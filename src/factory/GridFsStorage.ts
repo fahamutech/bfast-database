@@ -9,6 +9,8 @@ import {FilesAdapter} from "../adapter/FilesAdapter";
 import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
 import {SecurityController} from "../controllers/SecurityController";
 
+const sharp = require('sharp');
+
 let _security: SecurityController;
 
 export class GridFsStorage implements FilesAdapter {
@@ -40,29 +42,16 @@ export class GridFsStorage implements FilesAdapter {
         return this._connectionPromise;
     }
 
-    async _getBucket(): Promise<GridFSBucket> {
+    async _getBucket(bucket = 'fs'): Promise<GridFSBucket> {
         const database = await this._connect();
-        return new GridFSBucket(database);
+        return new GridFSBucket(database, {bucketName: bucket});
     }
 
-    // For a given config object, filename, and data, store a file
-    // Returns a promise that resolve to new filename
     async createFile(filename: string, data: any, contentType: any, options: any = {}): Promise<string> {
         await this.validateFilename(filename);
         const newFilename = _security.generateUUID() + '-' + filename;
         const bucket = await this._getBucket();
-        const stream = await bucket.openUploadStream(newFilename, {
-            contentType: contentType,
-            metadata: options.metadata,
-        });
-        await stream.write(data);
-        stream.end();
-        return new Promise((resolve, reject) => {
-            stream.on('finish', () => {
-                resolve(newFilename);
-            });
-            stream.on('error', reject);
-        });
+        return this._saveFile(newFilename, data, contentType, bucket, options);
     }
 
     async deleteFile(filename: string) {
@@ -78,8 +67,8 @@ export class GridFsStorage implements FilesAdapter {
         );
     }
 
-    async getFileData(filename: string): Promise<Buffer> {
-        const bucket = await this._getBucket();
+    async getFileData(filename: string, thumbnail = false): Promise<Buffer> {
+        const bucket = await this._getBucket(thumbnail === true ? 'thumbnails' : 'fs');
         const stream = bucket.openDownloadStreamByName(filename);
         stream.read();
         return new Promise((resolve, reject) => {
@@ -110,8 +99,8 @@ export class GridFsStorage implements FilesAdapter {
         return {metadata};
     }
 
-    async handleFileStream(filename: string, req, res, contentType) {
-        const bucket = await this._getBucket();
+    async handleFileStream(filename: string, req, res, contentType, thumbnail = false) {
+        const bucket = await this._getBucket(thumbnail === true ? 'thumbnails' : 'fs');
         const files = await bucket.find({filename}).toArray();
         if (files.length === 0) {
             throw new Error('FileNotFound');
@@ -149,13 +138,6 @@ export class GridFsStorage implements FilesAdapter {
     canHandleFileStream = true;
     isS3 = false;
 
-    // handleShutdown() {
-    //     if (!this._client) {
-    //         return Promise.resolve();
-    //     }
-    //     return this._client.close(false);
-    // }
-
     async listFiles(query: { prefix: string, size: number, skip: number } = {
         prefix: '',
         size: 20,
@@ -184,7 +166,33 @@ export class GridFsStorage implements FilesAdapter {
         return null;
     }
 
-    async signedUrl(filename: string): Promise<string> {
+    async signedUrl(filename: string, thumbnail = false): Promise<string> {
         return this.getFileLocation(filename, this.config);
+    }
+
+    async createThumbnail(filename: string, data: Buffer, contentType: string, options: any = {}): Promise<string> {
+        const bucket = await this._getBucket('thumbnails');
+        const thumbnailBuffer = await sharp(data)
+            .jpeg({
+                quality: 50,
+            })
+            .resize({width: 100})
+            .toBuffer();
+        return this._saveFile(filename, thumbnailBuffer, contentType, bucket, options);
+    }
+
+    private async _saveFile(filename: string, data: any, contentType: string, bucket: GridFSBucket, options: any = {}): Promise<string> {
+        const stream = await bucket.openUploadStream(filename, {
+            contentType: contentType,
+            metadata: options.metadata,
+        });
+        await stream.write(data);
+        stream.end();
+        return new Promise((resolve, reject) => {
+            stream.on('finish', () => {
+                resolve(filename);
+            });
+            stream.on('error', reject);
+        });
     }
 }

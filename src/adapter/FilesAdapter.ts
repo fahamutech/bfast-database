@@ -14,7 +14,9 @@ export interface FilesAdapter {
      *
      * @return {Promise} a promise that should fail if the storage didn't succeed
      */
-    createFile(filename: string, data: Buffer, contentType: string, options: Object): Promise<string>
+    createFile(filename: string, data: Buffer, contentType: string, options: Object): Promise<string>;
+
+    createThumbnail(filename: string, data: Buffer, contentType: string, options: Object): Promise<string>;
 
     /** Responsible for deleting the specified file
      *
@@ -22,15 +24,16 @@ export interface FilesAdapter {
      *
      * @return {Promise} a promise that should fail if the deletion didn't succeed
      */
-    deleteFile(filename: string): Promise<any>
+    deleteFile(filename: string): Promise<any>;
 
     /** Responsible for retrieving the data of the specified file
      *
      * @param {string} filename - the name of file to retrieve
      *
+     * @param thumbnail {boolean} - true if request a thumbnail of an image
      * @return {Promise} a promise that should pass with the file data or fail on error
      */
-    getFileData(filename: string): Promise<any>
+    getFileData(filename: string, thumbnail: boolean): Promise<any>;
 
     /** Returns an absolute URL where the file can be accessed
      *
@@ -48,12 +51,18 @@ export interface FilesAdapter {
      * @param {object} response
      * @param {string} contentType
      *
+     * @param thumbnail {boolean} - true if request a thumbnail of an image
      * @returns {Promise} Data for byte range
      */
 
-    handleFileStream(filename: any, request: any, response: any, contentType: any): any;
+    handleFileStream(filename: any, request: any, response: any, contentType: any, thumbnail: boolean): any;
 
-    signedUrl(filename: string): Promise<string>;
+    /**
+     *
+     * @param filename {string} - the name of the file to retrieve
+     * @param thumbnail {boolean} - true if you want a thumbnail of an image
+     */
+    signedUrl(filename: string, thumbnail: boolean): Promise<string>;
 
     canHandleFileStream: boolean;
     isS3: boolean;

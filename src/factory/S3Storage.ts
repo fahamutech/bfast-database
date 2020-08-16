@@ -4,7 +4,8 @@ import {SecurityController} from "../controllers/SecurityController";
 import * as Minio from "minio";
 import {Client} from "minio";
 
-const url = require('url')
+const url = require('url');
+const sharp = require('sharp');
 
 export class S3Storage implements FilesAdapter {
     _s3: Client;
@@ -18,17 +19,7 @@ export class S3Storage implements FilesAdapter {
         const bucket = this.config.adapters.s3Storage.bucket;
         await this.validateFilename(filename);
         const newFilename = this._security.generateUUID() + '-' + filename;
-        const bucketExist = await this._s3.bucketExists(this.config.adapters.s3Storage.bucket);
-        if (bucketExist === true) {
-            await this._s3.putObject(bucket, newFilename, data);
-            return newFilename;
-        } else {
-            const endpoint = this.config.adapters.s3Storage.endPoint;
-            const region = endpoint.replace('https://', '').replace('http://', '').trim().split('.')[0];
-            await this._s3.makeBucket(bucket, region);
-            await this._s3.putObject(bucket, newFilename, data);
-            return newFilename;
-        }
+        return this._saveFile(newFilename, data, bucket, this.config.adapters.s3Storage.endPoint);
     }
 
     deleteFile(filename: string): Promise<any> {
@@ -36,8 +27,10 @@ export class S3Storage implements FilesAdapter {
         return this._s3.removeObject(bucket, filename);
     }
 
-    getFileData(filename: string): Promise<any> {
-        const bucket = this.config.adapters.s3Storage.bucket;
+    getFileData(filename: string, thumbnail = false): Promise<any> {
+        const bucket = thumbnail === true
+            ? this.config.adapters.s3Storage.bucket + '-thumb'
+            : this.config.adapters.s3Storage.bucket;
         return this._s3.getObject(bucket, filename);
     }
 
@@ -57,12 +50,14 @@ export class S3Storage implements FilesAdapter {
         return null;
     }
 
-    handleFileStream(filename: any, request: any, response: any, contentType: any): any {
+    handleFileStream(filename: any, request: any, response: any, contentType: any, thumbnail = false): any {
         return undefined;
     }
 
-    async signedUrl(filename: string): Promise<string> {
-        const bucket = this.config.adapters.s3Storage.bucket;
+    async signedUrl(filename: string, thumbnail = false): Promise<string> {
+        const bucket = thumbnail === true
+            ? this.config.adapters.s3Storage.bucket + '-thumb'
+            : this.config.adapters.s3Storage.bucket;
         return this._s3.presignedGetObject(bucket, filename,);
     }
 
@@ -125,5 +120,29 @@ export class S3Storage implements FilesAdapter {
         this._s3 = new Minio.Client({
             endPoint: ep.hostname, accessKey, secretKey, useSSL, port
         });
+    }
+
+    async createThumbnail(filename: string, data: Buffer, contentType: string, options: Object): Promise<string> {
+        const bucket = this.config.adapters.s3Storage.bucket + '-thumb';
+        const thumbnailBuffer = await sharp(data)
+            .jpeg({
+                quality: 50,
+            })
+            .resize({width: 100})
+            .toBuffer();
+        return this._saveFile(filename, thumbnailBuffer, bucket, this.config.adapters.s3Storage.endPoint);
+    }
+
+    private async _saveFile(filename: string, data: any, bucket: string, endpoint: string): Promise<string> {
+        const bucketExist = await this._s3.bucketExists(bucket);
+        if (bucketExist === true) {
+            await this._s3.putObject(bucket, filename, data);
+            return filename;
+        } else {
+            const region = endpoint.replace('https://', '').replace('http://', '').trim().split('.')[0];
+            await this._s3.makeBucket(bucket, region.toString().trim());
+            await this._s3.putObject(bucket, filename, data);
+            return filename;
+        }
     }
 }

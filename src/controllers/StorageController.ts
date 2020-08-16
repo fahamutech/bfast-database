@@ -46,6 +46,19 @@ export class StorageController {
             dataToSave?.type,
             {}
         );
+        if (type && type.toString().startsWith('image/') === true) {
+            try {
+                await this._filesAdapter.createThumbnail(
+                    file,
+                    isBase64 === true ?
+                        Buffer.from(dataToSave.data, 'base64')
+                        : dataToSave.data, type,
+                    {}
+                );
+            } catch (e) {
+                console.warn('Fails to save thumbnail', e);
+            }
+        }
         return this._filesAdapter.getFileLocation(file, this.config);
     }
 
@@ -57,12 +70,12 @@ export class StorageController {
         );
     }
 
-    getFileData(request, response) {
+    getFileData(request, response, thumbnail = false) {
         const filename = request.params.filename;
         const contentType = mime.getType(filename);
         if (this.isFileStreamable(request, this._filesAdapter)) {
             this._filesAdapter
-                .handleFileStream(filename, request, response, contentType)
+                .handleFileStream(filename, request, response, contentType, thumbnail)
                 .catch(() => {
                     response.status(404);
                     response.set('Content-Type', 'text/plain');
@@ -70,7 +83,7 @@ export class StorageController {
                 });
         } else {
             this._filesAdapter
-                .getFileData(filename)
+                .getFileData(filename, thumbnail)
                 .then(data => {
                     response.status(200);
                     response.set('Content-Type', contentType);
@@ -100,12 +113,14 @@ export class StorageController {
         if (!type) {
             type = mime.getType(filename);
         }
-        const file = await this._filesAdapter.createFile(
-            filename,
-            data,
-            type,
-            {}
-        );
+        const file = await this._filesAdapter.createFile(filename, data, type, {});
+        if (type && type.toString().startsWith('image/') === true) {
+            try {
+                await this._filesAdapter.createThumbnail(file, data, type, {});
+            } catch (e) {
+                console.warn('Fails to save thumbnail', e);
+            }
+        }
         return this._filesAdapter.getFileLocation(file, this.config);
     }
 
@@ -152,9 +167,9 @@ export class StorageController {
         return this._filesAdapter.isS3
     }
 
-    handleGetFileBySignedUrl(request: any, response: any) {
+    handleGetFileBySignedUrl(request: any, response: any, thumbnail = false) {
         const filename = request.params.filename;
-        this._filesAdapter.signedUrl(filename).then(value => {
+        this._filesAdapter.signedUrl(filename, thumbnail).then(value => {
             response.redirect(value);
         }).catch(reason => {
             response.status(EXPECTATION_FAILED).send({message: reason.toString()});

@@ -28,10 +28,20 @@ export class RestController {
 
     getFile(request: any, response: any, _: any) {
         if (_storage.isS3() === true) {
-            _storage.handleGetFileBySignedUrl(request, response);
+            _storage.handleGetFileBySignedUrl(request, response, false);
             return;
         } else {
-            _storage.getFileData(request, response);
+            _storage.getFileData(request, response, false);
+            return;
+        }
+    }
+
+    getThumbnail(request: any, response: any, _: any) {
+        if (_storage.isS3() === true) {
+            _storage.handleGetFileBySignedUrl(request, response, true);
+            return;
+        } else {
+            _storage.getFileData(request, response, true);
             return;
         }
     }
@@ -52,12 +62,8 @@ export class RestController {
     multipartForm(request: any, response: any, _: any) {
         const form = formidable({
             multiples: true,
-            // uploadDir: __dirname,
             maxFileSize: 10 * 1024 * 1024 * 1024,
             keepExtensions: true
-        });
-        form.on('part', (d) => {
-            console.log(d);
         });
         form.parse(request, async (err, fields, files) => {
             try {
