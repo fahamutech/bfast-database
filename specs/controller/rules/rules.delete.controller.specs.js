@@ -48,5 +48,17 @@ describe('RulesController::Delete Unit Test', function () {
             assert(results.deleteProduct.length === 1);
             assert(typeof results.deleteProduct[0].id === 'string');
         });
+        it('should not delete objects by empty filter', async function () {
+            const results = await _rulesController.handleDeleteRules({
+                deleteProduct: {
+                    filter: {
+                    },
+                    return: []
+                }
+            }, {errors: {}});
+            assert(results.deleteProduct === undefined);
+            assert(results.errors !== undefined);
+            assert(results.errors['delete.Product']['message'] === 'Empty filter map is not supported in delete rule');
+        });
     });
 });

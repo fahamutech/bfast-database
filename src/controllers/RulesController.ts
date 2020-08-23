@@ -293,7 +293,7 @@ export class RulesController {
                     return ruleResultModel;
                 }
                 try {
-                    if (rulesBlockModelElement.id) {
+                    if (rulesBlockModelElement?.id) {
                         const filter: any = {};
                         delete rulesBlockModelElement.filter;
                         filter['_id'] = rulesBlockModelElement.id;
@@ -304,10 +304,10 @@ export class RulesController {
                             transaction: transactionSession
                         });
                     } else {
-                        if (!rulesBlockModelElement.filter) {
+                        if (!rulesBlockModelElement?.filter) {
                             throw "filter field is required if you dont supply id field";
                         }
-                        if (rulesBlockModelElement.filter && Object.keys(rulesBlockModelElement).length === 0) {
+                        if (rulesBlockModelElement?.filter && Object.keys(rulesBlockModelElement?.filter).length === 0) {
                             throw "Empty filter map is not supported in delete rule";
                         }
                         const query: any[] = await _databaseController.query(domain, rulesBlockModelElement, rulesBlockModel?.context, {
@@ -460,10 +460,10 @@ export class RulesController {
                     return ruleResultModel;
                 }
                 try {
-                    if (Object.keys(rulesBlockModelElement).length === 0) {
+                    if (rulesBlockModelElement?.filter && Object.keys(rulesBlockModelElement?.filter).length === 0) {
                         throw "Empty map is not supported in update rule";
                     }
-                    if (!rulesBlockModelElement.update) {
+                    if (!rulesBlockModelElement?.update) {
                         throw "Please update field is required, which contains properties to update a document"
                     }
                     if (rulesBlockModelElement?.id) {

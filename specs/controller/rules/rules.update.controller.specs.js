@@ -65,5 +65,21 @@ describe('RulesController::Update Unit Test', function () {
             assert(results.updateProduct[2].name === 'apple');
             assert(results.updateProduct[2].status === 'old');
         });
+        it('should not update objects by empty filter', async function () {
+            const results = await _rulesController.handleUpdateRules({
+                updateProduct: {
+                    filter: {},
+                    update: {
+                        $set: {
+                            name: 'apple'
+                        }
+                    },
+                    return: []
+                }
+            }, {errors: {}});
+            assert(results.updateProduct === undefined);
+            assert(results.errors !== undefined);
+            assert(results.errors['update.Product']['message'] === 'Empty map is not supported in update rule');
+        });
     });
 });

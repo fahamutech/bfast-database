@@ -45,6 +45,7 @@ exports.daas = daas;
  */
 exports.getRulesController = async function (memoryReplSet) {
     try {
+        process.setMaxListeners(0);
         await memoryReplSet.start();
         await memoryReplSet.waitUntilRunning();
         const config = {
