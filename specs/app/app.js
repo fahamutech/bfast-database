@@ -5,6 +5,6 @@ new BFastDatabase().start({
     masterKey: 'daas',
     mongoDbUri: 'mongodb://localhost:27017/daas',
     port: '5000',
-    mountPath: '/daas',
+    mountPath: '/',
     adapters: {}
 }).catch(console.log);
