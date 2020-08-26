@@ -1,7 +1,7 @@
 {
   "name": "bfast-daas",
-  "version": "2.0.0-beta.14",
-  "main": "dist/daas.js",
+  "version": "2.0.0-beta.15",
+  "main": "dist/bfastDatabase.js",
   "license": "MIT",
   "scripts": {
     "build": "gulp build",
