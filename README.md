@@ -50,7 +50,7 @@ export interface DaaSConfig {
 
 // And to Start it should be like this.
 
-new BfastDatabase().start({
+new BFastDatabase().start({
     port:3000
 }).then(_=>console.log("server started at port 3000"));
 ```
