@@ -28,7 +28,7 @@ if (checker.length === 0) {
 new BFastDatabase().start({
     applicationId: process.env.APPLICATION_ID,
     masterKey: process.env.MASTER_KEY,
-    mongoDbUri: process.env.DATABASE_URI,
+    mongoDbUri: process.env.MONGO_URL,
     port: process.env.PORT,
     mountPath: process.env.MOUNT_PATH,
     adapters: {
