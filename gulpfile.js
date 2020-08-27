@@ -3,6 +3,7 @@ const pkg = require('./package');
 const gulp = require('gulp');
 const del = require('del');
 const glob = require('glob');
+const {EnvUtil} = require('./dist/utils/env.util');
 
 function handleBuild(childProcess, cb) {
     childProcess.on('error', (err) => {
@@ -47,8 +48,9 @@ function devStart(cb) {
         await mongoMemoryServer.start();
         await mongoMemoryServer.waitUntilRunning();
         daaSServer = await daas();
+        const file = await new EnvUtil().getEnv(__dirname + '/db.env.txt');
         await daaSServer.start({
-            mongoDbUri: 'mongodb://localhost/smartstock',
+            mongoDbUri: file,
             applicationId: 'daas',
             port: 3003,
             adapters: {},
