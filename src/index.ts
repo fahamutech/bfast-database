@@ -1,23 +1,5 @@
 import {BFastDatabase} from "./bfastDatabase";
 
-/*
-- PARSE_SERVER_APPLICATION_ID=${appId}
-  - PARSE_SERVER_MASTER_KEY=${masterKey}
-  - PROJECT_ID=${projectId}
-  - PARSE_SERVER_DATABASE_URI=mongodb://${appId}:${masterKey}@1.mongo.fahamutech.com:27017,2.mongo.fahamutech.com:27017,3.mongo.fahamutech.com:27017/${projectId}?authSource=admin&replicaSet=mdbRepl
-  - PARSE_SERVER_START_LIVE_QUERY_SERVER=1
-  - PARSE_SERVER_LIVE_QUERY={"classNames":["stocks","sales","purchases","units","categories","accounts","suppliers","orders"]}
-  - PARSE_SERVER_MAX_UPLOAD_SIZE=1048576mb
-  - PARSE_SERVER_OBJECT_ID_SIZE=16
-  - PARSE_SERVER_SCHEMA_CACHE_TTL=10000
-  - PORT=3000
-  - PARSE_SERVER_MOUNT_PATH=/
-  - S3_BUCKET=
-  - S3_ACCESS_KEY=
-  - S3_SECRET_KEY=
-  - S3_ENDPOINT=https://eu-central-1.linodeobjects.com/
- */
-
 let isS3Configured = true;
 const s3Bucket = process.env.S3_BUCKET;
 const s3AccessKey = process.env.S3_ACCESS_KEY;
@@ -44,11 +26,11 @@ if (checker.length === 0) {
 }
 
 new BFastDatabase().start({
-    applicationId: process.env.PARSE_SERVER_APPLICATION_ID,
-    masterKey: process.env.PARSE_SERVER_MASTER_KEY,
-    mongoDbUri: process.env.PARSE_SERVER_DATABASE_URI,
+    applicationId: process.env.APPLICATION_ID,
+    masterKey: process.env.MASTER_KEY,
+    mongoDbUri: process.env.DATABASE_URI,
     port: process.env.PORT,
-    mountPath: process.env.PARSE_SERVER_MOUNT_PATH,
+    mountPath: process.env.MOUNT_PATH,
     adapters: {
         s3Storage: isS3Configured
             ? {
