@@ -9,10 +9,10 @@ RUN yarn build
 FROM node:10-alpine
 WORKDIR /daas
 COPY --from=buildStage /dist/ /daas/
-RUN ls -l /daas/
+#RUN ls -l /daas/
 COPY package.json .
 COPY yarn.lock .
 RUN apk --no-cache update
 RUN yarn install --production=true
 
-CMD ["node","/daas/src/index.js"]
+CMD ["node","/daas/index.js"]
