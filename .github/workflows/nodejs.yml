@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - master
-      # - 2.0.x
-      # - beta
 
 jobs:
   build:
