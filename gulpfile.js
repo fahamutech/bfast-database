@@ -54,7 +54,7 @@ function devStart(cb) {
             applicationId: 'daas',
             port: 3003,
             adapters: {},
-            mountPath: '/',
+           // mountPath: await new EnvUtil().getEnv('/'),
             masterKey: 'daas'
         });
     }

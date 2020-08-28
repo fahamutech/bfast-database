@@ -46,6 +46,9 @@ export class BFastDatabase {
     }
 
     private static _validateOptions(options: BFastDatabaseConfigAdapter): { valid: boolean, message: string } {
+        if (!options.mountPath){
+            options.mountPath = '/';
+        }
         if (!options.port) {
             return {
                 valid: false,
