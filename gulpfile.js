@@ -3,7 +3,6 @@ const pkg = require('./package');
 const gulp = require('gulp');
 const del = require('del');
 const glob = require('glob');
-const {EnvUtil} = require('./dist/utils/env.util');
 
 function handleBuild(childProcess, cb) {
     childProcess.on('error', (err) => {
@@ -40,6 +39,7 @@ function pushToDocker(cb) {
 
 function devStart(cb) {
     const {mongoServer, mongoRepSet, daas} = require('./specs/mock.config');
+    const {EnvUtil} = require('./dist/utils/env.util');
     let mongoMemoryServer;
     let daaSServer;
 
@@ -54,7 +54,7 @@ function devStart(cb) {
             applicationId: 'daas',
             port: 3003,
             adapters: {},
-            mountPath: '/',
+           // mountPath: await new EnvUtil().getEnv('/'),
             masterKey: 'daas'
         });
     }
