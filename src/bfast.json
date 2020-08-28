@@ -1,11 +1,13 @@
 {
   "ignore": [
+    "/daas/node_modules/**",
     "**/specs/**",
     "**/factory/**",
     "**/adapter/**",
     "**/controllers/**",
     "**/model/**",
     "**/*.specs.js",
+    "**/*.spec.js",
     "**/index.js"
   ]
 }
