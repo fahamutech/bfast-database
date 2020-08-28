@@ -6,8 +6,10 @@
 
 import {Db, GridFSBucket, MongoClient} from 'mongodb';
 import {FilesAdapter} from "../adapter/FilesAdapter";
-import {DaaSConfig} from "../config";
+import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
 import {SecurityController} from "../controllers/SecurityController";
+
+const sharp = require('sharp');
 
 let _security: SecurityController;
 
@@ -18,7 +20,9 @@ export class GridFsStorage implements FilesAdapter {
     _connectionPromise: Promise<Db>;
     _mongoOptions: Object;
 
-    constructor(private readonly security: SecurityController, mongoDatabaseURI = DaaSConfig.getInstance().mongoDbUri, mongoOptions = {}) {
+    constructor(private readonly security: SecurityController,
+                private readonly config: BFastDatabaseConfig,
+                mongoDatabaseURI = BFastDatabaseConfig.getInstance().mongoDbUri, mongoOptions = {}) {
         this._databaseURI = mongoDatabaseURI;
         _security = this.security;
         const defaultMongoOptions = {
@@ -38,29 +42,16 @@ export class GridFsStorage implements FilesAdapter {
         return this._connectionPromise;
     }
 
-    async _getBucket(): Promise<GridFSBucket> {
+    async _getBucket(bucket = 'fs'): Promise<GridFSBucket> {
         const database = await this._connect();
-        return new GridFSBucket(database);
+        return new GridFSBucket(database, {bucketName: bucket});
     }
 
-    // For a given config object, filename, and data, store a file
-    // Returns a promise that resolve to new filename
     async createFile(filename: string, data: any, contentType: any, options: any = {}): Promise<string> {
         await this.validateFilename(filename);
         const newFilename = _security.generateUUID() + '-' + filename;
         const bucket = await this._getBucket();
-        const stream = await bucket.openUploadStream(newFilename, {
-            contentType: contentType,
-            metadata: options.metadata,
-        });
-        await stream.write(data);
-        stream.end();
-        return new Promise((resolve, reject) => {
-            stream.on('finish', () => {
-                resolve(newFilename);
-            });
-            stream.on('error', reject);
-        });
+        return this._saveFile(newFilename, data, contentType, bucket, options);
     }
 
     async deleteFile(filename: string) {
@@ -76,8 +67,8 @@ export class GridFsStorage implements FilesAdapter {
         );
     }
 
-    async getFileData(filename: string): Promise<Buffer> {
-        const bucket = await this._getBucket();
+    async getFileData(filename: string, thumbnail = false): Promise<Buffer> {
+        const bucket = await this._getBucket(thumbnail === true ? 'thumbnails' : 'fs');
         const stream = bucket.openDownloadStreamByName(filename);
         stream.read();
         return new Promise((resolve, reject) => {
@@ -94,8 +85,8 @@ export class GridFsStorage implements FilesAdapter {
         });
     }
 
-    getFileLocation(filename: string): string {
-        return '/files/' + DaaSConfig.getInstance().applicationId + '/' + encodeURIComponent(filename);
+    async getFileLocation(filename: string, config: BFastDatabaseConfig): Promise<string> {
+        return '/storage/' + config.applicationId + '/file/' + encodeURIComponent(filename);
     }
 
     async getMetadata(filename) {
@@ -108,47 +99,60 @@ export class GridFsStorage implements FilesAdapter {
         return {metadata};
     }
 
-    async handleFileStream(filename: string, req, res, contentType) {
-        // const bucket = await this._getBucket();
-        // const files = await bucket.find({ filename }).toArray();
-        // if (files.length === 0) {
-        //     throw new Error('FileNotFound');
-        // }
-        // const parts = req
-        //     .get('Range')
-        //     .replace(/bytes=/, '')
-        //     .split('-');
-        // const partialstart = parts[0];
-        // const partialend = parts[1];
-        //
-        // const start = parseInt(partialstart, 10);
-        // const end = partialend ? parseInt(partialend, 10) : files[0].length - 1;
-        //
-        // res.writeHead(206, {
-        //     'Accept-Ranges': 'bytes',
-        //     'Content-Length': end - start + 1,
-        //     'Content-Range': 'bytes ' + start + '-' + end + '/' + files[0].length,
-        //     'Content-Type': contentType,
-        // });
-        // const stream = bucket.openDownloadStreamByName(filename);
-        // stream.start(start);
-        // stream.on('data', (chunk) => {
-        //     res.write(chunk);
-        // });
-        // stream.on('error', () => {
-        //     res.sendStatus(404);
-        // });
-        // stream.on('end', () => {
-        //     res.end();
-        // });
+    async handleFileStream(filename: string, req, res, contentType, thumbnail = false) {
+        const bucket = await this._getBucket(thumbnail === true ? 'thumbnails' : 'fs');
+        const files = await bucket.find({filename}).toArray();
+        if (files.length === 0) {
+            throw new Error('FileNotFound');
+        }
+        const parts = req
+            .get('Range')
+            .replace(/bytes=/, '')
+            .split('-');
+        const partialstart = parts[0];
+        const partialend = parts[1];
+
+        const start = parseInt(partialstart, 10);
+        const end = partialend ? parseInt(partialend, 10) : files[0].length - 1;
+
+        res.writeHead(206, {
+            'Accept-Ranges': 'bytes',
+            'Content-Length': end - start + 1,
+            'Content-Range': 'bytes ' + start + '-' + end + '/' + files[0].length,
+            'Content-Type': contentType,
+        });
+        const stream = bucket.openDownloadStreamByName(filename);
+        // @ts-ignore
+        stream.start(start);
+        stream.on('data', (chunk) => {
+            res.write(chunk);
+        });
+        stream.on('error', () => {
+            res.sendStatus(404);
+        });
+        stream.on('end', () => {
+            res.end();
+        });
     }
 
-    // handleShutdown() {
-    //     if (!this._client) {
-    //         return Promise.resolve();
-    //     }
-    //     return this._client.close(false);
-    // }
+    canHandleFileStream = true;
+    isS3 = false;
+
+    async listFiles(query: { prefix: string, size: number, skip: number } = {
+        prefix: '',
+        size: 20,
+        skip: 0
+    }): Promise<any[]> {
+        const bucket = await this._getBucket();
+        return bucket.find({
+            filename: {
+                $regex: query.prefix, $options: 'i'
+            }
+        }, {
+            skip: query.skip,
+            limit: query.size
+        }).toArray();
+    }
 
     validateFilename(filename: string): Promise<void> {
         if (filename.length > 128) {
@@ -160,5 +164,35 @@ export class GridFsStorage implements FilesAdapter {
             throw 'Filename contains invalid characters.';
         }
         return null;
+    }
+
+    async signedUrl(filename: string, thumbnail = false): Promise<string> {
+        return this.getFileLocation(filename, this.config);
+    }
+
+    async createThumbnail(filename: string, data: Buffer, contentType: string, options: any = {}): Promise<string> {
+        const bucket = await this._getBucket('thumbnails');
+        const thumbnailBuffer = await sharp(data)
+            .jpeg({
+                quality: 50,
+            })
+            .resize({width: 100})
+            .toBuffer();
+        return this._saveFile(filename, thumbnailBuffer, contentType, bucket, options);
+    }
+
+    private async _saveFile(filename: string, data: any, contentType: string, bucket: GridFSBucket, options: any = {}): Promise<string> {
+        const stream = await bucket.openUploadStream(filename, {
+            contentType: contentType,
+            metadata: options.metadata,
+        });
+        await stream.write(data);
+        stream.end();
+        return new Promise((resolve, reject) => {
+            stream.on('finish', () => {
+                resolve(filename);
+            });
+            stream.on('error', reject);
+        });
     }
 }

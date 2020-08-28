@@ -3,9 +3,9 @@ name: Node CI
 on:
   push:
     branches:
-      - master
+      # - master
       # - 2.0.x
-      # - beta
+      - beta
 
 jobs:
   build:

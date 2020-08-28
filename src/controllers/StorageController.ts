@@ -2,12 +2,11 @@ import {FilesAdapter} from "../adapter/FilesAdapter";
 import {FileModel} from "../model/FileModel";
 import {ContextBlock} from "../model/RulesBlockModel";
 import mime from "mime";
-
-let _fileAdapter: FilesAdapter;
+import {EXPECTATION_FAILED} from "http-status-codes";
+import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
 
 export class StorageController {
-    constructor(filesAdapter: FilesAdapter) {
-        _fileAdapter = filesAdapter;
+    constructor(private readonly _filesAdapter: FilesAdapter, private readonly config: BFastDatabaseConfig) {
     }
 
     async save(fileModel: FileModel, context: ContextBlock): Promise<string> {
@@ -16,7 +15,7 @@ export class StorageController {
             throw 'Filename required';
         }
         if (!base64) {
-            throw 'File data to save is required';
+            throw 'File base64 data to save is required';
         }
         if (!type) {
             type = mime.getType(filename);
@@ -24,11 +23,11 @@ export class StorageController {
         const _source = StorageController.getSource(base64, type);
         const dataToSave: {
             type?: any,
-            base64: string,
+            data: any,
             filename: string,
             fileData: Object,
         } = {
-            base64: _source.base64,
+            data: _source.base64,
             filename: filename,
             fileData: {
                 metadata: {},
@@ -38,14 +37,91 @@ export class StorageController {
         if (_source.type) {
             dataToSave.type = _source.type;
         }
-        const isBase64 = Buffer.from(dataToSave.base64, 'base64').toString('base64') === dataToSave.base64;
-        const file = await _fileAdapter.createFile(
-            dataToSave.filename, isBase64
-                ? Buffer.from(dataToSave.base64, 'base64')
-                : dataToSave.base64, dataToSave?.type,
+        const isBase64 = Buffer.from(dataToSave.data, 'base64').toString('base64') === dataToSave.data;
+        const file = await this._filesAdapter.createFile(
+            dataToSave.filename,
+            isBase64 === true ?
+                Buffer.from(dataToSave.data, 'base64')
+                : dataToSave.data,
+            dataToSave?.type,
             {}
         );
-        return _fileAdapter.getFileLocation(file);
+        if (type && type.toString().startsWith('image/') === true) {
+            try {
+                await this._filesAdapter.createThumbnail(
+                    file,
+                    isBase64 === true ?
+                        Buffer.from(dataToSave.data, 'base64')
+                        : dataToSave.data, type,
+                    {}
+                );
+            } catch (e) {
+                console.warn('Fails to save thumbnail', e);
+            }
+        }
+        return this._filesAdapter.getFileLocation(file, this.config);
+    }
+
+    isFileStreamable(req, filesController: FilesAdapter) {
+        return (
+            req.get('Range')
+            && typeof filesController.handleFileStream === 'function'
+            && filesController.canHandleFileStream === true
+        );
+    }
+
+    getFileData(request, response, thumbnail = false) {
+        const filename = request.params.filename;
+        const contentType = mime.getType(filename);
+        if (this.isFileStreamable(request, this._filesAdapter)) {
+            this._filesAdapter
+                .handleFileStream(filename, request, response, contentType, thumbnail)
+                .catch(() => {
+                    response.status(404);
+                    response.set('Content-Type', 'text/plain');
+                    response.end('File not found.');
+                });
+        } else {
+            this._filesAdapter
+                .getFileData(filename, thumbnail)
+                .then(data => {
+                    response.status(200);
+                    response.set('Content-Type', contentType);
+                    response.set('Content-Length', data.length);
+                    response.end(data);
+                })
+                .catch(() => {
+                    response.status(404);
+                    response.set('Content-Type', 'text/plain');
+                    response.end('File not found.');
+                });
+        }
+    }
+
+    async listFiles(data: { prefix: string, size: number, skip: number, after: string }): Promise<any[]> {
+        return this._filesAdapter.listFiles(data);
+    }
+
+    async saveFromBuffer(fileModel: { filename: string, data: Buffer, type: string }, context: ContextBlock): Promise<string> {
+        let {filename, data, type} = fileModel;
+        if (!filename) {
+            throw 'Filename required';
+        }
+        if (!data) {
+            throw 'File base64 data to save is required';
+        }
+        if (!type) {
+            type = mime.getType(filename);
+        }
+        const file = await this._filesAdapter.createFile(filename, data, type, {});
+        if (type && type.toString().startsWith('image/') === true) {
+            try {
+                await this._filesAdapter.createThumbnail(file, data, type, {});
+            } catch (e) {
+                console.warn('Fails to save thumbnail', e);
+            }
+        }
+        return this._filesAdapter.getFileLocation(file, this.config);
     }
 
     async delete(data: { filename: string }, context: ContextBlock): Promise<string> {
@@ -53,7 +129,7 @@ export class StorageController {
         if (!filename) {
             throw 'Filename required';
         }
-        await _fileAdapter.deleteFile(filename);
+        await this._filesAdapter.deleteFile(filename);
         return filename;
     }
 
@@ -85,5 +161,18 @@ export class StorageController {
             };
         }
         return _source;
+    }
+
+    isS3(): boolean {
+        return this._filesAdapter.isS3
+    }
+
+    handleGetFileBySignedUrl(request: any, response: any, thumbnail = false) {
+        const filename = request.params.filename;
+        this._filesAdapter.signedUrl(filename, thumbnail).then(value => {
+            response.redirect(value);
+        }).catch(reason => {
+            response.status(EXPECTATION_FAILED).send({message: reason.toString()});
+        });
     }
 }

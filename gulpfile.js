@@ -3,6 +3,7 @@ const pkg = require('./package');
 const gulp = require('gulp');
 const del = require('del');
 const glob = require('glob');
+const {EnvUtil} = require('./dist/utils/env.util');
 
 function handleBuild(childProcess, cb) {
     childProcess.on('error', (err) => {
@@ -38,15 +39,24 @@ function pushToDocker(cb) {
 }
 
 function devStart(cb) {
-    const {mongoServer, daas} = require('./specs/shared');
+    const {mongoServer, mongoRepSet, daas} = require('./specs/mock.config');
     let mongoMemoryServer;
     let daaSServer;
 
     async function run() {
-        mongoMemoryServer = mongoServer();
+        mongoMemoryServer = mongoRepSet();
         await mongoMemoryServer.start();
-        daaSServer = await daas('mongodb://localhost/smartstock', 3003);
-        await daaSServer.start();
+        await mongoMemoryServer.waitUntilRunning();
+        daaSServer = await daas();
+        const file = await new EnvUtil().getEnv(__dirname + '/db.env.txt');
+        await daaSServer.start({
+            mongoDbUri: file,
+            applicationId: 'daas',
+            port: 3003,
+            adapters: {},
+            mountPath: '/',
+            masterKey: 'daas'
+        });
     }
 
     run().catch(reason => {
@@ -75,7 +85,7 @@ function deleteBuild(cb) {
 }
 
 function test(cb) {
-    const testPath = __dirname + '/specs/tests';
+    const testPath = __dirname + '/specs/rest';
     glob('**/*.js', {absolute: true, cwd: testPath}, (err, files) => {
         if (err) {
             console.error(err);

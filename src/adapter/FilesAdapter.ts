@@ -1,4 +1,4 @@
-import {ConfigAdapter} from "../config";
+import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
 
 export interface FilesAdapter {
     /** Responsible for storing the file in order to be retrieved later by its filename
@@ -14,7 +14,9 @@ export interface FilesAdapter {
      *
      * @return {Promise} a promise that should fail if the storage didn't succeed
      */
-    createFile(filename: string, data: any, contentType: string, options: Object): Promise<string>
+    createFile(filename: string, data: Buffer, contentType: string, options: Object): Promise<string>;
+
+    createThumbnail(filename: string, data: Buffer, contentType: string, options: Object): Promise<string>;
 
     /** Responsible for deleting the specified file
      *
@@ -22,35 +24,56 @@ export interface FilesAdapter {
      *
      * @return {Promise} a promise that should fail if the deletion didn't succeed
      */
-    deleteFile(filename: string): Promise<any>
+    deleteFile(filename: string): Promise<any>;
 
     /** Responsible for retrieving the data of the specified file
      *
      * @param {string} filename - the name of file to retrieve
      *
+     * @param thumbnail {boolean} - true if request a thumbnail of an image
      * @return {Promise} a promise that should pass with the file data or fail on error
      */
-    getFileData(filename: string): Promise<any>
+    getFileData(filename: string, thumbnail: boolean): Promise<any>;
 
     /** Returns an absolute URL where the file can be accessed
      *
      * @param {string} filename
      *
+     * @param config
      * @return {string} Absolute URL
      */
-    getFileLocation(filename: string): string;
+    getFileLocation(filename: string, config: BFastDatabaseConfig): Promise<string>;
 
     /** Handles Byte-Range Requests for Streaming
      *
      * @param {string} filename
-     * @param {object} req
-     * @param {object} res
+     * @param {object} request
+     * @param {object} response
      * @param {string} contentType
      *
+     * @param thumbnail {boolean} - true if request a thumbnail of an image
      * @returns {Promise} Data for byte range
      */
 
-    // handleFileStream(filename: string, res: any, req: any, contentType: string): Promise
+    handleFileStream(filename: any, request: any, response: any, contentType: any, thumbnail: boolean): any;
+
+    /**
+     *
+     * @param filename {string} - the name of the file to retrieve
+     * @param thumbnail {boolean} - true if you want a thumbnail of an image
+     */
+    signedUrl(filename: string, thumbnail: boolean): Promise<string>;
+
+    canHandleFileStream: boolean;
+    isS3: boolean;
+
+
+    /**
+     *
+     * @param query
+     */
+    listFiles(query: { prefix: string, size: number, skip: number, after: string }): Promise<any>;
+
 
     /** Responsible for retrieving metadata and tags
      *

@@ -2,22 +2,22 @@ import {DatabaseAdapter} from "./adapter/DatabaseAdapter";
 import {AuthAdapter} from "./adapter/AuthAdapter";
 import {EmailAdapter} from "./adapter/EmailAdapter";
 
-export class DaaSConfig implements ConfigAdapter {
-    private static instance: DaaSConfig;
+export class BFastDatabaseConfig implements BFastDatabaseConfigAdapter {
+    private static instance: BFastDatabaseConfig;
 
     private constructor() {
     }
 
-    static getInstance(): DaaSConfig {
+    static getInstance(): BFastDatabaseConfig {
         if (this.instance) {
             return this.instance;
         } else {
-            this.instance = new DaaSConfig();
+            this.instance = new BFastDatabaseConfig();
             return this.instance;
         }
     }
 
-    addValues(config: ConfigAdapter) {
+    addValues(config: BFastDatabaseConfigAdapter) {
         Object.assign(this, config);
     }
 
@@ -26,15 +26,16 @@ export class DaaSConfig implements ConfigAdapter {
     mountPath: string;
     mongoDbUri?: string;
     port: string;
-    adapters?: {
-        database?: (config: ConfigAdapter) => DatabaseAdapter;
-        auth?: (config: ConfigAdapter) => AuthAdapter;
-        email?: (config: ConfigAdapter) => EmailAdapter;
+    adapters: {
+        database?: (config: BFastDatabaseConfigAdapter) => DatabaseAdapter;
+        auth?: (config: BFastDatabaseConfigAdapter) => AuthAdapter;
+        email?: (config: BFastDatabaseConfigAdapter) => EmailAdapter;
         s3Storage?: {
             accessKey: string;
             bucket: string;
             direct: boolean;
             endPoint: string;
+            port?: null;
             prefix?: string;
             region?: string;
             useSSL?: boolean;
@@ -44,16 +45,16 @@ export class DaaSConfig implements ConfigAdapter {
 }
 
 
-export interface ConfigAdapter {
+export interface BFastDatabaseConfigAdapter {
     port: string;
-    masterKey: string;
+    masterKey?: string;
     applicationId: string;
     mountPath: string;
     mongoDbUri?: string;
-    adapters?: {
-        database?: (config: ConfigAdapter) => DatabaseAdapter;
-        auth?: (config: ConfigAdapter) => AuthAdapter;
-        email?: (config: ConfigAdapter) => EmailAdapter;
+    adapters: {
+        database?: (config: BFastDatabaseConfigAdapter) => DatabaseAdapter;
+        auth?: (config: BFastDatabaseConfigAdapter) => AuthAdapter;
+        email?: (config: BFastDatabaseConfigAdapter) => EmailAdapter;
         s3Storage?: {
             accessKey: string;
             bucket: string;
@@ -62,6 +63,7 @@ export interface ConfigAdapter {
             prefix?: string;
             region?: string;
             useSSL?: boolean;
+            port?: null;
             secretKey: string;
         } | undefined;
     }

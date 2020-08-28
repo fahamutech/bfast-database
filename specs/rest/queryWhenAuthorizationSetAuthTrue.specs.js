@@ -5,7 +5,7 @@ const {
     it,
     describe
 } = require('mocha');
-const {serverUrl} = require('../shared');
+const {serverUrl} = require('../mock.config');
 const assert = require('assert');
 
 describe('QueryRule Integration Test', function () {
