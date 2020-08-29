@@ -8,9 +8,6 @@ import {BFastDatabaseConfig, BFastDatabaseConfigAdapter} from "./bfastDatabaseCo
 export class BFastDatabase {
     private bfastFunctions: BfastFunctions;
 
-    constructor() {
-    }
-
     /**
      * start a bfast::database server
      * @param options {BFastDatabaseConfig}
@@ -46,7 +43,7 @@ export class BFastDatabase {
     }
 
     private static _validateOptions(options: BFastDatabaseConfigAdapter): { valid: boolean, message: string } {
-        if (!options.mountPath){
+        if (!options.mountPath) {
             options.mountPath = '/';
         }
         if (!options.port) {

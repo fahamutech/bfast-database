@@ -1,7 +1,6 @@
 import * as bcrypt from 'bcrypt';
 import * as _jwt from "jsonwebtoken";
 import * as uuid from 'uuid';
-import {SecurityAdapter} from "../adapter/SecurityAdapter";
 
 let _jwtPassword =
     `MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDFg6797ocIzEPK
@@ -22,7 +21,7 @@ bzrJW7JZAgMBAAECggEABAX9r5CHUaePjfX8vnil129vDKa1ibKEi0cjI66CQGbB
 JLcWQ6hFDpecIaaCJiqAXvFACr`;
 
 
-export class SecurityController implements SecurityAdapter {
+export class SecurityController {
 
     constructor() {
     }

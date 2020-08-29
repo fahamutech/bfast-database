@@ -1,6 +1,6 @@
 import {FilterModel} from "./FilterModel";
 
-export interface UpdateModel<T> {
+export interface UpdateModel<T extends any> {
     id?: string;
     upsert?: boolean;
     filter?: FilterModel<T>;
