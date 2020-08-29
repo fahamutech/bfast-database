@@ -15,6 +15,7 @@ export interface BasicAttributesModel {
     _wperm?: any;
     _acl?: any;
     _hashed_password?: string;
+    password?: string;
     return?: string[];
     $currentDate?: { _updated_at: true };
 

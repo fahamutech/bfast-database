@@ -46,11 +46,11 @@ export class DatabaseController {
     async init(mandatory = false): Promise<any> {
         try {
             return _database.init();
-        } catch (e) {
-            if (mandatory === true) {
-                throw e;
-            }
-            return;
+        } catch (_) {
+            // if (mandatory === true) {
+            //     throw e;
+            // }
+            // return;
         }
     }
 
@@ -414,7 +414,10 @@ export class DatabaseController {
             data.createdBy = data?._created_by;
             delete data._created_by;
         }
-        if (data && typeof data._hashed_password !== "boolean") {
+        if (data && data._hashed_password && typeof data._hashed_password !== "boolean") {
+            if (!data.password) {
+                data.password = data._hashed_password;
+            }
             delete data._hashed_password;
         }
         if (data && typeof data._rperm !== "boolean") {

@@ -27,7 +27,7 @@ export class BFastDatabase {
                 }
             });
             await this.bfastFunctions.start();
-            await BFastDatabase._setUpDatabase(options);
+            BFastDatabase._setUpDatabase(options).catch(reason => console.warn(reason.toString()));
             return true;
         } else {
             throw new Error(BFastDatabase._validateOptions(options).message);
