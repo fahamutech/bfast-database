@@ -51,10 +51,9 @@ export class Database implements DatabaseAdapter {
     async init(): Promise<any> {
         try {
             await this.dropIndexes('_User');
-        } catch (e) {
-            console.warn(e);
+        } catch (_) {
         }
-        await this.createIndexes('_User', [
+        return await this.createIndexes('_User', [
             {
                 field: 'email',
                 unique: true,
@@ -72,7 +71,6 @@ export class Database implements DatabaseAdapter {
                 }
             }
         ]);
-        return Promise.resolve();
     }
 
     async createIndexes(domain: string, indexes: any[]): Promise<any> {
@@ -218,8 +216,8 @@ export class Database implements DatabaseAdapter {
 
     async changes(domain: string, pipeline: any[], listener: (doc: ChangeEvent) => void): Promise<any> {
         const conn = await this.connection();
-        conn.db().collection(domain).watch(pipeline,{fullDocument: "updateLookup"}).on("change", doc => {
-           listener(doc)
+        conn.db().collection(domain).watch(pipeline, {fullDocument: "updateLookup"}).on("change", doc => {
+            listener(doc)
         });
         // await conn.close();
         return;
