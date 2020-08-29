@@ -126,26 +126,26 @@ export class Database implements DatabaseAdapter {
         const query = conn.db().collection(domain).find(queryModel.filter, {
             session: options && options.transaction ? options.transaction : undefined
         });
-        if (queryModel?.skip) {
+        if (queryModel.skip) {
             query.skip(queryModel.skip);
         } else {
             query.skip(0)
         }
-        if (queryModel?.size) {
+        if (queryModel.size) {
             if (queryModel.size !== -1) {
                 query.limit(queryModel.size);
             }
         } else {
-            if (queryModel?.count === false) {
-                query.limit(20);
+            if (!queryModel.count) {
+                query.limit(50);
             }
         }
-        if (queryModel?.orderBy && Array.isArray(queryModel?.orderBy) && queryModel?.orderBy?.length > 0) {
+        if (queryModel.orderBy && Array.isArray(queryModel.orderBy) && queryModel.orderBy?.length > 0) {
             queryModel.orderBy.forEach(value => {
                 query.sort(value);
             });
         }
-        if (queryModel?.return && Array.isArray(queryModel?.return) && queryModel.return.length > 0) {
+        if (queryModel.return && Array.isArray(queryModel.return) && queryModel.return.length > 0) {
             const fieldsToReturn = {};
             queryModel.return.forEach(x => {
                 fieldsToReturn[x] = 1

@@ -7,7 +7,7 @@ const restController = getRestController();
 /**
  * support backward parse-server files compatibility
  */
-export const getFileFromStorage = BFast.functions().onGetHttpRequest('/files/:applicationId/:filename', [
+export const getFileFromStorage = BFast.functions().onGetHttpRequest('/v2/files/:applicationId/:filename', [
     (request, _, next) => {
         request.body.applicationId = request.params.applicationId;
         request.body.ruleId = 'files.read'
@@ -22,7 +22,7 @@ export const getFileFromStorage = BFast.functions().onGetHttpRequest('/files/:ap
 /**
  * get file uploaded to server
  */
-export const getFileFromStorageV2 = BFast.functions().onGetHttpRequest('/storage/:appId/file/:filename', [
+export const getFileFromStorageV2 = BFast.functions().onGetHttpRequest('/v2/storage/:appId/file/:filename', [
     (request, _, next) => {
         request.body.applicationId = request.params.appId;
         request.body.ruleId = 'files.read'
@@ -37,7 +37,7 @@ export const getFileFromStorageV2 = BFast.functions().onGetHttpRequest('/storage
 /**
  * get thumbnail of image
  */
-export const geThumbnailFromStorage = BFast.functions().onGetHttpRequest('/storage/:appId/thumbnail/:filename', [
+export const geThumbnailFromStorage = BFast.functions().onGetHttpRequest('/v2/storage/:appId/thumbnail/:filename', [
     (request, _, next) => {
         request.body.applicationId = request.params.appId;
         request.body.ruleId = 'files.read'
@@ -52,7 +52,7 @@ export const geThumbnailFromStorage = BFast.functions().onGetHttpRequest('/stora
 /**
  * list all files in server
  */
-export const getFilesFromStorage = BFast.functions().onGetHttpRequest('/storage/:appId/list', [
+export const getFilesFromStorage = BFast.functions().onGetHttpRequest('/v2/storage/:appId/list', [
     (request, _, next) => {
         request.body.applicationId = request.params.appId;
         request.body.ruleId = 'files.list'
@@ -64,7 +64,7 @@ export const getFilesFromStorage = BFast.functions().onGetHttpRequest('/storage/
     restController.getAllFiles
 ]);
 
-export const uploadMultiPartFile = BFast.functions().onPostHttpRequest('/storage/:appId', [
+export const uploadMultiPartFile = BFast.functions().onPostHttpRequest('/v2/storage/:appId', [
     (request, response, next) => {
         request.body.applicationId = request.params.appId;
         request.body.ruleId = 'files.save'
@@ -76,13 +76,13 @@ export const uploadMultiPartFile = BFast.functions().onPostHttpRequest('/storage
     restController.multipartForm
 ]);
 
-export const onUploadMultiPartFile = BFast.functions().onGetHttpRequest('/storage/:appId',
+export const onUploadMultiPartFile = BFast.functions().onGetHttpRequest('/v2/storage/:appId',
     (request, response: any) => {
         // show a file upload form
         response.writeHead(200, {'content-type': 'text/html'});
         response.end(`
     <h2>With Node.js <code>"http"</code> module</h2>
-    <form action="/storage/daas" enctype="multipart/form-data" method="post">
+    <form action="/v2/storage/daas" enctype="multipart/form-data" method="post">
       <div>Text field title: <input type="text" name="title" /></div>
       <div>File: <input type="file" name="multipleFiles" multiple="multiple" /></div>
       <input type="submit" value="Upload" />

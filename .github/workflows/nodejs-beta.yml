@@ -3,8 +3,6 @@ name: Node CI
 on:
   push:
     branches:
-      # - master
-      # - 2.0.x
       - beta
 
 jobs:
@@ -29,6 +27,7 @@ jobs:
           yarn run test:controllers
           echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
           yarn run push
+          yarn run push:beta
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}

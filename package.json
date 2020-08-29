@@ -14,7 +14,9 @@
     "publish:beta": "yarn publish --tag beta",
     "start": "node .",
     "start:dev": "gulp devStart",
-    "push": "gulp publishContainer"
+    "push": "gulp publishContainer",
+    "push:latest": "gulp publishContainerLatest",
+    "push:beta": "gulp publishContainerBeta"
   },
   "dependencies": {
     "bcrypt": "^5.0.0",
@@ -26,6 +28,8 @@
     "mime": "^2.4.6",
     "minio": "^7.0.16",
     "mongodb": "^3.6.0",
+    "parse": "^2.15.0",
+    "parse-server": "^4.3.0",
     "sharp": "^0.26.0",
     "uuid": "^8.3.0"
   },
@@ -33,6 +37,7 @@
     "@types/minio": "^7.0.6",
     "@types/mongodb": "^3.5.26",
     "@types/node": "^14.6.0",
+    "@types/parse": "^2.12.4",
     "axios": "^0.20.0",
     "del": "^5.1.0",
     "glob": "^7.1.6",

@@ -3,7 +3,7 @@ import {getDatabaseController} from "./webServicesConfig";
 import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
 
 const databaseController = getDatabaseController();
-export const domainChangesListener = BFast.functions().onEvent('/__changes__',
+export const domainChangesListener = BFast.functions().onEvent('/v2/__changes__',
     (request, response) => {
         if (request.auth.applicationId === BFastDatabaseConfig.getInstance().applicationId) {
             if (request.body.pipeline && Array.isArray(request.body.pipeline) && request.body.domain) {
