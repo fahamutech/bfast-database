@@ -28,8 +28,44 @@ function buildDockerImage(cb) {
     handleBuild(buildImage, cb);
 }
 
+function buildDockerImageLatest(cb) {
+    const buildImage = process.exec(`sudo docker build -t joshuamshana/bfast-ce-daas:latest .`);
+    buildImage.on('exit', (code, signal) => {
+        console.log('build image task exit');
+        cb();
+    });
+    handleBuild(buildImage, cb);
+}
+
+function buildDockerImageBeta(cb) {
+    const buildImage = process.exec(`sudo docker build -t joshuamshana/bfast-ce-daas:beta .`);
+    buildImage.on('exit', (code, signal) => {
+        console.log('build image task exit');
+        cb();
+    });
+    handleBuild(buildImage, cb);
+}
+
 function pushToDocker(cb) {
     const pushImage = process.exec(`sudo docker push joshuamshana/bfast-ce-daas:v${pkg.version}`);
+    pushImage.on('exit', _ => {
+        console.log('push image exit');
+        cb();
+    });
+    handleBuild(pushImage, cb);
+}
+
+function pushToDockerLatest(cb) {
+    const pushImage = process.exec(`sudo docker push joshuamshana/bfast-ce-daas:latest`);
+    pushImage.on('exit', _ => {
+        console.log('push image exit');
+        cb();
+    });
+    handleBuild(pushImage, cb);
+}
+
+function pushToDockerBeta(cb) {
+    const pushImage = process.exec(`sudo docker push joshuamshana/bfast-ce-daas:beta`);
     pushImage.on('exit', _ => {
         console.log('push image exit');
         cb();
@@ -54,7 +90,7 @@ function devStart(cb) {
             applicationId: 'daas',
             port: 3003,
             adapters: {},
-           // mountPath: await new EnvUtil().getEnv('/'),
+            mountPath: await new EnvUtil().getEnv('/'),
             masterKey: 'daas'
         });
     }
@@ -103,3 +139,5 @@ exports.build = gulp.series(deleteBuild, compileTs, copyBFastJson);
 exports.devStart = gulp.series(deleteBuild, compileTs, copyBFastJson, devStart);
 exports.buildDocker = gulp.series(deleteBuild, compileTs, copyBFastJson, buildDockerImage);
 exports.publishContainer = gulp.series(deleteBuild, compileTs, copyBFastJson, buildDockerImage, pushToDocker);
+exports.publishContainerLatest = gulp.series(deleteBuild, compileTs, copyBFastJson, buildDockerImageLatest, pushToDockerLatest);
+exports.publishContainerBeta = gulp.series(deleteBuild, compileTs, copyBFastJson, buildDockerImageBeta, pushToDockerBeta);

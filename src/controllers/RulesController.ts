@@ -223,26 +223,26 @@ export class RulesController {
             }
             for (const createRule of createRules) {
                 const domain = this.extractDomain(createRule, 'create');
-                const rulesBlockModelElement = rulesBlockModel[createRule];
+                const createRuleBlock = rulesBlockModel[createRule];
                 // checkPermission
                 const allowed = await _authController.hasPermission(`create.${domain}`, rulesBlockModel?.context);
                 if (allowed !== true) {
                     ruleResultModel['errors'][`${transactionSession ? 'transaction.' : ''}create.${domain}`] = {
                         message: 'You have insufficient permission to this resource',
                         path: `${transactionSession ? 'transaction.' : ''}create.${domain}`,
-                        data: rulesBlockModelElement
+                        data: createRuleBlock
                     };
                     return ruleResultModel;
                 }
                 try {
                     let result;
-                    if (rulesBlockModelElement && Array.isArray(rulesBlockModelElement)) {
-                        result = await _databaseController.writeMany(domain, rulesBlockModelElement, rulesBlockModel?.context, {
+                    if (createRuleBlock && Array.isArray(createRuleBlock)) {
+                        result = await _databaseController.writeMany(domain, createRuleBlock, rulesBlockModel?.context, {
                             bypassDomainVerification: rulesBlockModel?.context?.useMasterKey === true,
                             transaction: transactionSession
                         });
                     } else {
-                        result = await _databaseController.writeOne(domain, rulesBlockModelElement, rulesBlockModel?.context, {
+                        result = await _databaseController.writeOne(domain, createRuleBlock, rulesBlockModel?.context, {
                             bypassDomainVerification: rulesBlockModel?.context?.useMasterKey === true,
                             transaction: transactionSession
                         });
@@ -252,7 +252,7 @@ export class RulesController {
                     ruleResultModel.errors[`${transactionSession ? 'transaction.' : ''}create.${domain}`] = {
                         message: e.message ? e.message : e.toString(),
                         path: `${transactionSession ? 'transaction.' : ''}create.${domain}`,
-                        data: rulesBlockModelElement
+                        data: createRuleBlock
                     };
                     if (transactionSession) {
                         throw e;
@@ -448,46 +448,46 @@ export class RulesController {
             }
             for (const updateRule of updateRules) {
                 const domain = this.extractDomain(updateRule, 'update');
-                const rulesBlockModelElement: UpdateModel<any> = rulesBlockModel[updateRule];
+                const updateRuleBlock: UpdateModel<any> = rulesBlockModel[updateRule];
                 // checkPermission
                 const allowed = await _authController.hasPermission(`update.${domain}`, rulesBlockModel.context);
                 if (allowed !== true) {
                     ruleResultModel.errors[`${transactionSession ? 'transaction.' : ''}update.${domain}`] = {
                         message: 'You have insufficient permission to this resource',
                         path: `${transactionSession ? 'transaction.' : ''}update.${domain}`,
-                        data: rulesBlockModelElement
+                        data: updateRuleBlock
                     };
                     return ruleResultModel;
                 }
                 try {
-                    if (rulesBlockModelElement?.filter && Object.keys(rulesBlockModelElement?.filter).length === 0) {
+                    if (updateRuleBlock?.filter && Object.keys(updateRuleBlock?.filter).length === 0) {
                         throw "Empty map is not supported in update rule";
                     }
-                    if (!rulesBlockModelElement?.update) {
+                    if (!updateRuleBlock?.update) {
                         throw "Please update field is required, which contains properties to update a document"
                     }
-                    if (rulesBlockModelElement?.id) {
+                    if (updateRuleBlock?.id) {
                         const filter: any = {};
-                        delete rulesBlockModelElement.filter;
-                        filter['_id'] = rulesBlockModelElement.id;
-                        rulesBlockModelElement.filter = filter;
+                        delete updateRuleBlock.filter;
+                        filter['_id'] = updateRuleBlock.id;
+                        updateRuleBlock.filter = filter;
                         ruleResultModel[updateRule]
-                            = await _databaseController.update(domain, rulesBlockModelElement, rulesBlockModel?.context, {
+                            = await _databaseController.update(domain, updateRuleBlock, rulesBlockModel?.context, {
                             bypassDomainVerification: rulesBlockModel?.context?.useMasterKey === true,
                             transaction: transactionSession
                         });
-                    } else if (rulesBlockModelElement?.filter) {
-                        const query: any[] = await _databaseController.query(domain, rulesBlockModelElement, rulesBlockModel.context, {
+                    } else if (updateRuleBlock?.filter) {
+                        const query: any[] = await _databaseController.query(domain, updateRuleBlock, rulesBlockModel.context, {
                             bypassDomainVerification: rulesBlockModel?.context?.useMasterKey === true,
                             transaction: transactionSession
                         });
                         const updateResults = [];
                         if (query && Array.isArray(query)) {
                             for (const value of query) {
-                                rulesBlockModelElement.filter = {
+                                updateRuleBlock.filter = {
                                     _id: value.id
                                 };
-                                const result = await _databaseController.update(domain, rulesBlockModelElement, rulesBlockModel?.context, {
+                                const result = await _databaseController.update(domain, updateRuleBlock, rulesBlockModel?.context, {
                                     bypassDomainVerification: rulesBlockModel?.context?.useMasterKey === true,
                                     transaction: transactionSession
                                 });
@@ -502,7 +502,7 @@ export class RulesController {
                     ruleResultModel.errors[`${transactionSession ? 'transaction.' : ''}update.${domain}`] = {
                         message: e.message ? e.message : e.toString(),
                         path: `${transactionSession ? 'transaction.' : ''}update.${domain}`,
-                        data: rulesBlockModelElement
+                        data: updateRuleBlock
                     };
                     if (transactionSession) {
                         throw e;
