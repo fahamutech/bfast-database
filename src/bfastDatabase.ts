@@ -43,20 +43,20 @@ export class BFastDatabase {
     }
 
     private static _validateOptions(options: BFastDatabaseConfigAdapter): { valid: boolean, message: string } {
-        if (!options.mountPath) {
-            options.mountPath = '/';
-        }
+        // if (!options.mountPath) {
+        //     options.mountPath = '/';
+        // }
         if (!options.port) {
             return {
                 valid: false,
                 message: 'Port option required'
             }
-        } else if (!options.mountPath) {
+        } else if (false /*!options.mountPath*/) {
             return {
                 valid: false,
                 message: 'Mount Path required'
             }
-        } else if (options?.mountPath === '/storage' || options?.mountPath === '/changes') {
+        } else if (false /*options?.mountPath === '/storage' || options?.mountPath === '/changes'*/) {
             return {
                 valid: false,
                 message: 'Mount path name not supported'

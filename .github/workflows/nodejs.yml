@@ -27,7 +27,7 @@ jobs:
           yarn run test:controllers
           echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
           yarn run push
-          yarn run push:latest
+          # yarn run push:latest
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}

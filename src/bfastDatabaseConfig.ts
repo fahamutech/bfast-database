@@ -23,7 +23,7 @@ export class BFastDatabaseConfig implements BFastDatabaseConfigAdapter {
 
     applicationId: string;
     masterKey: string;
-    mountPath: string;
+    // mountPath: string;
     mongoDbUri?: string;
     port: string;
     adapters: {
@@ -49,7 +49,7 @@ export interface BFastDatabaseConfigAdapter {
     port: string;
     masterKey?: string;
     applicationId: string;
-    mountPath: string;
+    // mountPath: string;
     mongoDbUri?: string;
     adapters: {
         database?: (config: BFastDatabaseConfigAdapter) => DatabaseAdapter;

@@ -5,21 +5,6 @@ import {getRestController} from "./webServicesConfig";
 const restController = getRestController();
 
 /**
- * support backward parse-server files compatibility
- */
-export const getFileFromStorage = BFast.functions().onGetHttpRequest('/v2/files/:applicationId/:filename', [
-    (request, _, next) => {
-        request.body.applicationId = request.params.applicationId;
-        request.body.ruleId = 'files.read'
-        next();
-    },
-    restController.applicationId,
-    restController.verifyToken,
-    restController.filePolicy,
-    restController.getFile
-]);
-
-/**
  * get file uploaded to server
  */
 export const getFileFromStorageV2 = BFast.functions().onGetHttpRequest('/v2/storage/:appId/file/:filename', [
