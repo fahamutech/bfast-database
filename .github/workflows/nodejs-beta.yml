@@ -26,7 +26,6 @@ jobs:
           yarn install
           yarn run test:controllers
           echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
-          yarn run push
           yarn run push:beta
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
