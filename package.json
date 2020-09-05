@@ -1,6 +1,6 @@
 {
   "name": "bfast-database",
-  "version": "2.0.0-rc.6",
+  "version": "2.0.0-rc.9",
   "main": "dist/bfastDatabase.js",
   "license": "MIT",
   "scripts": {
@@ -14,7 +14,9 @@
     "publish:beta": "yarn publish --tag beta",
     "start": "node .",
     "start:dev": "gulp devStart",
-    "push": "gulp publishContainer"
+    "push": "gulp publishContainer",
+    "push:latest": "gulp publishContainerLatest",
+    "push:beta": "gulp publishContainerBeta"
   },
   "dependencies": {
     "bcrypt": "^5.0.0",
@@ -25,7 +27,7 @@
     "jsonwebtoken": "^8.5.1",
     "mime": "^2.4.6",
     "minio": "^7.0.16",
-    "mongodb": "^3.6.0",
+    "mongodb": "^3.6.1",
     "sharp": "^0.26.0",
     "uuid": "^8.3.0"
   },

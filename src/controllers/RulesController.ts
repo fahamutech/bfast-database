@@ -460,9 +460,6 @@ export class RulesController {
                     return ruleResultModel;
                 }
                 try {
-                    if (updateRuleBlock?.filter && Object.keys(updateRuleBlock?.filter).length === 0) {
-                        throw "Empty map is not supported in update rule";
-                    }
                     if (!updateRuleBlock?.update) {
                         throw "Please update field is required, which contains properties to update a document"
                     }
@@ -477,6 +474,9 @@ export class RulesController {
                             transaction: transactionSession
                         });
                     } else if (updateRuleBlock?.filter) {
+                        if (updateRuleBlock?.filter && Object.keys(updateRuleBlock?.filter).length === 0) {
+                            throw "Empty map is not supported in update rule";
+                        }
                         const query: any[] = await _databaseController.query(domain, updateRuleBlock, rulesBlockModel.context, {
                             bypassDomainVerification: rulesBlockModel?.context?.useMasterKey === true,
                             transaction: transactionSession

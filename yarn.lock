@@ -125,6 +125,13 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-14.6.0.tgz#7d4411bf5157339337d7cff864d9ff45f177b499"
   integrity sha512-mikldZQitV94akrc4sCcSjtJfsTKt4p+e/s0AGscVA6XArQ9kFclP+ZiYUMnq987rc6QlYxXv/EivqlfSLxpKA==
 
+"@types/parse@^2.12.4":
+  version "2.12.4"
+  resolved "https://registry.yarnpkg.com/@types/parse/-/parse-2.12.4.tgz#d8bb4dec28e6768044db8576baa80dba7935cb61"
+  integrity sha512-jqjFQq1ZjilEjOpzVZ0fjyQs4RpFHMBNKji8wSYPqm+rOWDs3Qpse7xcPIcBUuoVuRYmmRvan/Lf9jmy4xMpMw==
+  dependencies:
+    "@types/node" "*"
+
 "@types/semver@^7.3.3":
   version "7.3.3"
   resolved "https://registry.yarnpkg.com/@types/semver/-/semver-7.3.3.tgz#3ad6ed949e7487e7bda6f886b4a2434a2c3d7b1a"
@@ -2961,10 +2968,23 @@ mongodb-memory-server@^6.6.6:
   dependencies:
     mongodb-memory-server-core "6.6.6"
 
-mongodb@^3.5.9, mongodb@^3.6.0:
+mongodb@^3.5.9:
   version "3.6.0"
   resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-3.6.0.tgz#babd7172ec717e2ed3f85e079b3f1aa29dce4724"
   integrity sha512-/XWWub1mHZVoqEsUppE0GV7u9kanLvHxho6EvBxQbShXTKYF9trhZC2NzbulRGeG7xMJHD8IOWRcdKx5LPjAjQ==
+  dependencies:
+    bl "^2.2.0"
+    bson "^1.1.4"
+    denque "^1.4.1"
+    require_optional "^1.0.1"
+    safe-buffer "^5.1.2"
+  optionalDependencies:
+    saslprep "^1.0.0"
+
+mongodb@^3.6.1:
+  version "3.6.1"
+  resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-3.6.1.tgz#2c5cc2a81456ba183e8c432d80e78732cc72dabd"
+  integrity sha512-uH76Zzr5wPptnjEKJRQnwTsomtFOU/kQEU8a9hKHr2M7y9qVk7Q4Pkv0EQVp88742z9+RwvsdTw6dRjDZCNu1g==
   dependencies:
     bl "^2.2.0"
     bson "^1.1.4"

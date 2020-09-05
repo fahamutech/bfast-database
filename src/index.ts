@@ -33,7 +33,7 @@ async function start() {
         masterKey: await envUtil.getEnv(process.env.MASTER_KEY),
         mongoDbUri: await envUtil.getEnv(process.env.MONGO_URL),
         port: await envUtil.getEnv(process.env.PORT),
-        mountPath: await envUtil.getEnv(process.env.MOUNT_PATH),
+        // mountPath: await envUtil.getEnv(process.env.MOUNT_PATH),
         adapters: {
             s3Storage: isS3Configured
                 ? {
