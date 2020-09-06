@@ -1,7 +1,7 @@
 import {BasicAttributesModel} from "../model/BasicAttributesModel";
-import {ContextBlock} from "../model/RulesBlockModel";
+import {ContextBlock} from "../model/Rules";
 import {QueryModel} from "../model/QueryModel";
-import {UpdateModel} from "../model/UpdateModel";
+import {UpdateRuleRequest} from "../model/UpdateRuleRequest";
 import {DeleteModel} from "../model/DeleteModel";
 
 export interface DatabaseAdapter {
@@ -30,7 +30,7 @@ export interface DatabaseAdapter {
      */
     writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock, options?: DatabaseWriteOptions): Promise<V>;
 
-    update<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateModel<T>, context: ContextBlock, options?: DatabaseUpdateOptions): Promise<V>;
+    update<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateRuleRequest<T>, context: ContextBlock, options?: DatabaseUpdateOptions): Promise<V>;
 
     deleteOne<T extends BasicAttributesModel, V>(domain: string, deleteModel: DeleteModel<T>, context: ContextBlock, options?: DatabaseBasicOptions): Promise<V>;
 

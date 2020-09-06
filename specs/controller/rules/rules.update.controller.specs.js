@@ -21,6 +21,7 @@ describe('RulesController::Update Unit Test', function () {
                     {name: 'xyz', price: 50, status: 'new', id: 'xyz'},
                     {name: 'wer', price: 100, status: 'new'},
                     {name: 'poi', price: 30, status: 'new'},
+                    {name: 'poipo', price: 60, status: 'old'},
                 ]
             }, {errors: {}});
         });
@@ -64,6 +65,89 @@ describe('RulesController::Update Unit Test', function () {
             assert(results.updateProduct[1].status === 'old');
             assert(results.updateProduct[2].name === 'apple');
             assert(results.updateProduct[2].status === 'old');
+        });
+        it('should update many documents by filter', async function () {
+            const results = await _rulesController.handleUpdateRules({
+                updateProduct: [
+                    {
+                        filter: {
+                            status: 'old'
+                        },
+                        update: {
+                            $set: {
+                                name: 'apple',
+                                status: 'new'
+                            }
+                        },
+                    },
+                    {
+                        filter: {
+                            status: 'new'
+                        },
+                        update: {
+                            $set: {
+                                name: 'apple',
+                                status: 'old'
+                            }
+                        },
+                    }
+                ]
+            }, {errors: {}});
+            assert(results.updateProduct !== undefined);
+            assert(Array.isArray(results.updateProduct));
+            assert(results.updateProduct.length === 2);
+            assert(Array.isArray(results.updateProduct[0]));
+            assert(Array.isArray(results.updateProduct[1]));
+        });
+        it('should update many documents by id', async function () {
+            const results = await _rulesController.handleUpdateRules({
+                updateProduct: [
+                    {
+                        id: 'xyz',
+                        filter: {},
+                        update: {
+                            $set: {
+                                name: 'apple',
+                                status: 'new'
+                            }
+                        },
+                    },
+                    {
+                        filter: {
+                            status: 'new'
+                        },
+                        update: {
+                            $set: {
+                                name: 'apple',
+                                status: 'old'
+                            }
+                        },
+                    }
+                ]
+            }, {errors: {}});
+            assert(results.updateProduct !== undefined);
+            assert(Array.isArray(results.updateProduct));
+            assert(results.updateProduct.length === 2);
+            assert(results.updateProduct[0].id === 'xyz');
+            assert(Array.isArray(results.updateProduct[1]));
+        });
+        it('should not update many documents when empty filter exist', async function () {
+            const results = await _rulesController.handleUpdateRules({
+                updateProduct: [
+                    {
+                        filter: {},
+                        update: {
+                            $set: {
+                                name: 'apple',
+                                status: 'new'
+                            }
+                        },
+                    }
+                ]
+            }, {errors: {}});
+            assert(results.updateProduct === undefined);
+            assert(results.errors !== undefined);
+            assert(results.errors['update.Product']['message'] === 'Empty map is not supported in update rule');
         });
         it('should not update objects by empty filter', async function () {
             const results = await _rulesController.handleUpdateRules({

@@ -7,7 +7,7 @@
 import {Db, GridFSBucket, MongoClient} from 'mongodb';
 import {FilesAdapter} from "../adapter/FilesAdapter";
 import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
-import {SecurityController} from "../controllers/SecurityController";
+import {SecurityController} from "../controllers/security.controller";
 
 const sharp = require('sharp');
 

@@ -1,7 +1,7 @@
 import {BfastFunctions} from 'bfast-faas';
 import {Database} from "./factory/Database";
-import {DatabaseController} from "./controllers/DatabaseController";
-import {SecurityController} from "./controllers/SecurityController";
+import {DatabaseController} from "./controllers/database.controller";
+import {SecurityController} from "./controllers/security.controller";
 import {BFastDatabaseConfig, BFastDatabaseConfigAdapter} from "./bfastDatabaseConfig";
 
 

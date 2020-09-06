@@ -1,7 +1,7 @@
 import {AuthAdapter} from "../adapter/AuthAdapter";
-import {ContextBlock} from "../model/RulesBlockModel";
+import {ContextBlock} from "../model/Rules";
 import {BasicUserAttributes} from "../model/BasicUserAttributes";
-import {DatabaseController} from "./DatabaseController";
+import {DatabaseController} from "./database.controller";
 
 let _auth: AuthAdapter;
 let _databaseController: DatabaseController;

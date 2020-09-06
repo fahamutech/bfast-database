@@ -1,7 +1,8 @@
 const {BFastDatabase} = require("../dist/bfastDatabase");
 const {MongoMemoryServer} = require('mongodb-memory-server');
 const {MongoMemoryReplSet} = require('mongodb-memory-server');
-const {RulesController} = require('../dist/controllers/RulesController');
+const {RulesController} = require('../dist/controllers/rules.controller');
+const {UpdateRuleController} = require('../dist/controllers/update.rule.controller');
 
 /**
  *
@@ -56,7 +57,7 @@ exports.getRulesController = async function (memoryReplSet) {
             mountPath: '/',
             masterKey: 'daas'
         }
-        return new RulesController(config);
+        return new RulesController(config, new UpdateRuleController());
     } catch (e) {
         console.log(e);
     }

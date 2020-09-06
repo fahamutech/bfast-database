@@ -19,6 +19,8 @@ describe('RulesController::Transaction Unit Test', function () {
             await _rulesController.handleCreateRules({
                 createProduct: [
                     {name: 'xyz', price: 50, status: 'new', id: 'xyz'},
+                    {name: 'zyx', price: 50, status: 'new', id: 'zyx'},
+                    {name: 'uuu', price: 50, status: 'new', id: 'uuu'},
                 ]
             }, {errors: {}});
         });
@@ -64,8 +66,69 @@ describe('RulesController::Transaction Unit Test', function () {
             assert(Array.isArray(results.transaction.commit.createProduct));
             assert(Array.isArray(results.transaction.commit.queryProduct));
             assert(results.transaction.commit.createProduct.length === 2);
-            assert(results.transaction.commit.queryProduct.length === 3);
+            assert(results.transaction.commit.queryProduct.length === 5);
 
+        });
+        it('should perform transaction when update block is array', async function () {
+            const results = await _rulesController.handleTransactionRule({
+                transaction: {
+                    commit: {
+                        createProduct: [
+                            {name: 'zxc', price: 100, status: 'new'},
+                            {name: 'mnb', price: 30, status: 'new'},
+                        ],
+                        updateProduct: [
+                            {
+                                id: 'uuu',
+                                return: [],
+                                update: {
+                                    $set: {
+                                        name: 'apple',
+                                        price: 1000
+                                    }
+                                }
+                            },
+                            {
+                                id: 'zyx',
+                                return: [],
+                                update: {
+                                    $set: {
+                                        name: 'nokia',
+                                        price: 5000
+                                    }
+                                }
+                            }
+                        ],
+                        deleteProduct: {
+                            id: 'uuu'
+                        },
+                        queryProduct: {
+                            filter: {},
+                            return: []
+                        }
+                    }
+                }
+            }, {errors: {}});
+            assert(results.transaction !== undefined);
+            assert(results.transaction.commit !== undefined);
+            assert(results.transaction.commit.createProduct !== undefined);
+            assert(results.transaction.commit.queryProduct !== undefined);
+            assert(results.transaction.commit.updateProduct !== undefined);
+            assert(Array.isArray(results.transaction.commit.updateProduct));
+            assert(results.transaction.commit.updateProduct.length === 2);
+            assert(results.transaction.commit.updateProduct[0].name === 'apple');
+            assert(results.transaction.commit.updateProduct[0].price === 1000);
+            assert(results.transaction.commit.updateProduct[0].id === 'uuu');
+            assert(results.transaction.commit.updateProduct[1].name === 'nokia');
+            assert(results.transaction.commit.updateProduct[1].price === 5000);
+            assert(results.transaction.commit.updateProduct[1].id === 'zyx');
+            assert(results.transaction.commit.queryProduct !== undefined);
+            assert(results.transaction.commit.deleteProduct !== undefined);
+            assert(typeof results.transaction.commit.deleteProduct.id === 'string');
+            assert(Array.isArray(results.transaction.commit.createProduct));
+            assert(Array.isArray(results.transaction.commit.queryProduct));
+            assert(results.transaction.commit.createProduct.length === 2);
+            assert(results.transaction.commit.queryProduct.length === 6);
         });
     });
 });

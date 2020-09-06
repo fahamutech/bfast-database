@@ -1,9 +1,9 @@
 import {AuthAdapter} from "../adapter/AuthAdapter";
 import {BasicUserAttributes} from "../model/BasicUserAttributes";
-import {ContextBlock} from "../model/RulesBlockModel";
-import {DatabaseController} from "../controllers/DatabaseController";
-import {SecurityController} from "../controllers/SecurityController";
-import {EmailController} from "../controllers/EmailController";
+import {ContextBlock} from "../model/Rules";
+import {DatabaseController} from "../controllers/database.controller";
+import {SecurityController} from "../controllers/security.controller";
+import {EmailController} from "../controllers/email.controller";
 
 export class Auth implements AuthAdapter {
     private domainName = '_User';

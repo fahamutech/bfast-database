@@ -1,6 +1,6 @@
 import {FilesAdapter} from "../adapter/FilesAdapter";
 import {FileModel} from "../model/FileModel";
-import {ContextBlock} from "../model/RulesBlockModel";
+import {ContextBlock} from "../model/Rules";
 import mime from "mime";
 import {EXPECTATION_FAILED} from "http-status-codes";
 import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
