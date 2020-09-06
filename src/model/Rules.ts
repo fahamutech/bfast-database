@@ -1,4 +1,4 @@
-export interface RulesBlockModel {
+export interface Rules {
     applicationId?: string;
     masterKey?: string;
     token?: string;
@@ -38,7 +38,7 @@ export interface RulesBlockModel {
     }
 }
 
-export interface RuleResultModel {
+export interface RuleResponse {
     errors: {
         [key: string]: {
             message: string,

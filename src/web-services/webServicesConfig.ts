@@ -1,16 +1,16 @@
 import {BFastDatabaseConfig, BFastDatabaseConfigAdapter} from "../bfastDatabaseConfig";
-import {SecurityController} from "../controllers/SecurityController";
+import {SecurityController} from "../controllers/security.controller";
 import {FilesAdapter} from "../adapter/FilesAdapter";
 import {S3Storage} from "../factory/S3Storage";
 import {GridFsStorage} from "../factory/GridFsStorage";
-import {RestController} from "../controllers/RestController";
-import {StorageController} from "../controllers/StorageController";
-import {DatabaseController} from "../controllers/DatabaseController";
+import {RestController} from "../controllers/rest.controller";
+import {StorageController} from "../controllers/storage.controller";
+import {DatabaseController} from "../controllers/database.controller";
 import {Database} from "../factory/Database";
 import {Auth} from "../factory/Auth";
-import {EmailController} from "../controllers/EmailController";
+import {EmailController} from "../controllers/email.controller";
 import {Email} from "../factory/Email";
-import {AuthController} from "../controllers/AuthController";
+import {AuthController} from "../controllers/auth.controller";
 
 export const getRestController = function () {
     const config: BFastDatabaseConfig = BFastDatabaseConfig.getInstance();

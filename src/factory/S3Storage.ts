@@ -1,6 +1,6 @@
 import {FilesAdapter} from "../adapter/FilesAdapter";
 import {BFastDatabaseConfig, BFastDatabaseConfigAdapter} from "../bfastDatabaseConfig";
-import {SecurityController} from "../controllers/SecurityController";
+import {SecurityController} from "../controllers/security.controller";
 import * as Minio from "minio";
 import {Client} from "minio";
 

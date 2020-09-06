@@ -1,15 +1,15 @@
 import {BasicAttributesModel} from "../model/BasicAttributesModel";
-import {ContextBlock} from "../model/RulesBlockModel";
+import {ContextBlock} from "../model/Rules";
 import {
     DatabaseAdapter,
     DatabaseBasicOptions,
     DatabaseUpdateOptions,
     DatabaseWriteOptions
 } from "../adapter/DatabaseAdapter";
-import {UpdateModel} from "../model/UpdateModel";
+import {UpdateRuleRequest} from "../model/UpdateRuleRequest";
 import {DeleteModel} from "../model/DeleteModel";
 import {QueryModel} from "../model/QueryModel";
-import {SecurityController} from "./SecurityController";
+import {SecurityController} from "./security.controller";
 import {ChangeEvent} from "mongodb";
 
 let _database: DatabaseAdapter;
@@ -105,11 +105,11 @@ export class DatabaseController {
     /**
      * update a record depend on update model you provide
      * @param domain {string} a domain/table/collection to work with
-     * @param updateModel {UpdateModel} a map company query model and update doc
+     * @param updateModel {UpdateRuleRequest} a map company query model and update doc
      * @param context {ContextBlock} current operation context
      * @param options {DatabaseUpdateOptions} bfast::database update options
      */
-    async update(domain: string, updateModel: UpdateModel<any>, context: ContextBlock,
+    async update(domain: string, updateModel: UpdateRuleRequest, context: ContextBlock,
                  options: DatabaseUpdateOptions = {bypassDomainVerification: false}): Promise<any> {
         if (options && options.bypassDomainVerification === false) {
             await this.handleDomainValidation(domain);

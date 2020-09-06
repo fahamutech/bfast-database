@@ -6,9 +6,9 @@ import {
 } from "../adapter/DatabaseAdapter";
 import {ChangeEvent, MongoClient} from "mongodb";
 import {BasicAttributesModel} from "../model/BasicAttributesModel";
-import {ContextBlock} from "../model/RulesBlockModel";
+import {ContextBlock} from "../model/Rules";
 import {QueryModel} from "../model/QueryModel";
-import {UpdateModel} from "../model/UpdateModel";
+import {UpdateRuleRequest} from "../model/UpdateRuleRequest";
 import {DeleteModel} from "../model/DeleteModel";
 import {BFastDatabaseConfigAdapter} from "../bfastDatabaseConfig";
 
@@ -162,7 +162,7 @@ export class Database implements DatabaseAdapter {
         return result;
     }
 
-    async update<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateModel<T>,
+    async update<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateRuleRequest,
                                                     context: ContextBlock, options?: DatabaseUpdateOptions): Promise<V> {
         const conn = await this.connection();
         const response = await conn.db().collection(domain).findOneAndUpdate(updateModel.filter, updateModel.update, {

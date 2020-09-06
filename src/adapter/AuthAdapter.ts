@@ -1,5 +1,5 @@
 import {BasicUserAttributes} from "../model/BasicUserAttributes";
-import {ContextBlock} from "../model/RulesBlockModel";
+import {ContextBlock} from "../model/Rules";
 
 export interface AuthAdapter {
     signUp<T extends BasicUserAttributes>(userModel: T, context?: ContextBlock): Promise<T>;

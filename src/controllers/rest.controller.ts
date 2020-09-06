@@ -1,11 +1,12 @@
 import * as httpStatus from "http-status-codes";
 import {BAD_REQUEST, EXPECTATION_FAILED, OK, UNAUTHORIZED} from "http-status-codes";
-import {SecurityController} from "./SecurityController";
-import {RulesController} from "./RulesController";
+import {SecurityController} from "./security.controller";
+import {RulesController} from "./rules.controller";
 import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
-import {RuleResultModel} from "../model/RulesBlockModel";
-import {StorageController} from "./StorageController";
-import {AuthController} from "./AuthController";
+import {RuleResponse} from "../model/Rules";
+import {StorageController} from "./storage.controller";
+import {AuthController} from "./auth.controller";
+import {UpdateRuleController} from "./update.rule.controller";
 
 const formidable = require('formidable');
 const fs = require('fs');
@@ -171,8 +172,9 @@ export class RestController {
 
     handleRuleBlocks(request: any, response: any, next: any) {
         const body = request.body;
-        const results: RuleResultModel = {errors: {}};
-        const rulesController = new RulesController(BFastDatabaseConfig.getInstance());
+        const results: RuleResponse = {errors: {}};
+        const rulesController = new RulesController(BFastDatabaseConfig.getInstance(),
+            new UpdateRuleController());
         rulesController.handleIndexesRule(body, results).then(_ => {
             return rulesController.handleAuthenticationRule(body, results);
         }).then(_ => {
