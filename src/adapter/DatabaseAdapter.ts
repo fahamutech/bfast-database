@@ -30,7 +30,7 @@ export interface DatabaseAdapter {
      */
     writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock, options?: DatabaseWriteOptions): Promise<V>;
 
-    update<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateRuleRequest<T>, context: ContextBlock, options?: DatabaseUpdateOptions): Promise<V>;
+    update<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateRuleRequest, context: ContextBlock, options?: DatabaseUpdateOptions): Promise<V>;
 
     deleteOne<T extends BasicAttributesModel, V>(domain: string, deleteModel: DeleteModel<T>, context: ContextBlock, options?: DatabaseBasicOptions): Promise<V>;
 
