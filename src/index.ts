@@ -47,4 +47,7 @@ async function start() {
     });
 }
 
-start().catch(console.log);
+start().catch(reason => {
+    console.log(reason);
+    process.exit(-1);
+});

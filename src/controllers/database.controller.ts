@@ -44,14 +44,7 @@ export class DatabaseController {
      * @return Promise
      */
     async init(mandatory = false): Promise<any> {
-        try {
-            return _database.init();
-        } catch (_) {
-            // if (mandatory === true) {
-            //     throw e;
-            // }
-            // return;
-        }
+        return _database.init();
     }
 
     /**

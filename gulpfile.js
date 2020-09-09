@@ -1,4 +1,4 @@
-const process = require('child_process');
+const childProcess = require('child_process');
 const pkg = require('./package');
 const gulp = require('gulp');
 const del = require('del');
@@ -20,7 +20,7 @@ function handleBuild(childProcess, cb) {
 }
 
 function buildDockerImage(cb) {
-    const buildImage = process.exec(`sudo docker build -t joshuamshana/bfast-ce-daas:v${pkg.version} .`);
+    const buildImage = childProcess.exec(`sudo docker build -t joshuamshana/bfast-ce-daas:v${pkg.version} .`);
     buildImage.on('exit', (code, signal) => {
         console.log('build image task exit');
         cb();
@@ -29,7 +29,7 @@ function buildDockerImage(cb) {
 }
 
 function buildDockerImageLatest(cb) {
-    const buildImage = process.exec(`sudo docker build -t joshuamshana/bfast-ce-daas:latest .`);
+    const buildImage = childProcess.exec(`sudo docker build -t joshuamshana/bfast-ce-daas:latest .`);
     buildImage.on('exit', (code, signal) => {
         console.log('build image task exit');
         cb();
@@ -38,7 +38,7 @@ function buildDockerImageLatest(cb) {
 }
 
 function buildDockerImageBeta(cb) {
-    const buildImage = process.exec(`sudo docker build -t joshuamshana/bfast-ce-daas:beta .`);
+    const buildImage = childProcess.exec(`sudo docker build -t joshuamshana/bfast-ce-daas:beta .`);
     buildImage.on('exit', (code, signal) => {
         console.log('build image task exit');
         cb();
@@ -47,7 +47,7 @@ function buildDockerImageBeta(cb) {
 }
 
 function pushToDocker(cb) {
-    const pushImage = process.exec(`sudo docker push joshuamshana/bfast-ce-daas:v${pkg.version}`);
+    const pushImage = childProcess.exec(`sudo docker push joshuamshana/bfast-ce-daas:v${pkg.version}`);
     pushImage.on('exit', _ => {
         console.log('push image exit');
         cb();
@@ -56,7 +56,7 @@ function pushToDocker(cb) {
 }
 
 function pushToDockerLatest(cb) {
-    const pushImage = process.exec(`sudo docker push joshuamshana/bfast-ce-daas:latest`);
+    const pushImage = childProcess.exec(`sudo docker push joshuamshana/bfast-ce-daas:latest`);
     pushImage.on('exit', _ => {
         console.log('push image exit');
         cb();
@@ -65,7 +65,7 @@ function pushToDockerLatest(cb) {
 }
 
 function pushToDockerBeta(cb) {
-    const pushImage = process.exec(`sudo docker push joshuamshana/bfast-ce-daas:beta`);
+    const pushImage = childProcess.exec(`sudo docker push joshuamshana/bfast-ce-daas:beta`);
     pushImage.on('exit', _ => {
         console.log('push image exit');
         cb();
@@ -95,9 +95,11 @@ function devStart(cb) {
         });
     }
 
-    run().catch(reason => {
-        console.log(reason);
+    run().then(_ => {
         cb();
+    }).catch(reason => {
+        console.log(reason);
+        process.exit(-1);
     });
 }
 
@@ -107,7 +109,7 @@ function copyBFastJson(cb) {
 }
 
 function compileTs(cb) {
-    const compileTs = process.exec('tsc');
+    const compileTs = childProcess.exec('tsc');
     compileTs.on('exit', _ => {
         console.log('compile ts exit');
         cb();
@@ -127,7 +129,7 @@ function test(cb) {
             console.error(err);
         }
         files.forEach(file => {
-            const result = process.execSync(`npx mocha ${file}`);
+            const result = childProcess.execSync(`npx mocha ${file}`);
             console.log(result.toString());
         });
         cb();

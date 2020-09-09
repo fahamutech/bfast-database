@@ -16,6 +16,7 @@ export class BFastDatabase {
     async start(options: BFastDatabaseConfigAdapter): Promise<boolean> {
         if (BFastDatabase._validateOptions(options).valid) {
             BFastDatabase._registerOptions(options);
+            await BFastDatabase._setUpDatabase(options);
             this.bfastFunctions = new BfastFunctions({
                 port: options.port,
                 functionsConfig: {
@@ -24,7 +25,6 @@ export class BFastDatabase {
                 }
             });
             await this.bfastFunctions.start();
-            BFastDatabase._setUpDatabase(options).catch(reason => console.warn(reason.toString()));
             return true;
         } else {
             throw new Error(BFastDatabase._validateOptions(options).message);

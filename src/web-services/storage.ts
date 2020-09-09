@@ -50,6 +50,9 @@ const handleListFiles = [
     restController.getAllFiles
 ];
 
+export const getFileStorageV1 =
+    BFast.functions().onGetHttpRequest('/files/:appId/:filename', handleGetFile)
+
 /**
  * get file uploaded to server
  */

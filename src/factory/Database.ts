@@ -219,7 +219,6 @@ export class Database implements DatabaseAdapter {
         conn.db().collection(domain).watch(pipeline, {fullDocument: "updateLookup"}).on("change", doc => {
             listener(doc)
         });
-        // await conn.close();
         return;
     }
 }
