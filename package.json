@@ -1,6 +1,6 @@
 {
   "name": "bfast-database",
-  "version": "2.0.0-rc.11",
+  "version": "2.0.0-rc.12",
   "main": "dist/bfastDatabase.js",
   "license": "MIT",
   "scripts": {
@@ -28,7 +28,6 @@
     "mime": "^2.4.6",
     "minio": "^7.0.16",
     "mongodb": "^3.6.1",
-    "sharp": "^0.26.0",
     "uuid": "^8.3.0"
   },
   "devDependencies": {

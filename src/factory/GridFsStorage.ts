@@ -8,8 +8,9 @@ import {Db, GridFSBucket, MongoClient} from 'mongodb';
 import {FilesAdapter} from "../adapter/FilesAdapter";
 import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
 import {SecurityController} from "../controllers/security.controller";
+import {PassThrough} from "stream";
 
-const sharp = require('sharp');
+// const sharp = require('sharp');
 
 let _security: SecurityController;
 
@@ -47,7 +48,7 @@ export class GridFsStorage implements FilesAdapter {
         return new GridFSBucket(database, {bucketName: bucket});
     }
 
-    async createFile(filename: string, data: any, contentType: any, options: any = {}): Promise<string> {
+    async createFile(filename: string, data: PassThrough, contentType: any, options: any = {}): Promise<string> {
         await this.validateFilename(filename);
         const newFilename = _security.generateUUID() + '-' + filename;
         const bucket = await this._getBucket();
@@ -170,16 +171,16 @@ export class GridFsStorage implements FilesAdapter {
         return this.getFileLocation(filename, this.config);
     }
 
-    async createThumbnail(filename: string, data: Buffer, contentType: string, options: any = {}): Promise<string> {
-        const bucket = await this._getBucket('thumbnails');
-        const thumbnailBuffer = await sharp(data)
-            .jpeg({
-                quality: 50,
-            })
-            .resize({width: 100})
-            .toBuffer();
-        return this._saveFile(filename, thumbnailBuffer, contentType, bucket, options);
-    }
+    // async createThumbnail(filename: string, data: Buffer, contentType: string, options: any = {}): Promise<string> {
+    //     const bucket = await this._getBucket('thumbnails');
+    //     const thumbnailBuffer = await sharp(data)
+    //         .jpeg({
+    //             quality: 50,
+    //         })
+    //         .resize({width: 100})
+    //         .toBuffer();
+    //     return this._saveFile(filename, thumbnailBuffer, contentType, bucket, options);
+    // }
 
     private async _saveFile(filename: string, data: any, contentType: string, bucket: GridFSBucket, options: any = {}): Promise<string> {
         const stream = await bucket.openUploadStream(filename, {

@@ -7,12 +7,9 @@ import {RuleResponse} from "../model/Rules";
 import {StorageController} from "./storage.controller";
 import {AuthController} from "./auth.controller";
 import {UpdateRuleController} from "./update.rule.controller";
+import {PassThrough} from "stream";
 
 const formidable = require('formidable');
-const fs = require('fs');
-const util = require('util');
-const readFile = util.promisify(fs.readFile);
-const unLink = util.promisify(fs.unlink);
 
 let _storage: StorageController;
 let _security: SecurityController;
@@ -66,28 +63,35 @@ export class RestController {
             maxFileSize: 10 * 1024 * 1024 * 1024,
             keepExtensions: true
         });
-        form.parse(request, async (err, fields, files) => {
+        const passThrough = new PassThrough();
+        const fileMeta: { name: string, type: string } = {name: undefined, type: undefined};
+        form.onPart = part => {
+            if (!part.filename) {
+                form.handlePart(part)
+                return
+            }
+            fileMeta.name = part.filename
+            fileMeta.type = part.mime
+            part.on('data', function (buffer) {
+                passThrough.write(buffer);
+            })
+            part.on('end', function () {
+                passThrough.end();
+            })
+        }
+        form.parse(request, async (err, _0, _1) => {
             try {
                 if (err) {
                     response.status(BAD_REQUEST).send(err.toString());
                     return;
                 }
-                const filesKeys = Object.keys(files);
-                const urls = []
-                for (const key of filesKeys) {
-                    const extension = files[key].path.split('.')[1];
-                    const fileBuffer = await readFile(files[key].path);
-                    const result = await _storage.saveFromBuffer({
-                        data: fileBuffer,
-                        type: files[key].type,
-                        filename: `upload.${extension}`
-                    }, request.body.context);
-                    urls.push(result);
-                    try {
-                        await unLink(files[key].path);
-                    } catch (e) {
-                    }
-                }
+                const urls = [];
+                const result = await _storage.saveFromBuffer({
+                    data: passThrough as any,
+                    type: fileMeta.type,
+                    filename: fileMeta.name
+                }, request.body.context);
+                urls.push(result);
                 response.status(OK).json({urls});
             } catch (e) {
                 console.log(e);

@@ -15,14 +15,13 @@ function handleBuild(childProcess, cb) {
     });
 
     childProcess.stderr.on('data', (data) => {
-        console.log(data);
+        console.error(data);
     });
 }
 
 function buildDockerImage(cb) {
     const buildImage = childProcess.exec(`sudo docker build -t joshuamshana/bfast-ce-daas:v${pkg.version} .`);
     buildImage.on('exit', (code, signal) => {
-        console.log('build image task exit');
         cb();
     });
     handleBuild(buildImage, cb);
@@ -31,7 +30,6 @@ function buildDockerImage(cb) {
 function buildDockerImageLatest(cb) {
     const buildImage = childProcess.exec(`sudo docker build -t joshuamshana/bfast-ce-daas:latest .`);
     buildImage.on('exit', (code, signal) => {
-        console.log('build image task exit');
         cb();
     });
     handleBuild(buildImage, cb);
@@ -40,7 +38,6 @@ function buildDockerImageLatest(cb) {
 function buildDockerImageBeta(cb) {
     const buildImage = childProcess.exec(`sudo docker build -t joshuamshana/bfast-ce-daas:beta .`);
     buildImage.on('exit', (code, signal) => {
-        console.log('build image task exit');
         cb();
     });
     handleBuild(buildImage, cb);
@@ -49,7 +46,6 @@ function buildDockerImageBeta(cb) {
 function pushToDocker(cb) {
     const pushImage = childProcess.exec(`sudo docker push joshuamshana/bfast-ce-daas:v${pkg.version}`);
     pushImage.on('exit', _ => {
-        console.log('push image exit');
         cb();
     });
     handleBuild(pushImage, cb);
@@ -58,7 +54,6 @@ function pushToDocker(cb) {
 function pushToDockerLatest(cb) {
     const pushImage = childProcess.exec(`sudo docker push joshuamshana/bfast-ce-daas:latest`);
     pushImage.on('exit', _ => {
-        console.log('push image exit');
         cb();
     });
     handleBuild(pushImage, cb);
@@ -67,7 +62,6 @@ function pushToDockerLatest(cb) {
 function pushToDockerBeta(cb) {
     const pushImage = childProcess.exec(`sudo docker push joshuamshana/bfast-ce-daas:beta`);
     pushImage.on('exit', _ => {
-        console.log('push image exit');
         cb();
     });
     handleBuild(pushImage, cb);
@@ -89,7 +83,8 @@ function devStart(cb) {
             mongoDbUri: file,
             applicationId: 'daas',
             port: 3003,
-            adapters: {},
+            adapters: {
+            },
             mountPath: await new EnvUtil().getEnv('/'),
             masterKey: 'daas'
         });
@@ -111,7 +106,6 @@ function copyBFastJson(cb) {
 function compileTs(cb) {
     const compileTs = childProcess.exec('tsc');
     compileTs.on('exit', _ => {
-        console.log('compile ts exit');
         cb();
     });
     handleBuild(compileTs, cb);

@@ -4,6 +4,7 @@ import {ContextBlock} from "../model/Rules";
 import mime from "mime";
 import {EXPECTATION_FAILED} from "http-status-codes";
 import {BFastDatabaseConfig} from "../bfastDatabaseConfig";
+import {PassThrough} from "stream";
 
 export class StorageController {
     constructor(private readonly _filesAdapter: FilesAdapter, private readonly config: BFastDatabaseConfig) {
@@ -46,19 +47,19 @@ export class StorageController {
             dataToSave?.type,
             {}
         );
-        if (type && type.toString().startsWith('image/') === true) {
-            try {
-                await this._filesAdapter.createThumbnail(
-                    file,
-                    isBase64 === true ?
-                        Buffer.from(dataToSave.data, 'base64')
-                        : dataToSave.data, type,
-                    {}
-                );
-            } catch (e) {
-                console.warn('Fails to save thumbnail', e);
-            }
-        }
+        // if (type && type.toString().startsWith('image/') === true) {
+        //     try {
+        //         await this._filesAdapter.createThumbnail(
+        //             file,
+        //             isBase64 === true ?
+        //                 Buffer.from(dataToSave.data, 'base64')
+        //                 : dataToSave.data, type,
+        //             {}
+        //         );
+        //     } catch (e) {
+        //         console.warn('Fails to save thumbnail', e);
+        //     }
+        // }
         return this._filesAdapter.getFileLocation(file, this.config);
     }
 
@@ -102,7 +103,7 @@ export class StorageController {
         return this._filesAdapter.listFiles(data);
     }
 
-    async saveFromBuffer(fileModel: { filename: string, data: Buffer, type: string }, context: ContextBlock): Promise<string> {
+    async saveFromBuffer(fileModel: { filename: string, data: PassThrough, type: string }, context: ContextBlock): Promise<string> {
         let {filename, data, type} = fileModel;
         if (!filename) {
             throw 'Filename required';
@@ -114,13 +115,14 @@ export class StorageController {
             type = mime.getType(filename);
         }
         const file = await this._filesAdapter.createFile(filename, data, type, {});
-        if (type && type.toString().startsWith('image/') === true) {
-            try {
-                await this._filesAdapter.createThumbnail(file, data, type, {});
-            } catch (e) {
-                console.warn('Fails to save thumbnail', e);
-            }
-        }
+        // if (type && type.toString().startsWith('image/') === true) {
+        //     try {
+        //         await this._filesAdapter.createThumbnail(file, Buffer.from(data), type, {});
+        //     } catch (e) {
+        //         console.log(e);
+        //         console.warn('Fails to save thumbnail', e);
+        //     }
+        // }
         return this._filesAdapter.getFileLocation(file, this.config);
     }
 

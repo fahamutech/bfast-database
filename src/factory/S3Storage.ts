@@ -3,9 +3,10 @@ import {BFastDatabaseConfig, BFastDatabaseConfigAdapter} from "../bfastDatabaseC
 import {SecurityController} from "../controllers/security.controller";
 import * as Minio from "minio";
 import {Client} from "minio";
+import {PassThrough} from "stream";
 
 const url = require('url');
-const sharp = require('sharp');
+// const sharp = require('sharp');
 
 export class S3Storage implements FilesAdapter {
     _s3: Client;
@@ -15,7 +16,7 @@ export class S3Storage implements FilesAdapter {
         this._init(config);
     }
 
-    async createFile(filename: string, data: any, contentType: string, options: Object): Promise<string> {
+    async createFile(filename: string, data: PassThrough, contentType: string, options: Object): Promise<string> {
         const bucket = this.config.adapters.s3Storage.bucket;
         await this.validateFilename(filename);
         const newFilename = this._security.generateUUID() + '-' + filename;
@@ -116,22 +117,22 @@ export class S3Storage implements FilesAdapter {
                     return `${bucket}`
                 }
         });
-
         this._s3 = new Minio.Client({
+            region: region,
             endPoint: ep.hostname, accessKey, secretKey, useSSL, port
         });
     }
 
-    async createThumbnail(filename: string, data: Buffer, contentType: string, options: Object): Promise<string> {
-        const bucket = this.config.adapters.s3Storage.bucket + '-thumb';
-        const thumbnailBuffer = await sharp(data)
-            .jpeg({
-                quality: 50,
-            })
-            .resize({width: 100})
-            .toBuffer();
-        return this._saveFile(filename, thumbnailBuffer, bucket, this.config.adapters.s3Storage.endPoint);
-    }
+    // async createThumbnail(filename: string, data: Buffer, contentType: string, options: Object): Promise<string> {
+    //     const bucket = this.config.adapters.s3Storage.bucket + '-thumb';
+    //     const thumbnailBuffer = await sharp(data)
+    //         .jpeg({
+    //             quality: 50,
+    //         })
+    //         .resize({width: 100})
+    //         .toBuffer();
+    //     return this._saveFile(filename, thumbnailBuffer, bucket, this.config.adapters.s3Storage.endPoint);
+    // }
 
     private async _saveFile(filename: string, data: any, bucket: string, endpoint: string): Promise<string> {
         const bucketExist = await this._s3.bucketExists(bucket);
@@ -139,7 +140,10 @@ export class S3Storage implements FilesAdapter {
             await this._s3.putObject(bucket, filename, data);
             return filename;
         } else {
-            const region = endpoint.replace('https://', '').replace('http://', '').trim().split('.')[0];
+            const region = endpoint
+                .replace('https://', '')
+                .replace('http://', '')
+                .trim().split('.')[0];
             await this._s3.makeBucket(bucket, region.toString().trim());
             await this._s3.putObject(bucket, filename, data);
             return filename;
