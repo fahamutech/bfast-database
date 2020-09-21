@@ -83,8 +83,7 @@ function devStart(cb) {
             mongoDbUri: file,
             applicationId: 'daas',
             port: 3003,
-            adapters: {
-            },
+            adapters: {},
             mountPath: await new EnvUtil().getEnv('/'),
             masterKey: 'daas'
         });
