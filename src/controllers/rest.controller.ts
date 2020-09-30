@@ -71,6 +71,12 @@ export class RestController {
                 return
             }
             fileMeta.name = part.filename
+                .toString()
+                .replace('_','')
+                .replace('-','')
+                .replace('*','')
+                .replace('#','')
+                .replace('@','');
             fileMeta.type = part.mime
             part.on('data', function (buffer) {
                 passThrough.write(buffer);
