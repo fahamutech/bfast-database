@@ -76,6 +76,8 @@ export class RestController {
                 .replace('-','')
                 .replace('*','')
                 .replace('#','')
+                .replace('(','')
+                .replace(')','')
                 .replace('@','');
             fileMeta.type = part.mime
             part.on('data', function (buffer) {
