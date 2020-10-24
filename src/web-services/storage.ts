@@ -2,6 +2,7 @@ import {BFast} from "bfastnode";
 import {getRestController} from "./webServicesConfig";
 
 const restController = getRestController();
+
 const handleUploadFile = [
     (request, response, next) => {
         request.body.applicationId = request.params.appId;
@@ -95,4 +96,4 @@ export const onUploadMultiPartFile = BFast.functions().onGetHttpRequest('/storag
       <input type="submit" value="Upload" />
     </form>
   `);
-    });
+});

@@ -3,17 +3,36 @@ import {Database} from "./factory/Database";
 import {DatabaseController} from "./controllers/database.controller";
 import {SecurityController} from "./controllers/security.controller";
 import {BFastDatabaseConfig, BFastDatabaseConfigAdapter} from "./bfastDatabaseConfig";
+import {WebServices} from "./web-services";
 
 
 export class BFastDatabase {
     private bfastFunctions: BfastFunctions;
+
+    async init(options: BFastDatabaseConfigAdapter): Promise<boolean> {
+        if (BFastDatabase._validateOptions(options, false).valid) {
+            BFastDatabase._registerOptions(options);
+            await BFastDatabase._setUpDatabase(options);
+            return true;
+        } else {
+            throw new Error(BFastDatabase._validateOptions(options, false).message);
+        }
+    }
+
+    /**
+     * @return {WebServices} - Controller which expose mountable bfast::functions endpoint to be used
+     * in a bfast::functions project or express-js application
+     */
+    web() {
+        return new WebServices();
+    }
 
     /**
      * start a bfast::database server
      * @param options {BFastDatabaseConfig}
      * @return Promise
      */
-    async start(options: BFastDatabaseConfigAdapter): Promise<boolean> {
+    async startServer(options: BFastDatabaseConfigAdapter): Promise<boolean> {
         if (BFastDatabase._validateOptions(options).valid) {
             BFastDatabase._registerOptions(options);
             await BFastDatabase._setUpDatabase(options);
@@ -35,33 +54,32 @@ export class BFastDatabase {
      * stop a bfast::database server
      * @return Promise
      */
-    async stop(): Promise<any> {
+    async stopServer(): Promise<any> {
         if (!this.bfastFunctions) {
             return true;
         }
         return this.bfastFunctions.stop();
     }
 
-    private static _validateOptions(options: BFastDatabaseConfigAdapter): { valid: boolean, message: string } {
-        // if (!options.mountPath) {
-        //     options.mountPath = '/';
-        // }
-        if (!options.port) {
+    private static _validateOptions(options: BFastDatabaseConfigAdapter, serverMode = true): { valid: boolean, message: string } {
+        if (!options.port && serverMode === true) {
             return {
                 valid: false,
                 message: 'Port option required'
             }
-        } else if (false /*!options.mountPath*/) {
-            return {
-                valid: false,
-                message: 'Mount Path required'
-            }
-        } else if (false /*options?.mountPath === '/storage' || options?.mountPath === '/changes'*/) {
-            return {
-                valid: false,
-                message: 'Mount path name not supported'
-            }
-        } else if (!options.masterKey) {
+        }
+            // else if (false /*!options.mountPath*/) {
+            //     return {
+            //         valid: false,
+            //         message: 'Mount Path required'
+            //     }
+            // } else if (false /*options?.mountPath === '/storage' || options?.mountPath === '/changes'*/) {
+            //     return {
+            //         valid: false,
+            //         message: 'Mount path name not supported'
+            //     }
+        // }
+        else if (!options.masterKey) {
             return {
                 valid: false,
                 message: 'MasterKey required'

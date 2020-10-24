@@ -5,6 +5,8 @@
     "**/factory/**",
     "**/adapter/**",
     "**/controllers/**",
+    "**/web-services/index.**",
+    "**/web-services/webServicesConfig.**",
     "**/model/**",
     "**/*.specs.js",
     "**/*.spec.js",

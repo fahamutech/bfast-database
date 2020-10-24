@@ -22,7 +22,7 @@ export const domainChangesListener = BFast.functions().onEvent('/v2/__changes__'
                 response.emit({error: 'pipeline/domain is required'});
             }
         } else {
-            response.emit({error: 'un authorized'});
+            response.emit({error: 'unauthorized'});
         }
     }
 );

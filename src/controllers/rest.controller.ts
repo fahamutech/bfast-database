@@ -67,7 +67,7 @@ export class RestController {
         const fileMeta: { name: string, type: string } = {name: undefined, type: undefined};
         form.onPart = part => {
             if (!part.filename) {
-                form.handlePart(part)
+                form.handlePart(part);
                 return
             }
             fileMeta.name = part.filename
@@ -78,6 +78,8 @@ export class RestController {
                 .replace('#','')
                 .replace('(','')
                 .replace(')','')
+                .replace('>','')
+                .replace('<','')
                 .replace('@','');
             fileMeta.type = part.mime
             part.on('data', function (buffer) {

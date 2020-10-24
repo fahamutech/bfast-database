@@ -28,7 +28,7 @@ async function start() {
         })
     }
 
-    return new BFastDatabase().start({
+    return new BFastDatabase().startServer({
         applicationId: await envUtil.getEnv(process.env.APPLICATION_ID),
         masterKey: await envUtil.getEnv(process.env.MASTER_KEY),
         mongoDbUri: await envUtil.getEnv(process.env.MONGO_URL),
