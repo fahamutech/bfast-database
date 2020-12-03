@@ -1,46 +1,16 @@
 {
   "name": "bfast-database",
-  "version": "2.0.0-rc.16",
-  "main": "dist/bfastDatabase.js",
-  "license": "MIT",
+  "version": "0.0.1",
   "scripts": {
-    "build": "gulp build",
-    "build:docker": "gulp buildDocker",
-    "test:web-services": "yarn run build && mocha --exit specs/rest/all.specs.js",
-    "test:controllers": "yarn run build && npx mocha --exit specs/controller/* ",
-    "test:web-services:no-build": "mocha specs/rest/all.specs.js",
-    "prestart": "yarn run build",
-    "prepublishOnly": "npm run build",
-    "publish:beta": "yarn publish --tag beta",
-    "start": "node .",
-    "start:dev": "gulp devStart",
-    "push": "gulp publishContainer",
-    "push:latest": "gulp publishContainerLatest",
-    "push:beta": "gulp publishContainerBeta"
+    "test": "echo \"no test\"",
+    "start": "npx bfast fs serve"
   },
-  "peerDependencies": {},
   "dependencies": {
-    "bcrypt": "^5.0.0",
-    "bfast-faas": "^1.10.5-beta.0",
-    "bfastnode": "^4.0.0-beta.25",
-    "formidable": "^1.2.2",
-    "http-status-codes": "^2.1.4",
-    "jsonwebtoken": "^8.5.1",
-    "mime": "^2.4.6",
-    "minio": "^7.0.16",
-    "mongodb": "^3.6.2",
-    "uuid": "^8.3.1"
+    "bfastnode": "^4.0.1",
+    "bfast-database-core": "^0.0.9"
   },
   "devDependencies": {
-    "@types/minio": "^7.0.6",
-    "@types/mongodb": "^3.5.31",
-    "@types/node": "^14.11.1",
-    "axios": "^0.21.0",
-    "del": "^6.0.0",
-    "glob": "^7.1.6",
-    "gulp": "^4.0.2",
-    "mocha": "^8.2.0",
-    "mongodb-memory-server": "^6.9.2",
-    "typescript": "^4.0.3"
-  }
+    "bfast-tools": "^0.7.1-rc.0"
+  },
+  "private": true
 }
