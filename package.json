@@ -1,16 +1,16 @@
 {
   "name": "bfast-database",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "scripts": {
     "test": "echo \"no test\"",
     "start": "npx bfast fs serve"
   },
   "dependencies": {
     "bfastnode": "^4.0.1",
-    "bfast-database-core": "^0.0.10-alpha.1"
+    "bfast-database-core": "^0.0.10-alpha.2"
   },
   "devDependencies": {
-    "bfast-tools": "^0.7.1-rc.0"
+    "bfast-tools": "^0.7.1"
   },
   "private": true
 }

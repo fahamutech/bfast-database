@@ -12,9 +12,19 @@ class BfastController {
         const s3AccessKey = envUtil.getEnv(process.env.S3_ACCESS_KEY);
         const s3SecretKey = envUtil.getEnv(process.env.S3_SECRET_KEY);
         const s3Endpoint = envUtil.getEnv(process.env.S3_ENDPOINT);
+        const s3Region = envUtil.getEnv(process.env.S3_REGION);
 
-        const checker = [];
-        checker.push(s3Bucket, s3AccessKey, s3SecretKey, s3Endpoint);
+        let checker = [];
+        checker.push(s3Bucket, s3AccessKey, s3SecretKey, s3Endpoint, s3Region);
+        checker = checker.filter(x => {
+            if (!x) {
+                return false;
+            } else if (x.toString() === 'null') {
+                return false;
+            } else if (x.toString() === 'undefined') {
+                return false;
+            } else return x.toString() !== '';
+        })
         if (checker.length === 0) {
             isS3Configured = false;
         } else {
@@ -41,6 +51,7 @@ class BfastController {
                         endPoint: s3Endpoint,
                         secretKey: s3SecretKey,
                         accessKey: s3AccessKey,
+                        region: s3Region
                     } : undefined,
             }
         }
