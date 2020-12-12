@@ -40,16 +40,16 @@ class BfastController {
                 }
             })
         }
-        if (!process.env.PRODUCTION) {
-            process.env.PRODUCTION = '0';
-        }
-        if (process.env.PRODUCTION === '0' && (!process.env.MONGO_URL || process.env.MONGO_URL === 'no')) {
-            process.env.MONGO_URL = 'mongodb://localhost/bfast';
-        }
+        // if (!process.env.PRODUCTION) {
+        //     process.env.PRODUCTION = '0';
+        // }
+        // if (process.env.PRODUCTION === '0' && (!process.env.MONGO_URL || process.env.MONGO_URL === 'no')) {
+        //     process.env.MONGO_URL = 'mongodb://localhost/bfast';
+        // }
         return {
-            applicationId: process.env.PRODUCTION === '0' ? 'bfast' : envUtil.getEnv(process.env.APPLICATION_ID),
-            projectId: process.env.PRODUCTION === '0' ? 'bfast' : envUtil.getEnv(process.env.PROJECT_ID),
-            masterKey: process.env.PRODUCTION === '0' ? 'bfast' : envUtil.getEnv(process.env.MASTER_KEY),
+            applicationId: envUtil.getEnv(process.env.APPLICATION_ID),
+            projectId: envUtil.getEnv(process.env.PROJECT_ID),
+            masterKey: envUtil.getEnv(process.env.MASTER_KEY),
             mongoDbUri: envUtil.getEnv(process.env.MONGO_URL),
             adapters: {
                 s3Storage: isS3Configured
@@ -74,11 +74,11 @@ class BfastController {
 
     async initiateBFastClients() {
         BFast.init({
-            applicationId: process.env.PRODUCTION === '0' ? 'bfast' : await envUtil.getEnv(process.env.APPLICATION_ID),
-            projectId: process.env.PRODUCTION === '0' ? 'bfast' : await envUtil.getEnv(process.env.PROJECT_ID),
-            appPassword: process.env.PRODUCTION === '0' ? 'bfast' : await envUtil.getEnv(process.env.MASTER_KEY),
-            databaseURL: `http://localhost:${process.env.PRODUCTION === '0' ? process.env.DEV_PORT : await envUtil.getEnv(process.env.PORT)}`,
-            functionsURL: `http://localhost:${process.env.PRODUCTION === '0' ? process.env.DEV_PORT : await envUtil.getEnv(process.env.PORT)}`,
+            applicationId: await envUtil.getEnv(process.env.APPLICATION_ID),
+            projectId: await envUtil.getEnv(process.env.PROJECT_ID),
+            appPassword: await envUtil.getEnv(process.env.MASTER_KEY),
+            databaseURL: `http://localhost:${process.env.PRODUCTION === '0' && process.env.DEV_PORT ? process.env.DEV_PORT : await envUtil.getEnv(process.env.PORT)}`,
+            functionsURL: `http://localhost:${process.env.PRODUCTION === '0' && process.env.DEV_PORT ? process.env.DEV_PORT : await envUtil.getEnv(process.env.PORT)}`,
         });
     }
 }
