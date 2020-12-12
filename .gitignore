@@ -11,3 +11,5 @@ devStart.sh
 .env
 **.tgz
 db.env.txt
+*.tgz
+bfast-database-*

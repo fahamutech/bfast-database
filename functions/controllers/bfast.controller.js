@@ -40,10 +40,17 @@ class BfastController {
                 }
             })
         }
+        if (!process.env.PRODUCTION) {
+            process.env.PRODUCTION = '0';
+        }
+        if (process.env.PRODUCTION === '0' && (!process.env.MONGO_URL || process.env.MONGO_URL === 'no')) {
+            process.env.MONGO_URL = 'mongodb://localhost/bfast';
+        }
         return {
             applicationId: process.env.PRODUCTION === '0' ? 'bfast' : envUtil.getEnv(process.env.APPLICATION_ID),
+            projectId: process.env.PRODUCTION === '0' ? 'bfast' : envUtil.getEnv(process.env.PROJECT_ID),
             masterKey: process.env.PRODUCTION === '0' ? 'bfast' : envUtil.getEnv(process.env.MASTER_KEY),
-            mongoDbUri: process.env.PRODUCTION === '0' ? 'mongodb://localhost/bfast' : envUtil.getEnv(process.env.MONGO_URL),
+            mongoDbUri: envUtil.getEnv(process.env.MONGO_URL),
             adapters: {
                 s3Storage: isS3Configured
                     ? {
