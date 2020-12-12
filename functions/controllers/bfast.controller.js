@@ -50,6 +50,7 @@ class BfastController {
             applicationId: envUtil.getEnv(process.env.APPLICATION_ID),
             projectId: envUtil.getEnv(process.env.PROJECT_ID),
             masterKey: envUtil.getEnv(process.env.MASTER_KEY),
+            logs: envUtil.getEnv(process.env.LOGS) === '1',
             mongoDbUri: envUtil.getEnv(process.env.MONGO_URL),
             adapters: {
                 s3Storage: isS3Configured

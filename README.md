@@ -6,10 +6,11 @@ NodeJS Database Runtime Instance For Bfast::Cloud::Database.
 
 This instruction tested for linux environment you can translate the commands to your OS.
 
- * You need to have `NodeJs` to your local machine, or you can download from
-[NodeJs](https://nodejs.org/en/download/) website.
+* You need to have `NodeJs` to your local machine, or you can download from
+  [NodeJs](https://nodejs.org/en/download/) website.
 
- * You need to have mongodb in your local machine or mongodb url. To install mongodb go to [mongodb installation](https://docs.mongodb.com/manual/installation/) 
+* You need to have mongodb in your local machine or mongodb url. To install mongodb go
+  to [mongodb installation](https://docs.mongodb.com/manual/installation/)
 
 ### Install BFast Tools
 
@@ -59,7 +60,7 @@ You put all configurations in ENV if you want a module version please see
       - PORT = 3000 // port to serve bfast-database if you use bfast-tools it will pick the port you specify with --port or 3000 as default
       - PRODUCTION='0' // specify whether you run in production or developement mode when '0' is dev and '1' is production, default value is [ '0' ]
 
- Storage if you want to use amazon s3 object storage, you must supply its configurations as follows.
+Storage if you want to use amazon s3 object storage, you must supply its configurations as follows.
 
       - S3_BUCKET= // you s3 bucket name for aws storage 
       - S3_ACCESS_KEY= // you s3 access key for aws storage 
@@ -67,15 +68,14 @@ You put all configurations in ENV if you want a module version please see
       - S3_REGION= // the region your browser is running
       - S3_ENDPOINT= // endpoint for your bucket
 
-Storage if you want to use GridFs when do not supply any of s3 configuration 
-when you start bfast-database, and it will opt to use GridFs.
-
+Storage if you want to use GridFs when do not supply any of s3 configuration when you start bfast-database, and it will
+opt to use GridFs.
 
 ## Example [ For Linux Users ]
 
-You can run `start.sh` bash file, just replace the env variable of your choice.
+You can run `start.js` file, just replace the env variable of your choice.
 
-        $ bash start.sh
+        $ node start.js
 
 That's it.
 
