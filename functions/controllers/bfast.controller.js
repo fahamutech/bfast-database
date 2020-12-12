@@ -76,9 +76,7 @@ class BfastController {
         BFast.init({
             applicationId: await envUtil.getEnv(process.env.APPLICATION_ID),
             projectId: await envUtil.getEnv(process.env.PROJECT_ID),
-            appPassword: await envUtil.getEnv(process.env.MASTER_KEY),
-            databaseURL: `http://localhost:${process.env.PRODUCTION === '0' && process.env.DEV_PORT ? process.env.DEV_PORT : await envUtil.getEnv(process.env.PORT)}`,
-            functionsURL: `http://localhost:${process.env.PRODUCTION === '0' && process.env.DEV_PORT ? process.env.DEV_PORT : await envUtil.getEnv(process.env.PORT)}`,
+            appPassword: await envUtil.getEnv(process.env.MASTER_KEY)
         });
     }
 }
