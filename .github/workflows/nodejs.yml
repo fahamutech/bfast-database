@@ -23,7 +23,7 @@ jobs:
       - name: install, build, and test
         run: |
           npm install --production
-          npm publish
+          npm publish --registry https://registry.npmjs.org/:_authToken=${NPM_TOKEN}
         env:
           CI: true
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
