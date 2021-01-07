@@ -1,10 +1,10 @@
 {
   "name": "bfast-database",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "main": "functions/index.js",
   "scripts": {
     "test": "echo \"no test\"",
-    "start": "node start.js"
+    "start:dev": "node start.js"
   },
   "bundledDependencies": [
     "bfastnode",
@@ -12,7 +12,7 @@
   ],
   "dependencies": {
     "bfastnode": "^4.0.5",
-    "bfast-database-core": "^0.0.10-alpha.6"
+    "bfast-database-core": "^0.0.10-alpha.7"
   },
   "private": false,
   "devDependencies": {

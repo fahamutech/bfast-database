@@ -10,10 +10,10 @@
 //         PORT: "3000",
 //         LOGS: '1',
 //         PRODUCTION: "1",
-//         // S3_BUCKET=
-//         // export S3_ACCESS_KEY=
-//         // export S3_SECRET_KEY=
-//         // export S3_ENDPOINT=
+//         S3_BUCKET: "bfast-cloud",
+//         S3_ACCESS_KEY: "",
+//         S3_SECRET_KEY: "",
+//         S3_ENDPOINT: "https://us-east-1.linodeobjects.com"
 //     }
 // });
 //
