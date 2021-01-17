@@ -4,3 +4,5 @@ pkg.js
 **/*.d.ts
 dist
 node_modules
+Dockerfile
+build-database-instamce.sh
