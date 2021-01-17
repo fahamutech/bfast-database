@@ -15,3 +15,4 @@ webpack.config.js
 **.log
 **.tgz
 .npmrc
+/start.js

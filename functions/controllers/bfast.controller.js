@@ -1,11 +1,21 @@
-const {BFast} = require("bfastnode");
-const {BfastDatabaseCore, EnvUtil} = require('bfast-database-core');
-
-const bfastDatabase = new BfastDatabaseCore();
+const {EnvUtil} = require('bfast-database-core');
 const envUtil = new EnvUtil();
 
 class BfastController {
 
+    /**
+     *
+     * @return {{
+     * mongoDbUri: string,
+     * adapters: {s3Storage: ({bucket: string, endPoint: string, secretKey: string, accessKey: string, region: string}|undefined)},
+     * masterKey: string,
+     * port: (string|string),
+     * applicationId: string,
+     * projectId: string,
+     * logs: boolean,
+     * taarifaToken: string
+     * }}
+     */
     getBFastDatabaseConfigs() {
         let isS3Configured = true;
         const s3Bucket = envUtil.getEnv(process.env.S3_BUCKET);
@@ -46,39 +56,25 @@ class BfastController {
         // if (process.env.PRODUCTION === '0' && (!process.env.MONGO_URL || process.env.MONGO_URL === 'no')) {
         //     process.env.MONGO_URL = 'mongodb://localhost/bfast';
         // }
+        const port = envUtil.getEnv(process.env.PORT);
         return {
             applicationId: envUtil.getEnv(process.env.APPLICATION_ID),
             projectId: envUtil.getEnv(process.env.PROJECT_ID),
             masterKey: envUtil.getEnv(process.env.MASTER_KEY),
             logs: envUtil.getEnv(process.env.LOGS) === '1',
+            port: port ? port : '3000',
+            taarifaToken: envUtil.getEnv(process.env.TAARIFA_TOKEN),
             mongoDbUri: envUtil.getEnv(process.env.MONGO_URL),
             adapters: {
-                s3Storage: isS3Configured
-                    ? {
-                        bucket: s3Bucket,
-                        endPoint: s3Endpoint,
-                        secretKey: s3SecretKey,
-                        accessKey: s3AccessKey,
-                        region: s3Region
-                    } : undefined,
+                s3Storage: isS3Configured ? {
+                    bucket: s3Bucket,
+                    endPoint: s3Endpoint,
+                    secretKey: s3SecretKey,
+                    accessKey: s3AccessKey,
+                    region: s3Region
+                } : undefined,
             }
         }
-    }
-
-    initServices() {
-        bfastDatabase.initiateServices(this.getBFastDatabaseConfigs());
-    }
-
-    async startDatabaseEngine() {
-        return bfastDatabase.init(this.getBFastDatabaseConfigs());
-    }
-
-    async initiateBFastClients() {
-        BFast.init({
-            applicationId: await envUtil.getEnv(process.env.APPLICATION_ID),
-            projectId: await envUtil.getEnv(process.env.PROJECT_ID),
-            appPassword: await envUtil.getEnv(process.env.MASTER_KEY)
-        });
     }
 }
 

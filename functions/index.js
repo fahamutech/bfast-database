@@ -1,27 +1,36 @@
+const {MailController} = require("./controllers/mail.controller");
+const {bfast} = require("bfastnode");
 const {BfastController} = require("./controllers/bfast.controller");
-const {WebServices, Provider} = require('bfast-database-core');
+const {WebServices, BfastDatabaseCore} = require('bfast-database-core');
 const bfastController = new BfastController();
 
+const config = bfastController.getBFastDatabaseConfigs();
 
-bfastController.initServices();
-
-async function start() {
-    await bfastController.startDatabaseEngine();
-    await bfastController.initiateBFastClients();
-}
-
-const webServices = new WebServices(
-    Provider.get(Provider.names.REST_WEB_SERVICE),
-    Provider.get(Provider.names.REALTIME_WEB_SERVICE),
-    Provider.get(Provider.names.STORAGE_WEB_SERVICE)
-);
+/**
+ *
+ * @type {WebServices}
+ */
+const webServices = new BfastDatabaseCore().init({
+    applicationId: config.applicationId,
+    projectId: config.projectId,
+    logs: config.logs,
+    masterKey: config.masterKey,
+    mongoDbUri: config.mongoDbUri,
+    port: config.port,
+    adapters: {
+        s3Storage: config.adapters.s3Storage,
+        email: config1 => {
+            return new MailController(config1);
+        }
+    }
+});
 
 exports.rules = webServices.rest().rules;
 
 exports.changes = webServices.realtime(
     {
-        applicationId: bfastController.getBFastDatabaseConfigs().applicationId,
-        masterKey: bfastController.getBFastDatabaseConfigs().masterKey
+        applicationId: config.applicationId,
+        masterKey: config.masterKey
     }
 ).changes;
 
@@ -29,4 +38,13 @@ for (const api of Object.keys(webServices.storage())) {
     exports[api] = webServices.storage()[api];
 }
 
-start().catch(console.log);
+bfast.init({
+    applicationId: config.applicationId,
+    projectId: config.projectId,
+    appPassword: config.masterKey
+});
+
+bfast.init({
+    applicationId: 'fahamutaarifa',
+    projectId: 'fahamutaarifa'
+});
