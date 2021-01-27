@@ -24,6 +24,7 @@ jobs:
         run: |
           # npm install --production
           # npm publish --registry https://registry.npmjs.org/:_authToken=${NPM_TOKEN}
+          bash build-database-instance.sh
         env:
           CI: true
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
