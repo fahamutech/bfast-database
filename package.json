@@ -1,6 +1,6 @@
 {
   "name": "bfast-database",
-  "version": "2.0.9",
+  "version": "2.0.10",
   "main": "functions/index.js",
   "scripts": {
     "test": "echo \"no test\"",
@@ -12,7 +12,7 @@
   ],
   "dependencies": {
     "bfastnode": "^4.0.6",
-    "bfast-database-core": "0.0.10-alpha.12"
+    "bfast-database-core": "0.0.10-alpha.13"
   },
   "private": false,
   "devDependencies": {
