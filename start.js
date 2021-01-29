@@ -1,13 +1,13 @@
 const {exec} = require('child_process')
 
-const cp = exec(`bfast fs serve`, {
+const cp = exec(`bfast fs serve --port 3010`, {
     cwd: __dirname,
     env: {
         APPLICATION_ID: "bfast",
         MASTER_KEY: "bfast",
         PROJECT_ID: "bfast",
         MONGO_URL: "mongodb://localhost/bfast",
-        PORT: "3000",
+        PORT: "3010",
         LOGS: '1',
         PRODUCTION: "1",
         // S3_BUCKET: "bfast-cloud",
