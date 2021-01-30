@@ -1,12 +1,13 @@
 {
   "name": "bfast-database",
-  "version": "2.0.12",
+  "version": "2.0.13",
   "main": "functions/index.js",
+  "repository": "https://github.com/fahamutech/bfast-database",
   "scripts": {
     "test": "echo \"no test\"",
     "start:dev": "node start.js"
   },
-  "bundledDependencies": [
+  "bundleDependencies": [
     "bfastnode",
     "bfast-database-core"
   ],
