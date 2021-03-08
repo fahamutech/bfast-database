@@ -47,4 +47,4 @@ bfast.init({
 bfast.init({
     applicationId: 'fahamutaarifa',
     projectId: 'fahamutaarifa'
-});
+}, 'fahamutaarifa');
