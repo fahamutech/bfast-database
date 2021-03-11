@@ -1,6 +1,6 @@
 {
   "name": "bfast-database",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "main": "functions/index.js",
   "repository": "https://github.com/fahamutech/bfast-database",
   "scripts": {
@@ -12,8 +12,8 @@
     "bfast-database-core"
   ],
   "dependencies": {
-    "bfast-database-core": "^0.0.10-alpha.15",
-    "bfastnode": "^4.2.0"
+    "bfast-database-core": "^0.0.10-alpha.17",
+    "bfastnode": "^4.2.2"
   },
   "private": false,
   "devDependencies": {
