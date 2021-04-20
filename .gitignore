@@ -13,3 +13,5 @@ devStart.sh
 db.env.txt
 *.tgz
 bfast-database-*
+rsakey.local.json
+rsapub.local.json

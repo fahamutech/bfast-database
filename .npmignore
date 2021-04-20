@@ -16,3 +16,6 @@ webpack.config.js
 **.tgz
 .npmrc
 /start.js
+*.local.json
+rsakey.local.json
+rsapub.local.json

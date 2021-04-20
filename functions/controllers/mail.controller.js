@@ -1,7 +1,7 @@
 const {bfast} = require("bfastnode");
 const {EmailAdapter} = require("bfast-database-core");
 
-class MailController extends EmailAdapter{
+class MailController extends EmailAdapter {
 
     constructor(config) {
         super();
@@ -15,17 +15,21 @@ class MailController extends EmailAdapter{
 
     /**
      *
-     * @param mailModel
+     * @param mailModel{{
+     *     from: string,
+     *     to: string,
+     *     subject: string,
+     *     html: string,
+     *     text: string
+     * }}
      * @return {Promise<*>}
      */
     async sendMail(mailModel) {
-        return bfast.functions('fahamutaarifa').request('/mail').post({
-
-        }, {
+        return bfast.functions('fahamutaarifa').request('/mail').post(mailModel, {
             headers: {
                 'authorization': this.config.taarifaToken
             }
-        })
+        });
     }
 }
 

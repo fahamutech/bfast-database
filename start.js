@@ -10,6 +10,9 @@ const cp = exec(`bfast fs serve --port 3010`, {
         PORT: "3010",
         LOGS: '1',
         PRODUCTION: "1",
+        RSA_KEY: __dirname + '/rsakey.local.json',
+        RSA_PUBLIC_KEY: __dirname + '/rsapub.local.json',
+        TAARIFA_TOKEN: 'abc'
         // S3_BUCKET: "bfast-cloud",
         // S3_ACCESS_KEY: "",
         // S3_SECRET_KEY: "",

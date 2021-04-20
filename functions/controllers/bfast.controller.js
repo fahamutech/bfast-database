@@ -12,6 +12,8 @@ class BfastController {
      * port: (string|string),
      * applicationId: string,
      * projectId: string,
+     * rsaKeyPairInJson: *,
+     * rsaPublicKeyInJson: *,
      * logs: boolean,
      * taarifaToken: string
      * }}
@@ -65,6 +67,8 @@ class BfastController {
             port: port ? port : '3000',
             taarifaToken: envUtil.getEnv(process.env.TAARIFA_TOKEN),
             mongoDbUri: envUtil.getEnv(process.env.MONGO_URL),
+            rsaKeyPairInJson: envUtil.getEnv(process.env.RSA_KEY),
+            rsaPublicKeyInJson: envUtil.getEnv(process.env.RSA_PUBLIC_KEY),
             adapters: {
                 s3Storage: isS3Configured ? {
                     bucket: s3Bucket,

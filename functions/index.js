@@ -5,7 +5,6 @@ const {WebServices, BfastDatabaseCore} = require('bfast-database-core');
 const bfastController = new BfastController();
 
 const config = bfastController.getBFastDatabaseConfigs();
-
 /**
  *
  * @type {WebServices}
@@ -16,6 +15,8 @@ const webServices = new BfastDatabaseCore().init({
     logs: config.logs,
     masterKey: config.masterKey,
     mongoDbUri: config.mongoDbUri,
+    rsaKeyPairInJson: config.rsaKeyPairInJson,
+    rsaPublicKeyInJson: config.rsaPublicKeyInJson,
     port: config.port,
     adapters: {
         s3Storage: config.adapters.s3Storage,
@@ -26,6 +27,7 @@ const webServices = new BfastDatabaseCore().init({
 });
 
 exports.rules = webServices.rest().rules;
+exports.authjwk = webServices.rest().jwk;
 
 exports.changes = webServices.realtime(
     {
