@@ -5,6 +5,17 @@ const {WebServices, BfastDatabaseCore} = require('bfast-database-core');
 const bfastController = new BfastController();
 
 const config = bfastController.getBFastDatabaseConfigs();
+bfast.init({
+    applicationId: config.applicationId,
+    projectId: config.projectId,
+    appPassword: config.masterKey
+});
+
+bfast.init({
+    applicationId: 'fahamutaarifa',
+    projectId: 'fahamutaarifa'
+}, 'fahamutaarifa');
+
 /**
  *
  * @type {WebServices}
@@ -39,14 +50,3 @@ exports.changes = webServices.realtime(
 for (const api of Object.keys(webServices.storage())) {
     exports[api] = webServices.storage()[api];
 }
-
-bfast.init({
-    applicationId: config.applicationId,
-    projectId: config.projectId,
-    appPassword: config.masterKey
-});
-
-bfast.init({
-    applicationId: 'fahamutaarifa',
-    projectId: 'fahamutaarifa'
-}, 'fahamutaarifa');
