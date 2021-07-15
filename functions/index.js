@@ -5,7 +5,7 @@ const {WebServices, BfastDatabaseCore} = require('bfast-database-core');
 const bfastController = new BfastController();
 
 const config = bfastController.getBFastDatabaseConfigs();
-console.log(config);
+// console.log(config);
 bfast.init({
     applicationId: config.applicationId,
     projectId: config.projectId,
