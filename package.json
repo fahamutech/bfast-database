@@ -1,13 +1,15 @@
 {
   "name": "bfast-database",
-  "version": "2.2.0-alpha.0",
+  "version": "2.2.0-alpha.1",
   "main": "functions/index.js",
   "author": {
     "email": "mama27j@gmail.com",
     "name": "Joshua Mshana",
     "url": "https://github.com/joshuamshana"
   },
-  "maintainers": ["FahamuTech(https://github.com/fahamutech)"],
+  "maintainers": [
+    "FahamuTech(https://github.com/fahamutech)"
+  ],
   "repository": "https://github.com/fahamutech/bfast-database",
   "scripts": {
     "test": "echo \"no test\"",
@@ -18,8 +20,8 @@
     "bfast-database-core"
   ],
   "dependencies": {
-    "bfast-database-core": "^0.1.1-alpha.5",
-    "bfastnode": "^4.5.0"
+    "bfast-database-core": "~0.1.1-alpha.5",
+    "bfastnode": "~4.5.0"
   },
   "private": false,
   "devDependencies": {
