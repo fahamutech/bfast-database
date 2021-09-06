@@ -1,6 +1,6 @@
 {
   "name": "bfast-database",
-  "version": "2.2.0-alpha.15",
+  "version": "2.2.1",
   "main": "functions/index.js",
   "author": {
     "email": "mama27j@gmail.com",
