@@ -18,22 +18,11 @@ bfast.init({
  *
  * @type {WebServices}
  */
-const webServices = new BfastDatabaseCore().init({
-    applicationId: config.applicationId,
-    projectId: config.projectId,
-    logs: config.logs,
-    masterKey: config.masterKey,
-    mongoDbUri: config.mongoDbUri,
-    rsaKeyPairInJson: config.rsaKeyPairInJson,
-    rsaPublicKeyInJson: config.rsaPublicKeyInJson,
-    port: config.port,
-    adapters: {
-        s3Storage: config.adapters.s3Storage,
-        email: config1 => {
-            return new MailController(config1);
-        }
-    }
-});
+
+config.adapters.email = (c) => {
+    return new MailController(c);
+}
+const webServices = new BfastDatabaseCore().init(config);
 
 exports.rules = webServices.rest().rules;
 exports.authjwk = webServices.rest().jwk;
