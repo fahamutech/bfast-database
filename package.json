@@ -1,6 +1,6 @@
 {
   "name": "bfast-database",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "main": "functions/index.js",
   "author": {
     "email": "mama27j@gmail.com",
@@ -15,7 +15,7 @@
     "test": "echo \"no test\"",
     "start:dev": "node start.js"
   },
-  "bundleDependencies": [
+  "bundledDependencies": [
     "bfast",
     "bfast-database-core"
   ],
