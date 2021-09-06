@@ -23,6 +23,8 @@ jobs:
       - name: install, build, and test
         run: |
           npm config set //registry.npmjs.org/:_authToken="${NPM_TOKEN}"
+          npm i -g npm
+          npm install
           npm publish
         env:
           CI: true
