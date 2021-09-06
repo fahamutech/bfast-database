@@ -1,11 +1,8 @@
 const {MailController} = require("./controllers/mail.controller");
-const {bfast} = require("bfastnode");
-const {BfastController} = require("./controllers/bfast.controller");
+const bfast = require("bfast");
 const {WebServices, BfastDatabaseCore} = require('bfast-database-core');
-const bfastController = new BfastController();
+const {config} = require("./controllers/bfast.controller");
 
-const config = bfastController.getBFastDatabaseConfigs();
-// console.log(config);
 bfast.init({
     applicationId: config.applicationId,
     projectId: config.projectId,

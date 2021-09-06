@@ -1,4 +1,4 @@
-const {bfast} = require("bfastnode");
+const bfast = require("bfast");
 const {EmailAdapter} = require("bfast-database-core");
 
 class MailController extends EmailAdapter {
