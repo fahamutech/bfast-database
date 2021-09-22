@@ -26,13 +26,14 @@ const webServices = new BfastDatabaseCore().init(config);
 
 exports.rules = webServices.rest().rules;
 exports.authjwk = webServices.rest().jwk;
-
-exports.changes = webServices.realtime(
+const realtime = webServices.realtime(
     {
         applicationId: config.applicationId,
         masterKey: config.masterKey
     }
-).changes;
+)
+exports.changes = realtime.changes;
+exports.syncs = realtime.syncs;
 
 for (const api of Object.keys(webServices.storage())) {
     exports[api] = webServices.storage()[api];
