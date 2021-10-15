@@ -1,10 +1,8 @@
 const {functions} = require("bfast");
-const {EmailAdapter} = require("bfast-database-core");
 
-class MailController extends EmailAdapter {
+class MailController {
 
     constructor(config) {
-        super();
         /**
          *
          * @type {{taarifaToken: string}}

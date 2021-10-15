@@ -1,7 +1,7 @@
-const {MailController} = require("./controllers/mail.controller");
+// const {MailController} = require("./controllers/mail.controller");
 const bfast = require("bfast");
-const {WebServices, BfastDatabaseCore} = require('bfast-database-core');
 const {config} = require("./controllers/bfast.controller");
+const {initialize} = require("bfast-database-core");
 
 bfast.init({
     applicationId: config.applicationId,
@@ -14,15 +14,10 @@ bfast.init({
     projectId: 'fahamutaarifa'
 }, 'fahamutaarifa');
 
-/**
- *
- * @type {WebServices}
- */
-
-config.adapters.email = (c) => {
-    return new MailController(c);
-}
-const webServices = new BfastDatabaseCore().init(config);
+// config.adapters.email = (c) => {
+//     return new MailController(c);
+// }
+const webServices = initialize(config);
 
 exports.rules = webServices.rest().rules;
 exports.authjwk = webServices.rest().jwk;
@@ -33,7 +28,6 @@ const realtime = webServices.realtime(
     }
 )
 exports.changes = realtime.changes;
-exports.syncs = realtime.syncs;
 
 for (const api of Object.keys(webServices.storage())) {
     exports[api] = webServices.storage()[api];
