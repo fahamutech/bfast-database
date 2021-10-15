@@ -1,6 +1,6 @@
 {
   "name": "bfast-database",
-  "version": "3.2.7",
+  "version": "3.2.8",
   "main": "functions/index.js",
   "author": {
     "email": "mama27j@gmail.com",
@@ -20,8 +20,8 @@
     "bfast-database-core"
   ],
   "dependencies": {
-    "bfast-database-core": "~2.1.10",
-    "bfast": "~5.4.3"
+    "bfast-database-core": "~2.2.0-alpha.0",
+    "bfast": "~5.4.15"
   },
   "private": false,
   "devDependencies": {
