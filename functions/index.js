@@ -1,4 +1,3 @@
-// const {MailController} = require("./controllers/mail.controller");
 const bfast = require("bfast");
 const {config} = require("./controllers/bfast.controller");
 const {initialize} = require("bfast-database-core");
@@ -29,6 +28,21 @@ const realtime = webServices.realtime(
 )
 exports.changes = realtime.changes;
 
-for (const api of Object.keys(webServices.storage())) {
-    exports[api] = webServices.storage()[api];
-}
+// for (const api of Object.keys(webServices.storage())) {
+//     exports[api] = webServices.storage()[api];
+// }
+module.exports.fileUploadApi = webServices.storage().fileUploadApi;
+module.exports.fileListApi = webServices.storage().fileListApi;
+module.exports.fileThumbnailV2Api = webServices.storage().fileThumbnailV2Api;
+module.exports.fileThumbnailApi = webServices.storage().fileThumbnailApi;
+module.exports.fileV2Api = webServices.storage().fileV2Api;
+module.exports.fileApi = webServices.storage().fileApi;
+module.exports.getUploadFileV2 = webServices.storage().getUploadFileV2;
+
+
+
+
+
+
+
+
