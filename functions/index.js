@@ -28,9 +28,7 @@ const realtime = webServices.realtime(
 )
 exports.changes = realtime.changes;
 
-// for (const api of Object.keys(webServices.storage())) {
-//     exports[api] = webServices.storage()[api];
-// }
+
 module.exports.fileUploadApi = webServices.storage().fileUploadApi;
 module.exports.fileListApi = webServices.storage().fileListApi;
 module.exports.fileThumbnailV2Api = webServices.storage().fileThumbnailV2Api;
