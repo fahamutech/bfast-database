@@ -15,3 +15,4 @@ db.env.txt
 bfast-database-*
 rsakey.local.json
 rsapub.local.json
+specs/index.js
