@@ -1,9 +1,9 @@
-name: publish to npm
+name: publish to npm@latest
 
 on:
   release:
     types:
-      - published
+      - released
 
 jobs:
   build:
