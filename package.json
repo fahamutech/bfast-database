@@ -1,7 +1,7 @@
 {
   "name": "bfast-database",
-  "version": "4.0.0-beta.0",
-  "main": "functions/index.js",
+  "version": "4.0.0-beta.1",
+  "main": "functions/index.mjs",
   "author": {
     "email": "mama27j@gmail.com",
     "name": "Joshua Mshana",
@@ -20,12 +20,11 @@
     "bfast-database-core"
   ],
   "dependencies": {
-    "bfast-database-core": "~4.0.0-alpha.1",
-    "bfast": "~6.0.0-alpha.18"
+    "bfast-database-core": "~4.0.0-alpha.17",
+    "bfast": "~6.0.1"
   },
   "private": false,
   "devDependencies": {
-    "bfast-function": "~2.0.0-alpha.9",
-    "keypairs": "~1.2.14"
+    "bfast-function": "~2.0.0-alpha.9"
   }
 }

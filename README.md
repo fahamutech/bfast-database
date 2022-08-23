@@ -58,17 +58,17 @@ Mandatory envs
       - APPLICATION_ID=bfast // supply appId the default or when PRODUCTION === '0' is [ bfast ]
       - MASTER_KEY=bfast // your master key default or when PRODUCTION === '0' is [ bfast ]
       - PROJECT_ID=bfast // your projectId default or when PRODUCTION === '0' is [ bfast ] 
-      - MONGO_URL="mongodb://localhost/test"// mongodb url to save your data, if in development mode and you don't supply it default is [ 'mongodb://localhost/bfast' ]
+      - DATABASE_URI="mongodb://localhost/test"// mongodb url to save your data, if in development mode and you don't supply it default is [ 'mongodb://localhost/bfast' ]
       - PORT=3000 // port to serve bfast-database if you use bfast-tools it will pick the port you specify with --port or 3000 as default
       - RSA_KEY='{..}' // stringfy JSON of your rsa private key for signed jwt
       - RSA_PUBLIC_KEY='{..}' // stringfy of your rsa public key for signed jwt
 
 Optional envs
 
-
       - PRODUCTION="0" // specify whether you run in production or developement mode when '0' is dev and '1' is production, default value is [ '0' ]
 
-Storage if you want to use amazon s3 object storage, you must supply its configurations as follows. If not bfast-database will use gridfs api of mongodb
+Storage if you want to use amazon s3 object storage, you must supply its configurations as follows. If not
+bfast-database will use gridfs api of mongodb
 
       - S3_BUCKET= // you s3 bucket name for aws storage 
       - S3_ACCESS_KEY= // you s3 access key for aws storage 
@@ -80,26 +80,31 @@ Storage if you want to use GridFs when do not supply any of s3 configuration whe
 opt to use GridFs.
 
 ## Example [ For Linux Users ]
+
 Pull the repository `git clone https://github.com/fahamutech/bfast-database`.
 
 Then run `start.js` file, just replace the env variable of your choice.
 
         $ node start.js
 
-That's it. For documentation refer to  [bfast-database-core](https://github.com/fahamutech/bfast-database-core) repository
-
+That's it. For documentation refer to  [bfast-database-core](https://github.com/fahamutech/bfast-database-core)
+repository
 
 # Documentations
 
 # BfastDatabase Engine
 
-Database as a service application to work with mongoDb as a primary and with any other database engine in future
+Database as a service application to work with mongoDb as a primary or any other database.
 
 ## 1.0 Introduction
 
-Backend application written to act upon a database to respond to user actions on the client side. Those services exposed to RESTful API mostly and sometimes to remember all the endpoints of a service become a challenge.
+Backend application written to act upon a database to respond to user actions on the client side.
+Those services exposed to REST API mostly and sometimes to remember all the endpoints of a service become a
+challenge.
 
-Also we write an application on top of a database inorder to sanitize or validate data. We try to save and apply some validation to data to check if they pass some certain criteria and if a user is authorized to perform that activity.
+Also, we write an application on top of a database inorder to sanitize or validate data.
+We try to save and apply some validation to data to check if they pass some certain criteria
+and if a user is authorized to perform that activity.
 
 This tool account for those issues with the following advantages:
 
@@ -110,190 +115,12 @@ This tool account for those issues with the following advantages:
 5. Work with unstructured data like files(e.g images)
 6. Query in sync ( return only data that do not exist on local machine )  mode and save bandwidth costs.
 
-Since it uses a single point for entry point we need an expressive rule to explain CRUD operation. Expressive rule will be transferred as JSON from client to server and server will respond with the respective JSON
-
-##
-
-
-## 1.1 Configurations
-
-**BfastDatabase** must be initialized with some configuration to make it flexible according to environment or requirements. To initialize a bfastdatabase instance run the following
-
-```typescript
-const {WebServices, BfastDatabaseCore} = require ('bfast-database-core');
-
-const webServices = new BfastDatabaseCore().init({
-    applicationId: 'your app id', // and identifier,
-    projectId: 'your project id', // any identifier,
-    logs: '0', //  either 1 or 0, to show or not respective,
-    masterKey: '8y87yiu', // any string, to be used by administrative operation only,
-    mongoDbUri: 'mongodb://localhost/test', // mongodb database url,
-    rsaKeyPairInJson: {..}, // rsa private key in json,
-    rsaPublicKeyInJson: {..}, // rsa public key in json,
-    port: '3000', // port to that your http server will listen to,
-    adapters: {
-        s3Storage: {..}, // s3 configuration or null for defaut mongodb gridfs api, 
-        email: (c: BFastDatabaseOptions)=> new EmailAdapterImplementation(), //  your deafult email implementation
-        database: (config: BFastDatabaseOptions) => new DatabaseAdapterImplementation(),
-        auth: (config: BFastDatabaseOptions) => new AuthAdapterImplementation(),
-    }
-});
-
-// Full bfast-database options is described by the follwing interface
-
-export interface BFastDatabaseOptions {
-  port?: string;
-  masterKey?: string;
-  applicationId?: string;
-  projectId?: string;
-  logs?: boolean,
-  mongoDbUri?: string;
-  taarifaToken?: string;
-  rsaKeyPairInJson: any,
-  rsaPublicKeyInJson: any,
-  adapters?: {
-    database?: (config: BFastDatabaseOptions) => DatabaseAdapter;
-    auth?: (config: BFastDatabaseOptions) => AuthAdapter;
-    email?: (config: BFastDatabaseOptions) => EmailAdapter;
-    s3Storage?: {
-      accessKey: string;
-      bucket: string;
-      direct: boolean;
-      endPoint: string;
-      prefix?: string;
-      region?: string;
-      useSSL?: boolean;
-      port?: null;
-      secretKey: string;
-    } | undefined;
-  };
-}
-
-// Adapters to implements
-
-export abstract class AuthAdapter {
-  abstract signUp<T extends BasicUserAttributesModel>(userModel: T, context?: ContextBlock): Promise<T>;
-
-  abstract signIn<T extends BasicUserAttributesModel>(userModel: T, context?: ContextBlock): Promise<T>;
-
-  abstract resetPassword(email: string, context?: ContextBlock): Promise<any>;
-
-  abstract updatePassword(password: string, context?: ContextBlock): Promise<any>;
-
-  abstract deleteUser(context?: ContextBlock): Promise<any>;
-
-  abstract update<T extends BasicUserAttributesModel>(userModel: T, context?: ContextBlock): Promise<T>;
-
-  abstract sendVerificationEmail(email: string, context?: ContextBlock): Promise<any>;
-}
-
-export abstract class EmailAdapter {
-  abstract sendMail(mailModel: MailModel): Promise<any>;
-}
-
-export abstract class DatabaseAdapter {
-
-    /**
-     * initialize some database pre operation like indexes
-     */
-    abstract init(): Promise<any>;
-
-    /**
-     * return promise which resolve to string which is id of a created document
-     * @param domain - {string} a domain/table/collection to work with
-     * @param data - {Object} a map of the data to write to bfast::database
-     * @param context - {ContextBlock} current operation context
-     * @param options - {DatabaseWriteOptions} bfast::database write operation
-     * @return Promise resolve with an id of the record created in bfast::database
-     */
-    abstract writeOne<T extends BasicAttributesModel>(domain: string, data: T, context: ContextBlock, options?: DatabaseWriteOptions): Promise<any>;
-
-    /**
-     * return promise which resolve to object of ids of a created documents
-     * @param domain - {string}
-     * @param data - {Array<any>}
-     * @param context - {ContextBlock}
-     * @param options - {Data}
-     */
-    abstract writeMany<T extends BasicAttributesModel, V>(domain: string, data: T[], context: ContextBlock, options?: DatabaseWriteOptions)
-        : Promise<V>;
-
-    abstract update<T extends BasicAttributesModel, V>(domain: string, updateModel: UpdateRuleRequestModel, context: ContextBlock,
-                                                       options?: DatabaseUpdateOptions): Promise<V>;
-
-    abstract deleteOne<T extends BasicAttributesModel, V>(domain: string, deleteModel: DeleteModel<T>, context: ContextBlock,
-                                                          options?: DatabaseBasicOptions): Promise<V>;
-
-    /**
-     * find a single record from a bfast::database
-     * @param domain - {string} a domain/table/collection to work with
-     * @param queryModel - {QueryModel}  a map which represent a desired data to return
-     * @param context - {ContextBlock} current operation context
-     * @param options - {DatabaseWriteOptions} bfast::database write operation
-     */
-    abstract findOne<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>, context: ContextBlock,
-                                                     options?: DatabaseWriteOptions): Promise<any>;
-
-    /**
-     * Query a database to find a result depend on the queryModel supplied
-     * @param domain - {string} a domain/table/collection to work with
-     * @param queryModel - {QueryModel} a map which represent a required data from bfast::database
-     * @param context - {ContextBlock} current operation context
-     * @param options - {DatabaseWriteOptions} bfast::database write options
-     */
-    abstract query<T extends BasicAttributesModel>(domain: string, queryModel: QueryModel<T>, context: ContextBlock,
-                                                   options?: DatabaseWriteOptions): Promise<any>;
-
-    abstract changes(domain: string, pipeline: object[], listener: (doc: any) => void, resumeToken: string): Promise<any>;
-
-    abstract transaction(operations: (session) => Promise<any>): Promise<any>;
-
-    abstract createIndexes(domain: string, indexes: any[]): Promise<any>;
-
-    abstract dropIndexes(domain: string): Promise<boolean>;
-
-    abstract listIndexes(domain: string): Promise<any>;
-
-    abstract aggregate(domain: string, pipelines: object[], context: ContextBlock, options?: DatabaseWriteOptions): Promise<any[]>;
-}
-
-export interface DatabaseWriteOptions extends DatabaseBasicOptions {
-    indexes?: {
-        field?: string,
-        unique?: boolean,
-        collation?: { locale: string, strength: number },
-        expireAfterSeconds?: number;
-    }[];
-}
-
-export interface DatabaseChangesOptions extends DatabaseWriteOptions{
-    resumeToken?: string;
-}
-
-export interface DatabaseUpdateOptions extends DatabaseBasicOptions {
-    indexes?: {
-        field?: string;
-        unique?: boolean;
-        collation?: { locale: string, strength: number };
-        expireAfterSeconds?: number;
-    }[];
-    dbOptions?: { [key: string]: any }
-}
-
-export interface DatabaseBasicOptions {
-    bypassDomainVerification: boolean;
-    transaction?: any;
-}
-
-```
-
-`BfastDatabaseCore().init({..})` return `WebServices` which contain bfast-functions endpoint 
-to expose them for bfast-functions to register them and expose for http server, jobs and events.
-
+Since it uses a single point for entry point we need an expressive rule to explain CRUD operation. Expressive rule will
+be transferred as JSON from client to server and server will respond with the respective JSON
 
 ## 1.2 HTTP Endpoint
 
-Server must listen to one endpoint by default is **/** , All Requests will be handled by **POST**
+Server must listen to one endpoint by default is **/v2** , All Requests will be handled by **POST**
 http method. Each request must contain the following header. JSON is used for send and receive messages.
 
 ```json
@@ -305,151 +132,154 @@ http method. Each request must contain the following header. JSON is used for se
 ## 1.3 Errors
 
 During checking and establishing a connection to start executing rules errors will return as normal
-HTTP response bodies. When any of the rules result in error that rule value will be null and 
-its error as object will be included in the **errors** block of the returned data. For example when 
+HTTP response bodies. When any of the rules result in error that rule value will be null and
+its error as object will be included in the **errors** block of the returned data. For example when
 we create **User** and **Post** on the same request and **Post** fails this is the error.
 
 ```json
 
 {
-    "createUser": {
-        "id":"89695uiu8",
-        "createdAt": "2020-02-01 67:89:12 GMT3+"
-    },
-    "errors": {
-        "create.Post":{
-             "message":"Post not created because of duplication"
-         }
+  "createUser": {
+    "id": "89695uiu8",
+    "createdAt": "2020-02-01 67:89:12 GMT3+"
+  },
+  "errors": {
+    "create.Post": {
+      "message": "Post not created because of duplication"
     }
+  }
 }
 ```
 
 ##
 
-
 ## 2.0 CRUD Rules
 
-Crud operation must be mapped to specific rules for the endpoint to understand and react to specific actions based on a rule.
+Crud operation must be mapped to specific rules for the endpoint to understand and react to specific actions
+based on a rule.
 
 ## 2.1 Common rules
 
-  - Each table/domain/collection must have common attributes which are
+- Each table/domain/collection must have common attributes which are
     - **\_id: string** -> This must be mapped to **id.**
-    - **\_created\_by: string** -> this mapped to **createdBy.** Which is the id of the user who created that entry to a Domain/Table/Collection.
+    - **\_created\_by: string** -> this mapped to **createdBy.** Which is the id of the user who created that entry to a
+      Domain/Table/Collection.
     - **\_created\_at: Date** -> this must be mapped to **createdAt.**
     - **\_updated\_at: Date** -> this must be mapped to **updatedAt.**
 
-  - JSON sent to the server from the client its root must be **{ }** and on top level fields can include the following.
-    - **Token: string** -> which will be used for authorization operation to determine user permission if resource is protected
+- JSON sent to the server from the client its root must be **{ }** and on top level fields can include the following.
+    - **Token: string** -> which will be used for authorization operation to determine user permission if resource is
+      protected
 
   ```json
     {
-        
-        "token": "6547fjhfiyr8r"
-    
-    }
+  "token": "6547fjhfiyr8r"
+
+}
+
 ```
 
     - **applicationId: string** -> this is a mandatory field for every request
+
 ```json
 {
-
- "applicationId": <your-application-id-used-to-start-a-server>
-
+  "applicationId": <your-application-id-used-to-start-a-server>
 }
 ```
 
     - **masterKey: string** -> this is optional field
 
 You can use this to override any rule and perform admin level activities
+
 ```json
 {
-    
-"masterKey": "654778757bjbo987t876fjhfiyr8r"
-
+  "masterKey": "654778757bjbo987t876fjhfiyr8r"
 }
 ```
 
-**NOTE:** By default a server will not return all attributes when create, update or query but you can override that behavior by set **return: []** as its uses will be described in this document. **return** is a reserved keyword must not be used in as a field or a column in a data you want to save.
+**NOTE:** By default a server will not return all attributes when create, update or query but you can override that
+behavior by set **return: []** as its uses will be described in this document. **return** is a reserved keyword must not
+be used in as a field or a column in a data you want to save.
 
-When a server successfully serves your request you specify in a rule the response will be available in nameSpace of your rule. Example **createUser** shall return **createUser** with your created User.
+When a server successfully serves your request you specify in a rule the response will be available in nameSpace of your
+rule. Example **createUser** shall return **createUser** with your created User.
 
 ## 2.2 Create Domain/Table/Collection
 
-To specify a create/save operation a JSON field must start with a word **create** then followed by a Domain/Table/Collection name to write data to e.g **createUser** means add new entry to domain/table/collection called **User** in database and data to save must be the value of **create${domain}** field. The word after **create** must be of any length and cases ideally but following CamelCase will be good for readable code. Examples of create operation will be as follows.
+To specify a create/save operation a JSON field must start with a word **create** then followed by a
+Domain/Table/Collection name to write data to e.g **createUser** means add new entry to domain/table/collection
+called **User** in database and data to save must be the value of **create${domain}** field. The word after **create**
+must be of any length and cases ideally but following CamelCase will be good for readable code. Examples of create
+operation will be as follows.
 
 ```json
 {
-    "token:"annaa",
-    "applicationId: "abs",
-    "createUser": {
-        "name": "John",
-        "age": 30
-    }
+  "applicationId": "abs",
+  "createUser": {
+    "name": "John",
+    "age": 30
+  }
 }
 ```
 
-**token** is optional. That rule means adding a new entry to the domain/table called **User** put **name=John** and **age=30**. Return **id** of created data.
+That rule means adding a new entry to the domain/table called **User** put **name=John** and **age=30**.
+Return **id** of created data.
 
 ```json
 {
-    "createUser":{
-        "id": "6657jg878",
-    }
+  "createUser": {
+    "id": "6657jg878"
+  }
 }
 ```
 
-To add many products we just send arrays
+To add many data we just send arrays
 
 ```json
 {
-    "applicationId": "6547fjhfiyr8r",
-    "createUser": [
-        {
-            "name": "John",
-            "age": 30
-        },
-        {
-            "name": "Doe",
-            "age": 12,
-            "h": 100
-        }
-    ]
+  "applicationId": "6547fjhfiyr8r",
+  "createUser": [
+    {
+      "name": "John",
+      "age": 30
+    },
+    {
+      "name": "Doe",
+      "age": 12,
+      "h": 100
+    }
+  ]
 }
 ```
 
 Response should be like.
+
 ```json
 {
-
-    "createUser":[
-        {
-            "id": "6657jg878",
-        },
-        {
-            "id": "op65AWjg8",
-        }
-    ]
+  "createUser": [
+    {
+      "id": "6657jg878"
+    },
+    {
+      "id": "op65AWjg8"
+    }
+  ]
 }
 ```
 
-In the **create** rule it returns **id** if you want more than one field to return you must specify those fields with the field **return** which is an array of extra fields you want to return. For example,
+In the **create** rule it returns **id** if you want more than one field to return you must specify those fields
+with the field **return** which is an array of extra fields you want to return. For example,
 
 ```json
 {
-
-"token": "6547fjhfiyr8r",
-
-"createUser": {
-
-"name": "John",
-
-"age": 30,
-
-"return": ["age","name"]
-
-}
-
+  "createUser": {
+    "name": "John",
+    "age": 30,
+    "return": [
+      "age",
+      "name"
+    ]
+  }
 }
 ```
 
@@ -457,211 +287,188 @@ Now the server will respond with the extra field you specify.
 
 ```json
 {
-
-"createUser":{
-
-"id": "6657jg878",
-
-"name": "John",
-
-"age": 30,
-
-}
-
+  "createUser": {
+    "id": "6657jg878",
+    "name": "John",
+    "age": 30
+  }
 }
 ```
-If return is empty array like **return: []** server will return all data of that document
 
+If return is empty array like **return: []** server will return all data of that document
 
 ## 2.3 Read/Query Domain/Table/Collection
 
-To get or query domain/table/collection a JSON field for that must start with a word **query** then followed by a Domain/Table/Collection name to query to e.g **queryUser** means find user(s) to domain/table/collection called **User** in database and format is **query${domain}**. The word after **query** must be of any length and cases ideally but following CamelCase will be good for readable code.
+To get or query domain/table/collection a JSON field for that must start with a word **query** then followed by a
+Domain/Table/Collection name to query to e.g **queryUser** means find user(s) to domain/table/collection called **User**
+in database and format is **query${domain}**. The word after **query** must be of any length and cases ideally but
+following CamelCase will be good for readable code.
 
 **query${domain}** rule block has a default field which you can use to shape your query. Those fields are as follows.
 
 - **skip: number** -> specify data to skip, default is **0.**
-- **size: number** -> specify number of data to return, default is **20.** If value is negative means you need all the documents to be returned
-- **count: boolean** -> you can count the results of a query to return a number of documents if set to true default value is false.
-- **orderBy: Array<{[field]:orderNumber}>** -> specify array of fields to order by. orderNumber can be 1 for ascending or -1 for descending. Field is the column we orderBy.
-- **last: number** -> this will return the number of data you specify from last of results.
-- **first: number** -> this will return the number of data you specify from the beginning of results.
+- **size: number** -> specify number of data to return, default is **20.** If value is negative means you need all the
+  documents to be returned
+- **count: boolean** -> you can count the results of a query to return a number of documents if set to true default
+  value is false.
+- **orderBy: Array<{[field]:orderNumber}>** -> specify array of fields to order by. orderNumber can be 1 for ascending
+  or -1 for descending. Field is the column we orderBy.
 - **filter: FilterModel** -> this is your query filter you send to server default is **{}** if not specified
-- **return: Array<string>** -> if not specified default is **[]** and will return only **id.** Either you specify or not **id** return id data match your query found.
-- **id: string** -> if this field present will ignore all other values except **return** and will return that specific data or **null** if not found
-- **hashes** -> List of sha1 of data that i have as a result of this operation and will return only changed data with or withouth the given hashes. If given hash exist in a result the hash will be returned if not the hash will be removed from list.If not specified default is [], 
-
-**\*NOTE\*** -> **FilterModel** needs more discussion to find a format of a query to be sent to the server.
+- **return: Array<string>** -> if not specified default is **[]** and will return only **id.** Either you specify or
+  not **id** return id data match your query found.
+- **id: string** -> if this field present will ignore all other values except **return** and will return that specific
+  data or **null** if not found
 
 Examples of query operation will be as follows.
 
 ### 2.3.1 Basic Query
 
-Following example will return all users if exist or **[]** if no data exist, default return field is **id.** Since we do not specify any return fields
+Following example will return all users if exist or **[]** if no data exist,
+default return field is **id.** Since we do not specify any return fields
 
+```json
 {
-
-"token": "6547fjhfiyr8r",
-
-"queryUser": {}
-
+  "queryUser": {}
 }
+```
 
 Response from server will be like this:
 
+```json
 {
+  "queryUser": [
+    {
+      "id": "op65AWjg8"
+    },
+    {
+      "id": "12sdAWj"
+    }
+  ]
+}
+```
 
-"queryUser": [
+### 2.3.2 Query By I'd
 
+```json
 {
-
-"id":"op65AWjg8"
-
-},
-
-{
-
-"id":"12sdAWj"
-
+  "queryUser": {
+    "id": "op65AWjg8",
+    "return": [
+      "name",
+      "age"
+    ]
+  }
 }
-
-]
-
-}
-
-### 2.3.2 Query By Id
-
-{
-
-"token": "6547fjhfiyr8r",
-
-"queryUser": {
-
-"id":"op65AWjg8",
-
-"return":["name","age"]
-
-}
-
-}
+```
 
 Response from the server will be as follows.
 
+```json
 {
-
-"queryUser": {
-
-"id":"op65AWjg8",
-
-"name": "John",
-
-"age": 30
-
+  "queryUser": {
+    "id": "op65AWjg8",
+    "name": "John",
+    "age": 30
+  }
 }
-
-}
+```
 
 ### 2.3.3 Query By Filter
 
+```json
 {
-
-"queryUser": {
-
-"filter":{
-
-"name":"John"
-
-},
-
-"return":["age"]
-
+  "queryUser": {
+    "filter": {
+      "name": "John"
+    },
+    "return": [
+      "age"
+    ]
+  }
 }
-
-}
+```
 
 Response from the server will be as follows.
 
+```json
 {
-
-"queryUser": [
-
-{
-
-"id":"op65AWjg8",
-
-"age":30
-
+  "queryUser": [
+    {
+      "id": "op65AWjg8",
+      "age": 30
+    }
+  ]
 }
-
-]
-
-}
+```
 
 ### 2.3.4 Count
 
 You can count the result of a query filter and return the total number of matched objects.
 
+```json
 {
-
-"queryUser": {
-
-"filter":{
-
-"name":"John"
-
-},
-
-"count": true
-
+  "queryUser": {
+    "filter": {
+      "name": "John"
+    },
+    "count": true
+  }
 }
-
-}
+```
 
 Response from server will be like the following
 
+```json
 {
-
-"queryUser": 1
-
+  "queryUser": 1
 }
+```
 
 ###
 
-
 ### 2.3.4 OrderBy
 
-You can order your query result by using the **orderBy** field inside the queryrule which is an array of maps containing your fields you want to orderBy. The sort map looks like this **{ <field> : number },** number can be 1 for ascending and -1 for descending. See example below.
+You can order your query result by using the **orderBy** field inside the queryrule which is an array of maps
+containing your fields you want to orderBy. The sort map looks like this **{ <field> : number },**
+number can be 1 for ascending and -1 for descending. See example below.
 
+```json
 {
-
-"applicationId": "daas",
-
-"queryProduct": {
-
-"filter": {},
-
-"orderBy": [{"name": 1}],
-
-"return": ["name"]
-
+  "applicationId": "daas",
+  "queryProduct": {
+    "filter": {},
+    "orderBy": [
+      {
+        "name": 1
+      }
+    ],
+    "return": [
+      "name"
+    ]
+  }
 }
-
-}
+```
 
 Response will be an array of the product array by names in ascending order.
 
+```json
 {
-
-"queryProduct": [
-
-{"name": "apple", "id": "y756yh-iuisyu-er56fg"}
-
-]
-
+  "queryProduct": [
+    {
+      "name": "apple",
+      "id": "y756yh-iuisyu-er56fg"
+    }
+  ]
 }
+```
 
 ## 2.4 Update Domain/Table/Collection
 
-To specify a update/patch operation a JSON field must start with a word **update** then followed by a Domain/Table/Collection name to write data to e.g **updateUser** means update entry to domain/table/collection called **User** in database and data to update must be the value of **create${domain}** field in JSON you specify. The word after **update** must be of any length and cases ideally but following CamelCase will be good for readable code.
+To specify a update/patch operation a JSON field must start with a word **update** then followed by a
+Domain/Table/Collection name to write data to e.g **updateUser** means update entry to domain/table/collection
+called **User** in database and data to update must be the value of **create${domain}** field in JSON you specify.
+The word after **update** must be of any length and cases ideally but following CamelCase will be good for readable
+code.
 
 **update${domain}** rule block has a default field which you can use to shape your update. Those fields are as follows.
 
@@ -670,180 +477,159 @@ To specify a update/patch operation a JSON field must start with a word **update
 - **skip: number** -> number of data to skip when search the match using filter
 - **id: string** -> specify id of the data you want to update if this present **filter** field will be ignored
 - **upsert: boolean** -> specify if data should be created if not present as a result of a filter, default is **false**
-- **update: UpdateModel** -> add data you want to update, if not specified default is **{ }.** UpdateModel can contain operator to modify data like insert into a list of array or update a relation
-- **return: Array<string>** -> specify additional fields to return default is **[]**. The operation will return **id** and **updatedAt** and with or without those fields you specify in the **return** field.
+- **update: UpdateModel** -> add data you want to update, if not specified default is **{ }.** UpdateModel can contain
+  operator to modify data like insert into a list of array or update a relation
+- **return: Array<string>** -> specify additional fields to return default is **[]**. The operation will return **id**
+  and **updatedAt** and with or without those fields you specify in the **return** field.
 
 ###
-
 
 ### 2.4.1 Update Many Documents Match Filter Query
 
-This operation will update all the documents that match the given filter and will return all the update documents in array.
+This operation will update all the documents that match the given filter and will return all the update documents in
+array.
 
+```json
 {
-
-"updateUser": {
-
-"filter":{
-
-"name":"John"
-
-},
-
-"update": {
-
-$set: {"name": "Josh"}
-
-},
-
-"return":["name"]
-
+  "applicationId": "test",
+  "updateUser": {
+    "filter": {
+      "name": "John"
+    },
+    "update": {
+      "$set": {
+        "name": "Josh"
+      }
+    },
+    "return": [
+      "name"
+    ]
+  }
 }
-
-}
+```
 
 Response from the server will be like the following.
 
+```json
 {
-
-"updateUser":[
-
-{
-
-"id": "98675tgu",
-
-"updatedAt": "2020-01-97 12:78:00 MT3+",
-
-"name": "Josh"
-
+  "updateUser": [
+    {
+      "id": "98675tgu",
+      "updatedAt": "2020-01-97 12:78:00 MT3+",
+      "name": "Josh"
+    }
+  ]
 }
-
-]
-
-}
+```
 
 ###
 
-
 ### 2.4.2 Update Single Document By Using Its Id
 
-If you use **id** to update a document **filter** and **upsert** field if present will be ignored and if data with that **id** is not present will return not found error 404. Examples of update requests will be as follows.
+If you use **id** to update a document **filter** and **upsert** field if present will be ignored and if data with
+that **id** is not present will return not found error 404. Examples of update requests will be as follows.
 
+```json
 {
-
-"updateUser": {
-
-"id":"98675tgu",
-
-"update": {
-
-$set: {"name": "Dzeko"}
-
-},
-
-"return":[]
-
+  "updateUser": {
+    "id": "98675tgu",
+    "update": {
+      "$set": {
+        "name": "Dzeko"
+      }
+    },
+    "return": []
+  }
 }
-
-}
+```
 
 Response from server will be as follows
 
+```json
 {
-
-"ResultOfUpdateUser":{
-
-"id": "98675tgu",
-
-"updatedAt": "2020-01-97 12:78:00 MT3+",
-
-"name": "Dzeko",
-
-"age": 30
-
+  "ResultOfUpdateUser": {
+    "id": "98675tgu",
+    "updatedAt": "2020-01-97 12:78:00 MT3+",
+    "name": "Dzeko",
+    "age": 30
+  }
 }
-
-}
+```
 
 ##
 
-
 ## 2.5Delete Domain/Table/Collection
 
-To specify a delete operation a JSON field must start with a word **delete** then followed by a Domain/Table/Collection name to delete data to e.g **deleteUser** means delete entry to domain/table/collection called **User** in database and information of entry to delete must be the value of **delete${domain}** field in JSON you specify. The word after **delete** must be of any length and cases ideally but following CamelCase will be good for readable code.
+To specify a delete operation a JSON field must start with a word **delete** then followed by a
+Domain/Table/Collection name to delete data to e.g **deleteUser** means delete entry to domain/table/collection
+called **User** in database and information of entry to delete must be the value of **delete${domain}** field in JSON
+you specify. The word after **delete** must be of any length and cases ideally but following CamelCase will be good
+for readable code.
 
-**delete${domain}** rule block has a default field which you can use to shape your delete operation. Those fields are as follows.
+**delete${domain}** rule block has a default field which you can use to shape your delete operation.
+Those fields are as follows.
 
 - **filter: FilterModel** -> delete data that match the specified filter object.
 - **id: string** -> specify **id** of the data you want to delete, if this present **filter** field will be ignored.
 
-Delete operation will return only the id of the deleted item ( s ). If delete operation fails will return with error code and message if you delete multiple documents and if a document is not deleted its id field will return null. Example of delete operation is as follows.
+Delete operation will return only the id of the deleted item ( s ). If delete operation fails will return with error
+code and message if you delete multiple documents and if a document is not deleted its id field will return null.
+Example of delete operation is as follows.
 
 ### 2.5.1 Delete Single Document By Id
 
+```json
 {
-
-"deleteUser":{
-
-"id": "98675tgu"
-
+  "deleteUser": {
+    "id": "98675tgu"
+  }
 }
-
-}
+```
 
 When user is deleted the results will be the id of the delete user
 
+```json
 {
-
-"deleteUser":{
-
-"id": "98675tgu"
-
+  "deleteUser": {
+    "id": "98675tgu"
+  }
 }
-
-}
+```
 
 ### 2.5.2 Delete MultipleDocument
 
 You can delete multiple data as follows.
 
+```json
 {
-
-"applicationId":"6878567gjh",
-
-"deleteUser":{
-
-filter: {
-
-"age": 20
-
-},
-
+  "applicationId": "test",
+  "deleteUser": {
+    "filter": {
+      "age": 20
+    }
+  }
 }
-
-}
+```
 
 The response will be the array of ids of deleted documents or null if the document is not deleted.
 
+```json
 {
-
-"deleteUser":[
-
-{
-
-"id": "98675tgu"
-
+  "deleteUser": [
+    {
+      "id": "98675tgu"
+    }
+  ]
 }
-
-]
-
-}
+```
 
 ## 3.0 Transactions
 
-Database operations sometimes need to be transactional across multiple Domain/Table/Collection so an easy way to perform transactions is needed. Transaction can be performed by issuing the Transaction Block rule.
+Database operations sometimes need to be transactional across multiple Domain/Table/Collection
+so an easy way to perform transactions is needed. Transaction can be performed by issuing the Transaction Block rule.
 
-You specify the transaction block by **transaction** keyword and the body can contain many CRUD rule blocks as explained in section 2.
+You specify the transaction block by **transaction** keyword and the body can contain many
+CRUD rule blocks as explained in section 2.
 
 Transaction block has the following field which you put all operation you want to perform
 
@@ -853,198 +639,188 @@ The result of the transaction will be a combination of individual CRUD operation
 
 Example of transaction operation is as follows.
 
+```json
 {
-
-"applicationId":"6878567gjh",
-
-"transaction":{
-
-"commit":{
-
-"createUser":{
-
-"name": "Jody"
-
-},
-
-"createPayment":{
-
-"txid": 232353535
-
+  "applicationId": "6878567gjh",
+  "transaction": {
+    "commit": {
+      "createUser": {
+        "name": "Jody"
+      },
+      "createPayment": {
+        "txid": 232353535
+      }
+    }
+  }
 }
-
-}
-
-}
-
-}
+```
 
 ## 4.0 Authentication &amp; Permission Policy
 
-Tool must provide a general authentication mechanism for grant access to users and authorization mechanism for resource consumption. Authentication use special domain name to store data which is **\_User** and Authorization it use **\_Policy**
+Tool must provide a general authentication mechanism for grant access to users and authorization mechanism for resource
+consumption. Authentication use special domain name to store data which is **\_User**
+and Authorization it uses **\_Policy**
 
 ## 4.1 Authentication
 
 You use the **auth** rule block to add new users or get access to the system. **auth** rule block fields are as follows.
 
 - **signUp: SignUpModel** -> use this field to register new users to the system.
-- **signIn: SignInModel** -> use this field for already registered users to get a temporary token to access subsequences requests.
+- **signIn: SignInModel** -> use this field for already registered users to get a temporary token to access subsequences
+  requests.
 - **reset: string** -> use this to reset a user password using a user email.
 
 ### 4.1.1 Create New User
 
-To create a new user to auth records records you must send the following JSON to server
+To create a new user to auth records you must send the following JSON to server
 
+```json
 {
-
-"applicationId":"6878567gjh",
-
-"auth":{
-
-"signUp":{
-
-"email":"eitah12@email.co",
-
-"username":"eith12",
-
-"password":"8697tgygyt78tuy",
-
-"fullName":"8an 9o0"
-
+  "applicationId": "6878567gjh",
+  "auth": {
+    "signUp": {
+      "email": "eitah12@email.co",
+      "username": "eith12",
+      "password": "8697tgygyt78tuy",
+      "fullName": "8an 9o0"
+    }
+  }
 }
-
-}
-
-}
+```
 
 Response from the server will be as follows.
 
+```json
 {
-
-"auth":{
-
-"signUp":{
-
-"email":"eitah12@email.co",
-
-"id":"eitah12968u",
-
-"username":"eith12",
-
-"token":"8697tgygyt78tuy.y78967ugkgiyu.099oyu",
-
-"createdAt":"2020-20-20 &amp;8:09:89 GMT3+",
-
-"fullName":"8an 9o0"
-
+  "auth": {
+    "signUp": {
+      "email": "eitah12@email.co",
+      "id": "eitah12968u",
+      "username": "eith12",
+      "token": "8697tgygyt78tuy.y78967ugkgiyu.099oyu",
+      "createdAt": "2020-20-20 &amp;8:09:89 GMT3+",
+      "fullName": "8an 9o0"
+    }
+  }
 }
-
-}
-
-}
+```
 
 ###
 
-
 ### 4.1.2 SignIn User
 
-After you get registered next time you need to authenticate yourself, you will send the following request to the server to perform such action.
+After you get registered next time you need to authenticate yourself, you will send the following request to the server
+to perform such action.
 
+```json
 {
-
-"auth":{
-
-"signIn":{
-
-"username":"eith12",
-
-"password":"8697tgygyt78tuy"
-
+  "auth": {
+    "signIn": {
+      "username": "eith12",
+      "password": "8697tgygyt78tuy"
+    }
+  }
 }
-
-}
-
-}
+```
 
 If user successful signIn will return the following response.
 
+```json
 {
-
-"auth":{
-
-"signIn":{
-
-"email":"eitah12@email.co",
-
-"Username":"eith12",
-
-"id":"78967gkugt",
-
-"token":"8697tgygyt78tuy.y78967ugkgiyu.099oyu",
-
-"createdAt":"2020-20-20 &amp;8:09:89 GMT3+",
-
-"fullName":"8an 9o0"
-
+  "auth": {
+    "signIn": {
+      "email": "eitah12@email.co",
+      "Username": "eith12",
+      "id": "78967gkugt",
+      "token": "8697tgygyt78tuy.y78967ugkgiyu.099oyu",
+      "createdAt": "2020-20-20 &amp;8:09:89 GMT3+",
+      "fullName": "8an 9o0"
+    }
+  }
 }
+```
 
-}
+If It fails to log in, the **signIn** field shall be null and error to be found in the errors block.
 
-}
+[//]: # (### 4.1.3 Reset Password)
 
-If It fails to login, the **signIn** field shall be null and error to be found in the errors block.
+[//]: # ()
 
-### 4.1.3 Reset Password
+[//]: # (You can reset a password of an already registered user by sending the following request to the server.)
 
-You can reset a password of an already registered user by sending the following request to the server.
+[//]: # ()
 
-{
+[//]: # ({)
 
-"auth":{
+[//]: # ()
 
-"reset":{
+[//]: # ("auth":{)
 
-"email":"eitah12@email.co"
+[//]: # ()
 
-}
+[//]: # ("reset":{)
 
-}
+[//]: # ()
 
-}
+[//]: # ("email":"eitah12@email.co")
 
-Password reset instructions will be sent to the email if it exists in database records. Server response will be as follows.
+[//]: # ()
 
-{
+[//]: # (})
 
-"auth":{
+[//]: # ()
 
-"reset": "Password recovery process sent to your email."
+[//]: # (})
 
-}
+[//]: # ()
 
-}
+[//]: # (})
+
+[//]: # ()
+
+[//]: # (Password reset instructions will be sent to the email if it exists in database records. Server response will be as follows.)
+
+[//]: # ()
+
+[//]: # ({)
+
+[//]: # ()
+
+[//]: # ("auth":{)
+
+[//]: # ()
+
+[//]: # ("reset": "Password recovery process sent to your email.")
+
+[//]: # ()
+
+[//]: # (})
+
+[//]: # ()
+
+[//]: # (})
 
 ## 4.2 Authorization
 
-Data access policy controlled by rules. You use the **policy** JSON rule block to add new rules for database access. You need **masterKey** in the top level block **{ }** to perform this action.
+Data access policy controlled by rules. You use the **policy** JSON rule block to add new rules for database access.
+You need **masterKey** in the top level block **{ }** to perform this action.
 
 ### 4.2.1 Rule format
 
-The **policy** block has the following fields, **add, remove** &amp; **list .** Rules field is an object which has the following format.
+The **policy** block has the following fields, **add, remove** &amp; **list .**
+Rules field is an object which has the following format.
 
-"add": {
-
-"<resource-operation>": "<condition>"
-
-},
-
-"list": {},
-
-"remove": {
-
-"ruleId": "<rule-id>"
-
+```json
+{
+  "add": {
+    "<resource-operation>": "<condition>"
+  },
+  "list": {},
+  "remove": {
+    "ruleId": "<rule-id>"
+  }
 }
+```
 
 **<resource-operation>** is the operation to act upon a resource, the common operation is
 
@@ -1057,17 +833,16 @@ The **policy** block has the following fields, **add, remove** &amp; **list .** 
 - **files.list**
 - **files.read**
 
-**<condition>** is the expression which evaluates to boolean either **true** or **false**. In your expression **context** is an object which will be injected, some of its properties are.
+**<condition>** is the expression which evaluates to boolean either **true** or **false**. In your expression **
+context** is an object which will be injected, some of its properties are.
 
+```json
 {
-
-"auth": boolean,
-
-"uid": string,
-
-"domain": string
-
+  "auth": boolean,
+  "uid": string,
+  "domain": string
 }
+```
 
 - **auth** -> this field will be true if the user is authenticated otherwise is false.
 - **uid** -> the user id execute the request or undefined.
@@ -1077,315 +852,266 @@ The **policy** block has the following fields, **add, remove** &amp; **list .** 
 
 When rules saved will replace any existing rules that match the new rule update. Example of adding rules.
 
+```json
 {
-
-"masterKey":"687tgjhgi78978567gjh",
-
-"applicationId":"6878567gjh",
-
-"policy":{
-
-"add": {
-
-"query.\*": "return true",
-
-"create.Product": "return false"
-
+  "masterKey": "687tgjhgi78978567gjh",
+  "applicationId": "6878567gjh",
+  "policy": {
+    "add": {
+      "query.*": "return true",
+      "create.Product": "return false"
+    }
+  }
 }
-
-}
-
-}
+```
 
 This symbol **\*** means any Domain/Table/Collection.
 
 Example of defining a javascript function is as follows.
 
+```json
 {
-
-"masterKey":"687tgjhgi78978567gjh",
-
-"applicationId":"6878567gjh",
-
-"policy":{
-
-"add": {
-
-"query.\*": `
-
-constauth===context.auth;
-
-returnauth===true;
-
-`
-
+  "masterKey": "687tgjhgi78978567gjh",
+  "applicationId": "6878567gjh",
+  "policy": {
+    "add": {
+      "query.*": "const auth===context.auth; return auth===true;"
+    }
+  }
 }
+```
 
-}
-
-}
-
-The last statement of the condition must **return boolean.** When return is **true** means request has access to that resource and if **false** means request does not have access to that resource.
+The last statement of the condition must **return boolean.** When return is **true** means request has access to that
+resource and if **false** means request does not have access to that resource.
 
 ### 4.2.3 List Rules
 
 You can list all available rules in your project as follows.
 
+```json
 {
-
-"masterKey":"687tgjhgi78978567gjh",
-
-"applicationId":"6878567gjh",
-
-"policy":{
-
-"list": {}
-
+  "masterKey": "687tgjhgi78978567gjh",
+  "applicationId": "6878567gjh",
+  "policy": {
+    "list": {}
+  }
 }
-
-}
+```
 
 The response from server will be as follows;
 
+```json
 {
-
-"policy":{
-
-"list": {
-
-"ruleId": "read.\*"
-
+  "policy": {
+    "list": {
+      "ruleId": "read.*"
+    }
+  }
 }
-
-}
-
-}
+```
 
 ### 4.2.3 Remove Rules
 
-You can remove saved policy by using **remove** rule block inside policy you will be required to supply the ruleId of the policy you remove. ruleId is equivalent to action you specify when you add a policy rule
+You can remove saved policy by using **remove** rule block inside policy you will be required to supply the ruleId of
+the policy you remove. ruleId is equivalent to action you specify when you add a policy rule
 
+```json
 {
-
-"masterKey":"687tgjhgi78978567gjh",
-
-"applicationId":"6878567gjh",
-
-"policy":{
-
-"remove": {"ruleId":"query.\*"}
-
+  "masterKey": "687tgjhgi78978567gjh",
+  "applicationId": "6878567gjh",
+  "policy": {
+    "remove": {
+      "ruleId": "query.*"
+    }
+  }
 }
-
-}
+```
 
 ## 5.0 Aggregation
 
-At some moment we want to perform aggregation of the data instead of just querying with a normal filter. The tool must provide ability to perform aggregation. You use **aggregate${Domain/Table/Collection}** to perform aggregation to a specified collection. This rule requires a **masterKey** since aggregation can alter data structure.
+At some moment we want to perform aggregation of the data instead of just querying with a normal filter. The tool must
+provide ability to perform aggregation. You use **aggregate${Domain/Table/Collection}** to perform aggregation to a
+specified collection. This rule requires a **masterKey** since aggregation can alter data structure.
 
+```json
 {
-
-"applicationId":"7867tgyujk",
-
-"masterKey": "785ghjgjfh",
-
-"aggregateTest": [
-
-{
-
-"$match": {
-
-"name": "qwerty"
-
+  "applicationId": "7867tgyujk",
+  "masterKey": "785ghjgjfh",
+  "aggregateTest": [
+    {
+      "$match": {
+        "name": "qwerty"
+      }
+    }
+  ]
 }
-
-}
-
-]
-
-}
+```
 
 If no error the result of aggregation will be found at **aggregateTest** from the JSON which returned by a server.
 
 ##
 
-
 ##
-
 
 ## 6.0 Storage
 
-Server must be able to save a simple file around **5~10 MB** and large files with **Gb** of data and retrieve those files. It has to use amazon **s3** compatible storage or **GridFS** mongoDb storage driver or a custom one as it seems fits.
+Server must be able to save a simple file around **5~10 MB** and large files with **Gb** of data and retrieve those
+files. It has to use amazon **s3** compatible storage or **GridFS** mongoDb storage driver or a custom one as it seems
+fits.
 
 ## 6.1 Base64 encode files
 
-For simple files we use rule blocks with base64 encoded. To control files you use **files** rule block, the structure of the rule is as follows.
+For simple files we use rule blocks with base64 encoded. To control files you use **files** rule block, the structure of
+the rule is as follows.
 
-- **save.filename ->** this field is any string may contain a file extension for auto content type detect, server will generate a random prefix id and append to the filename you provide so you can use the same file name multiple times and server will return a unique file name for each.
+- **save.filename ->** this field is any string may contain a file extension for auto content type detect, server will
+  generate a random prefix id and append to the filename you provide so you can use the same file name multiple times
+  and server will return a unique file name for each.
 - **save.base64 ->** the content of file to save base64 encoded or plain text
-- **save.type ->** the content-type mime of the file you save if not supplied mime will be determined from filename extension.
+- **save.type ->** the content-type mime of the file you save if not supplied mime will be determined from filename
+  extension.
 - **delete.filename ->** filename returned by server not the one you supplied.
 
+```json
 {
-
-"applicationId": string,
-
-"files": {
-
-"save": {
-
-"filename": string,
-
-"base64": string,
-
-"type": string
-
-},
-
-"delete": {
-
-"filename": string
-
+  "applicationId": string,
+  "files": {
+    "save": {
+      "filename": string,
+      "base64": string,
+      "type": string
+    },
+    "delete": {
+      "filename": string
+    }
+  }
 }
-
-}
-
-}
+```
 
 ##
-
 
 ### 6.1.1 Save File
 
 To save you send the following JSON to the server.
 
+```json
 {
-
-"applicationId": "d75ujgdkj",
-
-"files": {
-
-"save": {
-
-"filename": "hello.txt",
-
-"base64": "Helo, world!"
-
+  "applicationId": "d75ujgdkj",
+  "files": {
+    "save": {
+      "filename": "hello.txt",
+      "base64": "Helo, world!"
+    }
+  }
 }
-
-}
-
-}
+```
 
 If successfully saved, the server will return the path of the file location.
 
+```json
 {
-
-"files":{
-
-"save": "/storage/778guyg/file/d75ujgdkj/9f8875fb-4064-4d71-584a733-hello.txt"
-
+  "files": {
+    "save": "/storage/778guyg/file/d75ujgdkj/9f8875fb-4064-4d71-584a733-hello.txt"
+  }
 }
+```
 
-}
-
-Then you can append the path returned with your server host address to view the file. Or if you know the **filename** to view the file its path is **${hostname}:${port}/storage/${applicationId}/file/${filename}** e.g http://localhost:6000/storage/8767tuy/file/jgyrutiyhjfd-hello.txt
+Then you can append the path returned with your server host address to view the file. Or if you know the **filename** to
+view the file its path is **${hostname}:${port}/storage/${applicationId}/file/${filename}**
+e.g http://localhost:6000/storage/8767tuy/file/jgyrutiyhjfd-hello.txt
 
 ##
-
 
 ### 6.1.2 Delete File
 
 To delete a file you send the following JSON to the server.
 
+```json
 {
-
-"applicationId": "d75ujgdkj",
-
-"files": {
-
-"delete": {
-
-"filename": "oioyui-hjgiuguy-jkfjyfh-785ygjkh-hello.txt"
-
+  "applicationId": "d75ujgdkj",
+  "files": {
+    "delete": {
+      "filename": "oioyui-hjgiuguy-jkfjyfh-785ygjkh-hello.txt"
+    }
+  }
 }
-
-}
-
-}
+```
 
 If the file is successfully deleted, the server will return the filename which is just deleted.
 
+```json
 {
-
-"files": {
-
-"delete" : "oioyui-hjgiuguy-jkfjyfh-785ygjkh-hello.txt"
-
+  "files": {
+    "delete": "oioyui-hjgiuguy-jkfjyfh-785ygjkh-hello.txt"
+  }
 }
-
-}
+```
 
 ### 6.1.3 List Files
 
 To list your files you send the following JSON to the server.
 
+```json
 {
-
-"applicationId": "d75ujgdkj",
-
-"files": {
-
-"list": {
-
-"prefix": ""
-
+  "applicationId": "d75ujgdkj",
+  "files": {
+    "list": {
+      "prefix": ""
+    }
+  }
 }
-
-}
-
-}
+```
 
 Server will return array of file objects
 
+```json
 {
-
-"files": {
-
-"list" : [{filename: "oioyui-hjgiuguy-jkfjyfh-785ygjkh-hello.txt"}]
-
+  "files": {
+    "list": [
+      {
+        "filename": "oioyui-hjgiuguy-jkfjyfh-785ygjkh-hello.txt"
+      }
+    ]
+  }
 }
-
-}
+```
 
 ### 6.1.4 Retrieve a file
 
-When you know the filename you can get file content by using the following format **${hostname}:${port}/${your-server-endpoint}/storage/${your-application-id}/file/${filename}**. For example **https://bfast-daas.com/storage/788h/file/76tyuuu-78uui-87ui.mp4**
+When you know the filename you can get file content by using the following format **${hostname}:
+${port}/${your-server-endpoint}/storage/${your-application-id}/file/${filename}**. For
+example **https://bfast-daas.com/storage/788h/file/76tyuuu-78uui-87ui.mp4**
 
 ## 6.2 Upload large files
 
-You can upload large files with efficiency and progress tracking, this will use a direct and dedicated rest api endpoint **/storage/${applicationId}** with **POST** http method. This endpoint handle a multipart form data, form your client side you will send your formdata with files you want to save and will respond with the urls of the files saved;
+You can upload large files with efficiency and progress tracking, this will use a direct and dedicated rest api
+endpoint **/storage/${applicationId}** with **POST** http method. This endpoint handle a multipart form data, form your
+client side you will send your form data with files you want to save and will respond with the urls of the files saved;
 
 The response will be a json of the following format;
 
+```json
 {
-
-"urls": ["/storage/889/file/077-hello.txt"]
-
+  "urls": [
+    "/storage/889/file/077-hello.txt"
+  ]
 }
+```
 
 The result will always be an array even if you only upload one file.
 
 ##
 
-
 ## 7.0 Database Indexes
 
-You can modify the indexes of your database domain/collection/table for performance improvement and other factors as it seems fits. Format of the rule is **index${Domain/Collection/Table}** e.g **indexProduct.** This rule requires a **masterKey** field in your root rule block. Its format is as follows
+You can modify the indexes of your database domain/collection/table for performance improvement and other factors as it
+seems fits. Format of the rule is **index${Domain/Collection/Table}** e.g **indexProduct.** This rule requires a **
+masterKey** field in your root rule block. Its format is as follows
 
 ## 7.1 Format
 
-The **index${domain}** block has the following fields, **add, remove** &amp; **list .** index field is an object which has the following format.
+The **index${domain}** block has the following fields, **add, remove** &amp; **list .** index field is an object which
+has the following format.
 
 "add": [{"field": "name"}],
 
@@ -1395,25 +1121,22 @@ The **index${domain}** block has the following fields, **add, remove** &amp; **l
 
 ## 7.2 Add Indexes
 
-To add a new index to a domain/table/collection use **add** which accepts an array of the indexes you want to add, if the index exists will be updated.
+To add a new index to a domain/table/collection use **add** which accepts an array of the indexes you want to add, if
+the index exists will be updated.
 
+```json
 {
-
-"applicationId": "daas",
-
-"masterKey": "daas-master",
-
-"indexProduct": {
-
-"add": [
-
-{"field": "name"}
-
-]
-
+  "applicationId": "daas",
+  "masterKey": "daas-master",
+  "indexProduct": {
+    "add": [
+      {
+        "field": "name"
+      }
+    ]
+  }
 }
-
-}
+```
 
 The response from the server will be as follows
 
@@ -1427,88 +1150,72 @@ The response from the server will be as follows
 
 To list all available indexes for a domain use **list** sub command for **index${domain}** rule as follows;
 
+```json
 {
-
-"applicationId": "daas",
-
-"masterKey": "daas-master",
-
-"indexProduct": {
-
-"list": {}
-
+  "applicationId": "daas",
+  "masterKey": "daas-master",
+  "indexProduct": {
+    "list": {}
+  }
 }
-
-}
+```
 
 The response will be the list of the indexes available both user defined and default ( primary key index ).
 
+```json
 {
-
-"indexProduct": {
-
-"list": [
-
-{
-
-"v": 2,
-
-"key": {"name": 1},
-
-"name": "name\_1",
-
-"ns": "051475c8-60f6-4809-a33a-db9db0d4416a.Product"
-
+  "indexProduct": {
+    "list": [
+      {
+        "v": 2,
+        "key": {
+          "name": 1
+        },
+        "name": "name_1",
+        "ns": "051475c8-60f6-4809-a33a-db9db0d4416a.Product"
+      }
+    ]
+  }
 }
-
-]
-
-}
-
-}
+```
 
 ## 7.4 Remove Indexes
 
 You can delete/remove a user defined index only by using the **remove** rule in **index${domain}** rule block.
 
+```json
 {
-
-"applicationId": "daas",
-
-"masterKey": "daas-master",
-
-"indexProduct": {
-
-"remove": {}
-
+  "applicationId": "daas",
+  "masterKey": "daas-master",
+  "indexProduct": {
+    "remove": {}
+  }
 }
-
-}
+```
 
 The response from the server will be as follows.
 
+```json
 {
-
-"indexProduct": {
-
-"remove": true
-
+  "indexProduct": {
+    "remove": true
+  }
 }
-
-}
+```
 
 ## 8.0 PlayGround
 
-This is an interface for you to play with your rules when developing your application. You open the UI by running the following command.
+This is an interface for you to play with your rules when developing your application. You open the UI by running the
+following command.
 
 ~$ bfast database playground
 
 You must install " **bfast-tools**" a cli tool from npm like this **"~$ npm install -g bfast-tools"**
 
-
 # Other Reference
 
 1. [bfast-tools](https://github.com/fahamutech/bfast-tools)
-1. [bfast-function](https://github.com/fahamutech/bfast-function)
-1. [bfast website](https://bfast.fahamutech.com)
+2. [bfast-function](https://github.com/fahamutech/bfast-function)
+3. [bfast website](https://bfast.fahamutech.com/)
+4. [playground website](https://bfast-playground.web.app/)
 

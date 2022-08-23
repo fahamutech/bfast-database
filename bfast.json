@@ -3,7 +3,8 @@
   "ignore": [
     "**/node_modules/**",
     "**/specs/**",
-    "**/*.specs.js",
-    "**/*.controller.js"
+    "**/*.specs.mjs",
+    "**/*.spec.mjs",
+    "**/envs.mjs"
   ]
 }
